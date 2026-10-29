@@ -1,14 +1,14 @@
-:root{--navy:#14243a;--gold:#b99858;--gold-2:#8a7240;--bg:#fffdf8;--fg:#14243a;--muted:#5b6170;--card:#fff;--line:#ded5c3;
+:root{--navy:#14243a;--gold:#b99858;--gold-2:#7d6738;--bg:#f8f4ea;--fg:#23272f;--muted:#555b67;--card:#fffdf8;--line:#ddd3bf;
 --display:"Cormorant SC",Georgia,serif;--serif:"Source Serif 4",Georgia,serif;--sans:"Source Sans 3",Arial,sans-serif}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a2a;--fg:#ece6d8;--muted:#a9b0bd;--card:#16243a;--line:#2c3d58;--gold-2:#d1b477;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0f1a2a;--fg:#ece6d8;--muted:#a9b0bd;--card:#16243a;--line:#2c3d58;--gold-2:#d1b477;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161b22;--fg:#e6e0d3;--muted:#a7adb8;--card:#1d232c;--line:#323b48;--gold-2:#d1b477;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#161b22;--fg:#e6e0d3;--muted:#a7adb8;--card:#1d232c;--line:#323b48;--gold-2:#d1b477;color-scheme:dark}
 *{box-sizing:border-box}html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--serif);line-height:1.6}
 a{color:var(--gold-2)}
 .lw{max-width:860px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .lh{background:var(--navy);border-bottom:4px solid var(--gold)}.lh .lw{padding-block:22px 18px;text-align:center}
 .lbrand{display:inline-grid;gap:4px;justify-items:center;text-decoration:none}
-.lbrand .cv{font-family:var(--display);font-size:clamp(1.8rem,5vw,2.6rem);letter-spacing:.06em;line-height:1;color:#fffdf8}.lbrand .cv b{color:var(--gold);font-weight:inherit}
+.lbrand .cv{font-family:var(--display);font-size:clamp(1.8rem,5vw,2.6rem);letter-spacing:.1em;text-transform:uppercase;line-height:1;color:#fffdf8}.lbrand .emblem{width:58px;height:auto;display:block}.lbrand .cv b{color:var(--gold);font-weight:inherit}
 .lbrand .rg{font-family:var(--sans);font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:#d1b477}.lbrand .rg i{display:block;font-family:var(--serif);font-size:1rem;letter-spacing:.06em;text-transform:none;color:#efe6d2}
 .lnav{border-bottom:1px solid var(--line);background:var(--card)}.lnav .lw{display:flex;flex-wrap:wrap;gap:4px 16px;padding-block:8px;font-family:var(--sans);font-size:.9rem}
 .lnav a{text-decoration:none;color:var(--fg);min-height:36px;display:inline-flex;align-items:center}.lnav a[aria-current]{font-weight:600;border-bottom:2px solid var(--gold)}
