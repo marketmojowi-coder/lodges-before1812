@@ -1,7 +1,9 @@
 {
   "hosting": {
-    "public": "docs",
-    "ignore": ["firebase.json", "**/.*"],
-    "headers": [{ "source": "**/*.json", "headers": [{ "key": "Cache-Control", "value": "max-age=3600" }] }]
-  }
+    "public": "firebase/public",
+    "ignore": ["**/.*"],
+    "headers": [{ "source": "**/*.@(js|css)", "headers": [{ "key": "Cache-Control", "value": "max-age=600" }] }]
+  },
+  "firestore": { "rules": "firebase/firestore.rules", "indexes": "firebase/firestore.indexes.json" },
+  "storage": { "rules": "firebase/storage.rules" }
 }

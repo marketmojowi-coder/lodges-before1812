@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fact bins · Lodges Before 1812</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+<style>
+.bins{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:12px 0 22px}
+.bin{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:4px;padding:12px 14px;text-align:left;font:inherit;color:var(--fg);cursor:pointer;min-height:44px}
+.bin.on{outline:2px solid var(--gold)}
+.bin b{display:block;font-family:var(--display);font-size:1.2rem}
+.bin small{font-family:var(--sans);color:var(--muted);font-variant-numeric:tabular-nums}
+.fact{border-bottom:1px solid var(--line);padding:12px 0}
+.fact .st{font:600 .7rem var(--sans);text-transform:uppercase;letter-spacing:.06em;border-radius:10px;padding:1px 8px;border:1px solid var(--gold);color:var(--gold-2)}
+.fact .st.accepted{background:var(--gold);color:#14243a}.fact .st.rejected{opacity:.6;text-decoration:line-through}
+.fact p{margin:4px 0}
+.acts button{min-height:40px;margin:6px 6px 0 0;font:600 .8rem var(--sans);border-radius:3px;border:1px solid var(--line);background:var(--card);color:var(--fg);cursor:pointer;padding:0 12px}
+form.add{display:grid;gap:8px;background:var(--parch);border:1px solid var(--line);border-radius:4px;padding:14px;max-width:none;flex-direction:column}
+form.add label{font:600 .75rem var(--sans);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+form.add input,form.add select,form.add textarea{font:1rem var(--sans);padding:10px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--fg);min-height:44px;width:100%}
+form.add button{min-height:46px;border:0;border-radius:4px;background:var(--gold);color:#14243a;font:600 .95rem var(--sans);cursor:pointer}
+.tally{font-family:var(--sans);font-size:.85rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1 class="brand">Fact <span>Bins</span></h1>
+<p class="sub">New facts wait here until they are checked. Every fact must name its source and where the original is held. Only accepted facts count.</p></div></header>
+<nav class="topnav"><div class="wrap"><a href="index.html">Search</a> · <a href="bins.html">Fact bins</a></div></nav>
+<main><div class="wrap" style="display:block">
+  <p id="who" class="tally">Signing in…</p>
+  <h2 class="sec">Bins</h2>
+  <div id="bins" class="bins"></div>
+  <p id="tally" class="tally"></p>
+  <h2 class="sec">Facts</h2>
+  <div><label class="tally">Show <select id="fstat"><option value="">all</option><option>pending</option><option>accepted</option><option>rejected</option></select></label></div>
+  <div id="facts"></div>
+  <h2 class="sec" style="margin-top:24px">Add a fact</h2>
+  <form id="add" class="add">
+    <label for="a-bin">Bin</label><select id="a-bin" required></select>
+    <label for="a-man">Man (as written in the source)</label><input id="a-man" required>
+    <label for="a-lodge">Lodge</label><input id="a-lodge" placeholder="e.g. Federal No. 15">
+    <label for="a-year">Year</label><input id="a-year" inputmode="numeric" pattern="1[78][0-9][0-9]" placeholder="1787-1811">
+    <label for="a-claim">The fact</label><textarea id="a-claim" required rows="3"></textarea>
+    <label for="a-cite">Source citation (record, date, page)</label><input id="a-cite" required>
+    <label for="a-held">Where the original is held</label><input id="a-held" required placeholder="e.g. National Archives, Record Group 42">
+    <button type="submit">Put in the bin for review</button>
+    <p id="a-msg" class="tally" role="status"></p>
+  </form>
+</div></main>
+<script type="module" src="bins.js"></script>
+</body>
+</html>
