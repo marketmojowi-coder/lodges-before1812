@@ -83,7 +83,7 @@ function render(T){
     <h3>${hi(r.f[0][1],T)}</h3><p class="snip">${rest}</p>
     ${r.l.length?`<div class="lodgetag">${r.lv?"Lodges of the men named: ":"Lodge: "}${esc(r.l.join("; "))}</div>`:""}
     ${r.m.length?`<div class="chipline">${r.m.slice(0,8).map(i=>`<button class="chip${i===man?" on":""}" type="button" data-m="${i}">${esc(M[i].n)}</button>`).join("")}</div>`:""}
-    <div class="cite">${esc(bookRefs([r.c])||r.c)}</div>${orig(r)}
+    <div class="cite">${ct(bookRefs([r.c])||r.c)}</div>${orig(r)}
     <button class="copy" type="button" data-c="${R.indexOf(r)}">Copy citation</button>
     <details><summary>All fields</summary><dl>${r.f.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></details></article>`;
   }
@@ -97,9 +97,9 @@ function render(T){
   o.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>pick(+b.dataset.m));
 }
 function orig(r){const p=DATA.repos[r.o];if(!p)return"";
-  if(r.d!=null){const d=DATA.docs[r.d];return `<div class="orig"><b>Original:</b> ${esc(d.x.replace(/\.$/,""))}${r.dl?", "+esc(r.dl):""}. <span class="acc">${esc(p.access)}</span> <button class="linkbtn" type="button" data-d="${r.d}">All ${d.n} records from this document</button></div>`}
+  if(r.d!=null){const d=DATA.docs[r.d];return `<div class="orig"><b>Original:</b> ${ct(d.x.replace(/\.$/,""))}${r.dl?", "+esc(r.dl):""}. <span class="acc">${esc(p.access)}</span> <button class="linkbtn" type="button" data-d="${r.d}">All ${d.n} records from this document</button></div>`}
   if(r.o==="BOOK")return `<div class="orig"><b>Original:</b> <span class="acc">${esc(p.access)}</span></div>`;
-  return `<div class="orig"><b>Original:</b> ${esc(r.od&&r.od!==r.c?r.od:p.cite||r.od)}${r.oh?`. <b>Held at:</b> ${esc(r.oh)}`:""}. <span class="acc">${esc(p.access)}</span></div>`}
+  return `<div class="orig"><b>Original:</b> ${ct(r.od&&r.od!==r.c?r.od:p.cite||r.od)}${r.oh?`. <b>Held at:</b> ${esc(r.oh)}`:""}. <span class="acc">${esc(p.access)}</span></div>`}
 function citeText(r){const p=DATA.repos[r.o];let t=r.c.replace(/\.$/,"");if(r.d!=null)return t+". Original: "+DATA.docs[r.d].x.replace(/\.$/,"")+(r.dl?", "+r.dl:"")+".";if(r.o!=="BOOK"&&r.od&&!r.c.includes(r.od))t+=`. Original: ${r.od}${r.oh?", "+r.oh:""}`;return t+"."}
 function pick(i){profile(i)}
 function count(a){const c={};a.forEach(v=>c[v]=(c[v]||0)+1);return Object.entries(c).sort((x,y)=>y[1]-x[1])}
@@ -124,8 +124,8 @@ function side(T,q){
     h+=`<div class="card rows"><div class="k" style="margin-top:0">Men of ${esc(fl)} (${list.length})</div>${list.slice(0,60).map(([m,k])=>`<button type="button" data-m="${k}"><span>${esc(m.n)}</span><span>${m.c}</span></button>`).join("")}${list.length>60?`<div class="k">and ${list.length-60} more; search a name</div>`:""}</div>`}
   const fo=$("fo").value;
   if(fo&&fo!=="BOOK"){const ds=DATA.docs.map((d,k)=>[d,k]).filter(([d])=>d.o===fo);
-    h+=`<div class="card rows"><div class="k" style="margin-top:0">${esc(DATA.repos[fo].name)}: ${ds.length} documents</div>${ds.map(([d,k])=>`<button type="button" data-d="${k}"><span>${esc(d.x.replace(/^.*?: /,""))}</span><span>${d.n}</span></button>`).join("")}</div>`}
-  if(docSel!==null){const d=DATA.docs[docSel];h=`<div class="card"><div class="k" style="margin-top:0">Document</div><div>${esc(d.x)}</div><div class="k">Records from it</div><div>${d.n} · <button class="linkbtn" type="button" id="undoc">show all records</button></div></div>`+h}
+    h+=`<div class="card rows"><div class="k" style="margin-top:0">${esc(DATA.repos[fo].name)}: ${ds.length} documents</div>${ds.map(([d,k])=>`<button type="button" data-d="${k}"><span>${ct(d.x.replace(/^.*?: /,""))}</span><span>${d.n}</span></button>`).join("")}</div>`}
+  if(docSel!==null){const d=DATA.docs[docSel];h=`<div class="card"><div class="k" style="margin-top:0">Document</div><div>${ct(d.x)}</div><div class="k">Records from it</div><div>${d.n} · <button class="linkbtn" type="button" id="undoc">show all records</button></div></div>`+h}
   if(last.length){h+=`<div class="card rows"><div class="k" style="margin-top:0">Narrow by source</div>${count(last.map(r=>r.s)).map(([k,n])=>`<button type="button" data-f="fs" data-v="${esc(k)}"><span>${esc(k)}</span><span>${n}</span></button>`).join("")}
     <div class="k">Records by year</div>${years(last)}</div>`}
   s.innerHTML=h;
@@ -330,7 +330,7 @@ function ix(k,arg){if(k==="atlas"){show("atlas");return}IX=k;document.querySelec
   if(k==="culture"){const c=CU[+arg||0];
     h=`<button class="linkbtn back" type="button" data-ix="trades">‹ Trades and callings</button><div class="ixbtns">${CU.map((x,j)=>`<button type="button" data-ix="culture" data-arg="${j}" class="${x===c?"on":""}">${esc(x.k)}<br><small>${x.men.length} men · ${esc(x.g)}</small></button>`).join("")}</div>
     <h3 class="h3s">${esc(c.k)}: ${c.men.length} ${esc(c.t)}</h3><p class="stats">Only explicit statements count. Each line gives the words of the record and where they come from. Heritage from the 2019 research workbook is the author's research notes, not a primary source.</p>
-    <div class="tscroll"><table class="stt"><thead><tr><th>Man</th><th>Lodges</th><th>Evidence</th><th>Source</th></tr></thead><tbody>${c.men.map(i=>`<tr><td><button type="button" class="linkbtn" data-m="${i}">${esc(M[i].n)}</button></td><td>${esc(M[i].l.join("; "))}</td><td style="text-align:left">${esc(c.ev[i][0])}</td><td style="text-align:left">${esc(bookRefs([c.ev[i][1]])||c.ev[i][1])}</td></tr>`).join("")}</tbody></table></div>`;
+    <div class="tscroll"><table class="stt"><thead><tr><th>Man</th><th>Lodges</th><th>Evidence</th><th>Source</th></tr></thead><tbody>${c.men.map(i=>`<tr><td><button type="button" class="linkbtn" data-m="${i}">${esc(M[i].n)}</button></td><td>${esc(M[i].l.join("; "))}</td><td style="text-align:left">${esc(c.ev[i][0])}</td><td style="text-align:left">${ct(bookRefs([c.ev[i][1]])||c.ev[i][1])}</td></tr>`).join("")}</tbody></table></div>`;
     document.querySelectorAll("#ix-btns [data-ix]").forEach(b=>b.classList.remove("on"))}
   if(k==="years")h=`<p class="stats">Men named on the surviving returns and rolls each year. Tap a year for its records.</p><div class="ixbtns">${C.years.map(y=>`<button type="button" data-yr="${y.y}">${y.y}<br><small>${y.t} men</small></button>`).join("")}</div>`;
   if(k==="buildings"){const c={};R.forEach(r=>r.b.forEach(b=>c[b]=(c[b]||0)+1));h=`<div class="ixbtns">${Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([b,n])=>`<button type="button" data-bd="${esc(b)}">${esc(b)}<br><small>${n} records</small></button>`).join("")}</div>`}
@@ -339,7 +339,7 @@ function ix(k,arg){if(k==="atlas"){show("atlas");return}IX=k;document.querySelec
      <div class="tscroll" id="fu-own"></div><h3 class="h3s">Funerals and burial grounds they took part in</h3><p class="stats">Pall bearers, processions and Masonic funeral rites, such as General Washington's in December 1799, and the choosing and buying of burial grounds.</p><div class="tscroll" id="fu-rites"></div>`;
     const cols=["Year","Man","Lodges","Event","Place","The record says","Source"];
     const row=x=>[{v:x.y||"–",s:x.y||9999},{v:M[x.i].n,h:`<button type="button" class="linkbtn" data-m="${x.i}">${esc(M[x.i].n)}</button>`},{v:M[x.i].l.join("; ")},{v:x.ev},{v:x.pl||"–"},{v:x.t},
-      {v:shortSrc(R[x.k]),h:`<span class="linkbtn" role="button" tabindex="0" data-rk="${x.k}">${PRIM(R[x.k])?"● ":""}${esc(shortSrc(R[x.k]))}</span>`}];
+      {v:shortSrc(R[x.k]),h:`<span class="linkbtn" role="button" tabindex="0" data-rk="${x.k}">${PRIM(R[x.k])?"● ":""}${ct(shortSrc(R[x.k]))}</span>`}];
     sortable("fu-own",cols,own.map(row),0,true);sortable("fu-rites",cols,rites.map(row),0,true);wire(P);return}
   if(k==="docs"){h=Object.entries(DATA.repos).filter(([o,v])=>v.nd).map(([o,v])=>`<h3 class="h3s">${esc(v.name)}</h3><p class="stats">${esc(v.holder||"")} ${esc(v.access||"")}</p><div class="rows">${DATA.docs.map((d,i)=>[d,i]).filter(([d])=>d.o===o).map(([d,i])=>`<button type="button" data-dc="${i}"><span>${esc(d.x.replace(/^.*?, (?=[A-Z][a-z]+ of|Proceedings|Return|Roster)/,""))}</span><span>${d.n}</span></button>`).join("")}</div>`).join("")}
   P.innerHTML=h;wire(P)}
@@ -378,7 +378,7 @@ function termsHTML(t){const T=(C.terms||[]).filter(x=>x.group===t);if(!T.length)
    ${T.map(x=>`<tr><td><b>${esc(x.calling)}</b>${x.note?`<br><small class="stats">${esc(x.note)}</small>`:""}</td><td>${esc(x.dublin||"–")}</td>
     <td>${x.moxon?`${esc(x.moxon)}<br><small class="stats">${esc(x.moxon_cite.replace(/^Joseph Moxon, Mechanick Exercises[^)]*\), /,"Moxon, "))}</small>`:"–"}</td>
     <td>${x.enc?`<a href="${esc(x.enc_url)}" target="_blank" rel="noopener">${esc(x.enc)} ↗</a>`:"–"}</td>
-    <td>${x.city?`${esc(x.city)}<br><small class="stats">${esc(x.city_cite)}</small>`:"–"}</td>
+    <td>${x.city?`${esc(x.city)}<br><small class="stats">${ct(x.city_cite)}</small>`:"–"}</td>
     <td>${esc(x.fws)}${x.fws_status&&x.fws_status!=="Confirmed"?` <small class="stats">(${esc(x.fws_status.toLowerCase())})</small>`:""}<br><small class="stats">${esc(x.soc)}</small></td></tr>`).join("")}</tbody></table></div>
    <p class="stats">Sources: Joseph Moxon, <i>Mechanick Exercises: or, the Doctrine of Handy-Works</i> (London, 1703), printed pages; Proceedings of the Commissioners and the Treasury Office estimate, RG 42, National Archives; Diderot and d'Alembert, <i>Encyclopédie</i>, plates (Paris, 1762–1772), plate sets by title at the University of Michigan's Collaborative Translation Project; federal wage-grade series of the U.S. Office of Personnel Management; Standard Occupational Classification of the Bureau of Labor Statistics. Today's titles are the nearest equivalents, not one-to-one.</p></details>`}
 function tradeTable(t){
@@ -416,12 +416,17 @@ function tradeTable(t){
 }
 
 /* Book references, reconciled: one entry per book, its tables listed once. */
+/* citations: titles of books, journals and newspapers in italics */
+const ITAL=new RegExp("(Proto Lodges of the Potomac Area, 1787–1811|Federal Lodge No\\. 15, 1793–1811|Origins of the Royal Arch|(?:Potomac Lodge|Naval Lodge No\\. 41|Columbia Lodge No\\. 35|Washington Parish)(?= \\(Lulu)|History of Freemasonry in Maryland|History of the Grand Lodge and of Freemasonry in the District of Columbia|(?:The )?Chronicles of Georgetown(?:, D\\.C\\., from 1751 to 1878)?|Navy-Yard, Washington(?:: History from Organization, 1799, to Present Date)?|History of the Washington Navy Yard Civilian Workforce, 1799–1962|Records of the Columbia Historical Society|Mechanick Exercises|One Hundred and Fifty Years, 1789–1939|National Intelligencer(?: and Washington Advertiser)?|Sunday Star|Evening Star|Times, and Patowmack Packet|Centinel of Liberty|Columbian Mirror(?: and Alexandria Gazette)?|Gazette of the United States|Impartial Observer|Washington Gazette|Washington Federalist|Universal Gazette|City Gazette)","g");
+const ct=s=>esc(s).replace(ITAL,"<i>$1</i>");
 function bookRefs(cs){const by=new Map();
   for(const c of cs)for(const seg of String(c).split(/;\s*/)){const m=seg.match(/^(Thomas M\. Saharsky, .*?\((?:Lulu, )?\d{4}\))(.*)$/);if(!m)continue;
     const loc=m[2].replace(/\(A\.L\. \d+\)/g,"").replace(/^[,\s]+|[,\s.]+$/g,"").replace(/\s+,/g,",").replace(/\s{2,}/g," ");
     if(!by.has(m[1]))by.set(m[1],new Set());if(loc)by.get(m[1]).add(loc)}
   return [...by].map(([b,ls])=>b.replace(/(\d{4})-(\d{4})/g,"$1–$2")+(ls.size?", "+[...ls].join("; "):"")+".").join(" ")}
-function heldAt(r){const p=DATA.repos[r.o]||{};const h=r.oh||p.holder||"";const a=(p.access||"").split(/(?<=\.)\s+/).filter(x=>!/library\.?$/i.test(x)).join(" ");return (h?`Held at ${h.replace(/\.$/,"")}. `:"")+a}
+function heldAt(r){const p=DATA.repos[r.o]||{};const h=r.oh||p.holder||"";const a=(p.access||"").split(/(?<=\.)\s+/).filter(x=>!/library\.?$/i.test(x)).join(" ");
+  const rd=/^reprinted in /i.test(h);return (h?`${rd?"Read in":"Held at"} ${h.replace(/^reprinted in /i,"").replace(/\.$/,"")}. `:"")+a}
+const holdLbl=r=>/^Read in /.test(heldAt(r))?"Read in":"Held at";
 
 
 /* ---------- Icons and the reader ---------- */
@@ -447,8 +452,8 @@ function reader(k){const r=R[k],kd=kindOf(r),y=yof2(r);let dlg=$("reader");if(!d
   <h3>${esc(r.o==="NEWS"?r.f[0][1]:r.t)}</h3><div class="date">${esc(date||y||"Undated")}${r.m.length?" · "+r.m.map(i=>esc(M[i].n)).join(", "):""}</div>
   ${said?`<blockquote>${esc(said[1])}</blockquote>`:""}
   <dl>${r.f.filter(([f])=>!/^(source|the book says|book note)$/i.test(f)).map(([f,v])=>`<dt>${esc(f)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
-  ${ox?`<div class="cit"><b>Original</b>${esc(ox)}.</div><div class="cit"><b>Held at</b>${esc(heldAt(r).replace(/^Held at /,""))}</div>`:(r.o==="AUTHOR_WB"?`<div class="cit"><b>Research note</b>${esc(r.c)}. ${esc(DATA.repos.AUTHOR_WB.access)}</div>`:`<div class="cit"><b>Original</b>Compiled in the series from several documents; see the book for its sources.</div>`)}
-  ${r.o==="AUTHOR_WB"?"":`<div class="cit"><b>In the books</b>${esc(bookRefs([r.c])||r.c)}</div>`}
+  ${ox?`<div class="cit"><b>Original</b>${ct(ox)}.</div><div class="cit"><b>${holdLbl(r)}</b>${ct(heldAt(r).replace(/^(Held at|Read in) /,""))}</div>`:(r.o==="AUTHOR_WB"?`<div class="cit"><b>Research note</b>${ct(r.c)}. ${esc(DATA.repos.AUTHOR_WB.access)}</div>`:r.k==="Settled fact"?`<div class="cit"><b>Sources</b>${ct(r.c)}</div><div class="cit"><b>Status</b>Settled for the whole series: checked against these records and kept the same in every book.</div>`:`<div class="cit"><b>Original</b>Compiled in the series from several documents; see the book for its sources.</div>`)}
+  ${r.o==="AUTHOR_WB"||r.k==="Settled fact"?"":`<div class="cit"><b>In the books</b>${ct(bookRefs([r.c])||r.c)}</div>`}
   <div class="acts"><button type="button" class="pri" id="rd-copy">Copy citation</button><button type="button" id="rd-print">Print or save as PDF</button>
   ${ca?`<a href="${ca}" target="_blank" rel="noopener">${svgI(ICK.news,"newspaper")} Find the issue at Chronicling America ↗</a>`:""}
   ${bld.map(b=>`<button type="button" data-atb="${esc(b)}">${svgI(ICK.map,"map")} ${esc(b)} on the Atlas</button><a href="https://www.loc.gov/photos/?q=${encodeURIComponent(BLD[b].q)}" target="_blank" rel="noopener">${svgI(ICK.pic,"pictures")} Pictures ↗</a>`).join("")}
@@ -732,14 +737,14 @@ function profile(i,keep){if(!keep)LPH="";const m=M[i],P=MP[i];
   if(!gs.length)h+=`<p class="stats">No original document in the data set names him directly. He is known from the lodge rolls compiled in the series (below).</p>`;
   for(const g of gs){const r=g[0],p=DATA.repos[r.o]||{};const ox=r.d!=null?DATA.docs[r.d].x:(r.od||p.cite||r.c);
     const locs=[...new Set(g.map(x=>x.dl).filter(Boolean))];
-    h+=`<div class="doc"><div class="ox">${esc(ox.replace(/\.$/,""))}${locs.length?", "+esc(locs.join("; ")):""}.</div>
-    <div class="acc"><b>Held at:</b> ${esc(heldAt(r).replace(/^Held at /,""))}</div>
-    ${bookRefs(g.map(x=>x.c))?`<div class="acc"><b>In the books:</b> ${esc(bookRefs(g.map(x=>x.c)))}</div>`:""}
+    h+=`<div class="doc"><div class="ox">${ct(ox.replace(/\.$/,""))}${locs.length?", "+esc(locs.join("; ")):""}.</div>
+    <div class="acc"><b>${holdLbl(r)}:</b> ${ct(heldAt(r).replace(/^(Held at|Read in) /,""))}</div>
+    ${bookRefs(g.map(x=>x.c))?`<div class="acc"><b>In the books:</b> ${ct(bookRefs(g.map(x=>x.c)))}</div>`:""}
     <ul>${g.map(x=>`<li>${esc(x.t)}: ${brief(x)}</li>`).join("")}</ul>
     <button class="copy" type="button" data-cc="${R.indexOf(r)}">Copy citation</button></div>`}
   const X=P.x.map(k=>R[k]);
   h+=`<details ${gs.length?"":"open"}><summary><b>Cross-references in the series books and rolls (${X.length})</b>: compiled from the documents above and from the lodge rolls; not separate originals.</summary>
-  <ul class="xref">${X.map(r=>`<li>${esc(r.s.replace(/ \(book data set\)/,""))} › ${esc(r.t)}${r.y.length?" ("+r.y[0]+(r.y.at(-1)!==r.y[0]?"–"+r.y.at(-1):"")+")":""}: ${brief(r)}<br><span class="acc">${esc(bookRefs([r.c])||r.c)}</span></li>`).join("")}</ul></details></div>`;
+  <ul class="xref">${X.map(r=>`<li>${esc(r.s.replace(/ \(book data set\)/,""))} › ${esc(r.t)}${r.y.length?" ("+r.y[0]+(r.y.at(-1)!==r.y[0]?"–"+r.y.at(-1):"")+")":""}: ${brief(r)}<br><span class="acc">${ct(bookRefs([r.c])||r.c)}</span></li>`).join("")}</ul></details></div>`;
   $("man-out").innerHTML=h;show("man");$("pback").onclick=()=>show("index");
   $("man-out").querySelectorAll(".infobox [data-ix]").forEach(b=>b.onclick=()=>{show("index");ix(b.dataset.ix,b.dataset.arg)});
   $("man-out").querySelectorAll(".infobox [data-m]").forEach(b=>b.onclick=()=>{profile(+b.dataset.m);window.scrollTo(0,0)});
