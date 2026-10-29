@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<title>Lodges Before 1812</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header><div class="wrap">
+  <h1 class="brand">Lodges <span>Before 1812</span></h1>
+  <p class="sub">The lodges of George-Town and the City of Washington, 1789-1811, from the book series by Thomas M. Saharsky. Search by man, lodge, year, trade or building. Every record names its source.</p>
+  <form id="f" role="search"><input id="q" type="search" placeholder="A man, trade, building or year" aria-label="Search the lodge records" autocomplete="off"><button type="submit">Search</button></form>
+</div></header>
+
+<div class="filters"><div class="wrap">
+  <label for="fl">Lodge</label><select id="fl"><option value="">All lodges</option></select>
+  <label for="fs">Source</label><select id="fs"><option value="">All sources</option></select>
+  <label for="fo">Original held at</label><select id="fo"><option value="">All repositories</option></select>
+  <label for="ft">Trade</label><select id="ft"><option value="">All trades</option></select>
+  <label for="fb">Building</label><select id="fb"><option value="">All buildings</option></select>
+  <label for="y1">Years</label><input class="yr" id="y1" inputmode="numeric" placeholder="1789"> <span>to</span> <input class="yr" id="y2" inputmode="numeric" placeholder="1811">
+  <button class="linkbtn" id="clr" type="button">Start over</button>
+</div></div>
+
+<main><div class="wrap">
+  <section id="out" aria-live="polite"></section>
+  <aside id="side"></aside>
+</div></main>
+<footer><div class="wrap" id="foot"></div></footer>
+<script src="app.js"></script>
+</body>
+</html>
