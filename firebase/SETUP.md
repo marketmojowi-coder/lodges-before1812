@@ -48,3 +48,12 @@ Hosting > Add custom domain > `lodges.mktmojox.com`. Firebase shows two DNS reco
 - Members download the data set from Storage once per visit (rules: members and editors only) and search it.
 - Fact bins (bins.html): members and agents add facts with a source; they wait as **pending** until an editor accepts or rejects them; counts per bin are live. Agents submit with `firebase/agents/submit_facts.py` (see AGENT_INSTRUCTIONS.md).
 - The free GitHub Pages site is only a landing page; the data set is not public.
+
+## Members' contributions: Schultz, Harper, Dove and other printed sources
+
+1. Seed the printed sources once (and after editing `admin/sources.json`): `python3 admin/seed_sources.py`.
+   Sources: Schultz, *History of Freemasonry in Maryland* (4 vols., 1884–1888); Harper, *History of the Grand Lodge and of Freemasonry in the District of Columbia* (1911); Dove, *Proceedings of the Grand Lodge of Virginia* (1874), George Washington Masonic National Memorial copy. All three are in the public domain.
+2. Members open **Fact bins**, choose the source, volume and page (the Oxford citation and "held at" fill in), and add one fact, or upload a CSV (`bin, source, volume, page, man, lodge, year, claim`) to add many. Every line arrives as **pending**.
+3. You (editor) review in the same page: Accept, Reject with a note, or select many and **Accept selected**. Only accepted facts leave the bins.
+4. Publish: `python3 admin/export_accepted.py <grand-lodge-app>/contributions/accepted_facts.csv`, rebuild (`python3 build_app.py`), then `python3 admin/upload_data.py <grand-lodge-app>/app_data.json`.
+   Accepted facts count in the statistics as printed sources: one document per volume, the page as its locator, each linked to the man named. Facts citing the lodge's minute books or ledger are never ingested.

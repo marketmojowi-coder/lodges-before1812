@@ -11,6 +11,11 @@ service cloud.firestore {
       allow read: if member();
       allow write: if editor();
     }
+    // Printed sources members may cite (Schultz, Harper, Dove ...): members read, editors keep the list.
+    match /sources/{id} {
+      allow read: if member();
+      allow write: if editor();
+    }
     // Facts: members add pending facts with a source; they read accepted facts and their own; editors review.
     match /facts/{id} {
       allow read: if editor() || (member() && (resource.data.status == "accepted" || resource.data.by == request.auth.uid));
