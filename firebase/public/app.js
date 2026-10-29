@@ -227,7 +227,7 @@ function cp(){
 }
 
 /* ---------- Index: buttons into the main categories ---------- */
-const PRIM=r=>r.o!=="BOOK";
+const PRIM=r=>r.o!=="BOOK"&&r.o!=="AUTHOR_WB";
 const MP=M.map(()=>({p:[],x:[]}));R.forEach((r,k)=>r.m.forEach(i=>(PRIM(r)?MP[i].p:MP[i].x).push(k)));
 const ND=M.map((m,i)=>new Set(MP[i].p.map(k=>R[k].d??("o"+R[k].o))).size);
 const callings=i=>occOf(i).map(k=>OC[k]);
@@ -349,10 +349,10 @@ const ICP={"Fraternal":'<path d="M8 2L3 14M8 2l5 12M2.5 9.5L8 13l5.5-3.5"/>',"Mi
  "Work":'<path d="M3 13l6-6M7 3l3-1 4 4-1 3-2-2-2 2-2-2 2-2z"/>',"Church":'<path d="M8 1v4M6.5 2.5h3M4 14V8l4-3 4 3v6zM7 14v-3h2v3"/>'};
 const ICK={doc:'<path d="M4 1.5h5.5L12.5 4.5V14.5h-8.5zM9.5 1.5v3h3M6 8h5M6 10.5h5"/>',news:'<path d="M2 3h10v10H3.5A1.5 1.5 0 0 1 2 11.5zM12 6h2v5.5a1.5 1.5 0 0 1-3 0M4 5.5h6M4 8h6M4 10.5h4"/>',
  map:'<path d="M1.5 3.5l4-1.5 5 1.5 4-1.5v10.5l-4 1.5-5-1.5-4 1.5zM5.5 2v10.5M10.5 3.5V14"/>',pic:'<rect x="1.5" y="3" width="13" height="10" rx="1"/><circle cx="5.5" cy="6.5" r="1.3"/><path d="M2 12l4-4 3 3 2-2 3.5 3.5"/>',
- book:'<path d="M2 3c2-1 4-1 6 .5 2-1.5 4-1.5 6-.5v10c-2-1-4-1-6 .5-2-1.5-4-1.5-6-.5zM8 3.5v10"/>'};
+ note:'<path d="M3 13l1-3 7-7 2 2-7 7zM9.5 4.5l2 2M2 14.5h12"/>',book:'<path d="M2 3c2-1 4-1 6 .5 2-1.5 4-1.5 6-.5v10c-2-1-4-1-6 .5-2-1.5-4-1.5-6-.5zM8 3.5v10"/>'};
 const svgI=(p,t)=>`<svg class="ic" viewBox="0 0 16 16" role="img" aria-label="${t}"><title>${t}</title>${p}</svg>`;
-const KNAME={doc:"Original document",news:"Newspaper",map:"Map or plat",pic:"Picture",book:"Series book"};
-function kindOf(r){const T=r.t+" "+r.f.map(x=>x[1]).join(" ");if(r.o==="NEWS")return "news";
+const KNAME={note:"Research note",doc:"Original document",news:"Newspaper",map:"Map or plat",pic:"Picture",book:"Series book"};
+function kindOf(r){if(r.o==="AUTHOR_WB")return "note";const T=r.t+" "+r.f.map(x=>x[1]).join(" ");if(r.o==="NEWS")return "news";
   if(/\b(plat|survey of|ground plan|map of|plan of the)\b/i.test(T))return "map";if(/\b(drawing|engraving|elevation|photograph|habs|sketch)\b/i.test(T))return "pic";return PRIM(r)?"doc":"book"}
 function caLink(r){const m=(r.od||"").match(/^(.*?),\s*([A-Z][a-z]+ \d{1,2}, \d{4})/);if(!m)return "";const d=new Date(m[2]+" 12:00");if(isNaN(d))return "";
   const f=`${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}/${d.getFullYear()}`;
@@ -366,8 +366,8 @@ function reader(k){const r=R[k],kd=kindOf(r),y=yof2(r);let dlg=$("reader");if(!d
   <h3>${esc(r.o==="NEWS"?r.f[0][1]:r.t)}</h3><div class="date">${esc(date||y||"Undated")}${r.m.length?" · "+r.m.map(i=>esc(M[i].n)).join(", "):""}</div>
   ${said?`<blockquote>${esc(said[1])}</blockquote>`:""}
   <dl>${r.f.filter(([f])=>!/^(source|the book says|book note)$/i.test(f)).map(([f,v])=>`<dt>${esc(f)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
-  ${ox?`<div class="cit"><b>Original</b>${esc(ox)}.</div><div class="cit"><b>Held at</b>${esc(heldAt(r).replace(/^Held at /,""))}</div>`:`<div class="cit"><b>Original</b>Compiled in the series from several documents; see the book for its sources.</div>`}
-  <div class="cit"><b>In the books</b>${esc(bookRefs([r.c])||r.c)}</div>
+  ${ox?`<div class="cit"><b>Original</b>${esc(ox)}.</div><div class="cit"><b>Held at</b>${esc(heldAt(r).replace(/^Held at /,""))}</div>`:(r.o==="AUTHOR_WB"?`<div class="cit"><b>Research note</b>${esc(r.c)}. ${esc(DATA.repos.AUTHOR_WB.access)}</div>`:`<div class="cit"><b>Original</b>Compiled in the series from several documents; see the book for its sources.</div>`)}
+  ${r.o==="AUTHOR_WB"?"":`<div class="cit"><b>In the books</b>${esc(bookRefs([r.c])||r.c)}</div>`}
   <div class="acts"><button type="button" class="pri" id="rd-copy">Copy citation</button><button type="button" id="rd-print">Print or save as PDF</button>
   ${ca?`<a href="${ca}" target="_blank" rel="noopener">${svgI(ICK.news,"newspaper")} Find the issue at Chronicling America ↗</a>`:""}
   ${bld.map(b=>`<button type="button" data-atb="${esc(b)}">${svgI(ICK.map,"map")} ${esc(b)} on the Atlas</button><a href="https://www.loc.gov/photos/?q=${encodeURIComponent(BLD[b].q)}" target="_blank" rel="noopener">${svgI(ICK.pic,"pictures")} Pictures ↗</a>`).join("")}
@@ -379,16 +379,21 @@ function reader(k){const r=R[k],kd=kindOf(r),y=yof2(r);let dlg=$("reader");if(!d
 /* ---------- Life at a glance: one dated line per event, sorted into phases ---------- */
 const PHASES=["Life and death","Fraternal","Military","Civic","Work","Church"];
 const LODGE_SRC=/lodge|roster|return|chapter|royal arch|members|officers|grand lodge|delegate|communication/i;
-function phaseOf(r,txt){const T=r.t+" "+txt,T2=T.replace(/naval lodge[^;,.]*|naval no\.? ?\d+|naval\s+\(?no/ig,"");
-  if(/\b(born|birth|died|death|deceased|funeral|buried|burial|grave|obituar|married|marriage|widow|the late)\b/i.test(T))return "Life and death";
+function phaseOf(r,txt,mi){const T=r.t+" "+txt,T2=T.replace(/naval lodge[^;,.]*|naval no\.? ?\d+|naval\s+\(?no/ig,"");
+  const LD=/\b(born|birth|died|death|deceased|funeral|buried|burial|grave|obituar|married|marriage|widow|the late)\b/ig;
+  if(mi==null){if(LD.test(T))return "Life and death"}
+  else{const sn=norm(M[mi].n).replace(/\b(jr|sr)\b\.?/g,"").trim().split(/\s+/).at(-1),nt=norm(T);let m;LD.lastIndex=0;
+    while((m=LD.exec(nt))){const w=nt.slice(Math.max(0,m.index-70),m.index+70);if(sn&&w.includes(sn))return "Life and death"}}
   if(/\b(pews?|pewholders?|vestry|vestryman|vestries|rector|chaplain|presbyterian|catholic|episcopal)\b/i.test(T))return "Church";
   if(r.o==="GLMD_RET"||r.o==="GLMD_PROC"||r.s.startsWith("Lodge rolls"))return "Fraternal";
+  if(r.o==="AUTHOR_WB"){const F=Object.fromEntries(r.f);if(F["Public building work"]||F["Private building work"])return "Work";
+    if(/\b(mayor|alderman|council|commission|justice|magistrate|lieut|captain|militia|war)\b/i.test(txt)){}else if(F["Office"])return "Fraternal";else if(F["Occupation"])return "Work"}
   if(r.o==="NARA_RG45"||/\b(navy|naval|militia|army|regiment|marines?|captain|lieutenant|commodore|sailing master|purser|gunner|frigate|tripoli|rifle volunteers|sergeant)\b/i.test(T2)&&!/worshipful master|warden|lodge no\./i.test(T2))return "Military";
   if(/\b(alderman|aldermen|council|councilman|mayor|justice of the peace|magistrate|levy court|corporation of|elected to|commissioner of|senate|house of representatives|postmaster|marshal|clerk of)\b/i.test(T))return "Civic";
   if(r.o==="NARA_RG42"||/payroll|pay roll|voucher|carvers at|cutters at|wages/i.test(r.t))return "Work";
   if(/worshipful master|warden|lodge|roster|chapter|royal arch|members|officers|delegate|past master/i.test(T)&&!/payroll|voucher|pay roll/i.test(r.t))return "Fraternal";
   return "Work"}
-function yof2(r){const ry=r.y.find(y=>y>=1750&&y<=1830);const xx=r.d!=null?DATA.docs[r.d].x:"";if(!xx.includes(": ")&&ry)return ry;const dy=r.d!=null&&xx.match(/\b1[78]\d\d\b(?!\s*[–-])/g);if(dy)return +dy.at(-1);return r.y.find(y=>y>=1750&&y<=1830)||+((r.t.match(/\b1[78]\d\d\b/)||(r.d!=null&&DATA.docs[r.d].x.match(/\b1[78]\d\d\b/))||[0])[0])||0}
+function yof2(r){if(r.o==="NEWS"){const said=(r.f.find(([k])=>/the book says/i.test(k))||[])[1]||"";const yy=(said.match(/\b1[78]\d\d\b/g)||[]).map(Number).filter(y=>y<=1830);const ry=r.y.find(y=>y<=1830);if(!ry&&yy.length)return Math.min(...yy)}const ry=r.y.find(y=>y>=1750&&y<=1830);const xx=r.d!=null?DATA.docs[r.d].x:"";if(!xx.includes(": ")&&ry)return ry;const dy=r.d!=null&&xx.match(/\b1[78]\d\d\b(?!\s*[–-])/g);if(dy)return +dy.at(-1);return r.y.find(y=>y>=1750&&y<=1830)||+((r.t.match(/\b1[78]\d\d\b/)||(r.d!=null&&DATA.docs[r.d].x.match(/\b1[78]\d\d\b/))||[0])[0])||0}
 function eventText(r,i){if(r.d!=null&&DATA.docs[r.d].x.includes(": ")){const x=DATA.docs[r.d].x.replace(/\.$/,""),tail=x.includes(": ")?x.slice(x.lastIndexOf(": ")+2):x;
     const off=(r.f.find(([k])=>/^office$/i.test(k))||[])[1],gr=(r.f.find(([k])=>/^grade$/i.test(k))||[])[1];
     const lodge=(x.match(/[A-Z][a-z]+ Lodge No\. \d+/)||[""])[0];
@@ -398,9 +403,9 @@ function eventText(r,i){if(r.d!=null&&DATA.docs[r.d].x.includes(": ")){const x=D
   const t=r.t.replace(/\s+\d{4}(\s+\d{4})?$/,"").replace(/^the /i,"");
   return (t+(vals?": "+vals:"")).slice(0,220)}
 function shortSrc(r){if(r.d!=null){const p=DATA.repos[r.o]||{};const x=DATA.docs[r.d].x.replace(/\.$/,"");const tail=x.includes(": ")?x.slice(x.lastIndexOf(": ")+2):x;return `Original: ${p.name||""}${tail?", "+tail:""}`}
-  if(PRIM(r))return "Original: "+(r.od||r.c).replace(/\.$/,"");return "Book: "+(bookRefs([r.c])||r.c)}
+  if(PRIM(r))return "Original: "+(r.od||r.c).replace(/\.$/,"");if(r.o==="AUTHOR_WB")return "Research note: "+r.c;return "Book: "+(bookRefs([r.c])||r.c)}
 function lifeEvents(i){const seen=new Set(),ev=[],primYP=new Set();
-  for(const k of [...MP[i].p,...MP[i].x]){const r=R[k],y=yof2(r),txt=r.f.map(x=>x[1]).join(" "),ph=phaseOf(r,txt),pr=PRIM(r);
+  for(const k of [...MP[i].p,...MP[i].x]){const r=R[k],y=yof2(r),txt=r.f.map(x=>x[1]).join(" "),ph=phaseOf(r,txt,i),pr=PRIM(r);
     if(!pr&&primYP.has(y+"|"+ph))continue;            // the original already covers this year and phase
     const key=y+"|"+ph+"|"+(r.d??(pr?r.t.slice(0,30):"x"));if(seen.has(key))continue;seen.add(key);if(pr)primYP.add(y+"|"+ph);
     ev.push({y,ph,t:eventText(r,i),src:shortSrc(r),prim:pr,k,kd:kindOf(r)})}
