@@ -60,6 +60,17 @@ aside ul{margin:4px 0 0;padding-left:18px}
 .years{display:flex;align-items:flex-end;gap:2px;height:46px;margin-top:6px}
 .years i{flex:1;background:var(--gold);min-height:2px;border-radius:1px 1px 0 0}
 .yl{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:8px 0 14px}
+.statgrid div{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:4px;padding:10px 12px;font-family:var(--sans)}
+.statgrid b{display:block;font-size:1.4rem;font-variant-numeric:tabular-nums}
+.statgrid span{font-size:.8rem;color:var(--muted)}
+.stt{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:.85rem;margin-bottom:6px;font-variant-numeric:tabular-nums}
+.stt th,.stt td{text-align:left;padding:5px 6px;border-bottom:1px solid var(--line)}
+.stt th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:.7rem;letter-spacing:.05em}
+.tscroll{overflow-x:auto;max-width:100%;margin-bottom:6px}
+.tscroll .stt td,.tscroll .stt th{text-align:right}.tscroll .stt td:first-child,.tscroll .stt th:first-child{text-align:left}
+.cols2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.h3s{font-family:var(--display);font-size:1.15rem;margin:10px 0 4px}
 .empty{font-family:var(--sans);color:var(--muted);padding:24px 0}
 footer{font-family:var(--sans);font-size:.78rem;color:var(--muted);border-top:1px solid var(--line)}
 footer .wrap{padding-block:14px 24px}
