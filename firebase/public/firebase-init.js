@@ -6,7 +6,8 @@ import { getFirestore, collection, query, where, getDocs, doc, getDoc, setDoc, s
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 // On Firebase Hosting the project's settings come from /__/firebase/init.json; on any other host (GitHub Pages) from
 // firebase-config.js. These settings are public by design; the database rules are what protect the data.
-let cfg; try { cfg = (await import("./firebase-config.js")).default; } catch (_) { cfg = await (await fetch("/__/firebase/init.json")).json(); }
+let cfg = null; try { cfg = (await import("./firebase-config.js")).default; } catch (_) {}
+if (!cfg) cfg = await (await fetch("/__/firebase/init.json")).json();
 export const OWNER = "marketmojowi@gmail.com";
 export const app = initializeApp(cfg);
 export const auth = getAuth(app);
