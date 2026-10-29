@@ -183,10 +183,12 @@ dialog.reader::backdrop{background:rgba(10,18,30,.6)}
 .crew{margin:6px 0 0;font-size:.85rem}
 .crew b{font-weight:600}
 .firm{font-size:.88rem;margin:2px 0}
+.held{border-left-color:var(--line)}.held summary{cursor:pointer;font-size:.85rem;color:var(--fg)}.hb{border-top:1px solid var(--line);padding:8px 0}.hb small{color:var(--muted)}
 .empty{font-family:var(--sans);color:var(--muted);padding:24px 0}
 footer{font-family:var(--sans);font-size:.78rem;color:var(--muted);border-top:1px solid var(--line)}
 footer .wrap{padding-block:14px 24px}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.hallmap{margin-top:12px}.hallmap .st{stroke:var(--line,#c9ced6);stroke-width:1}.hallmap .cap{fill:none;stroke:var(--muted,#8a93a3);stroke-width:2}.hallmap .ave{stroke:var(--muted,#8a93a3);stroke-width:3}
 /* Sign-in gate and nav */
 .gate{min-height:100vh;background:var(--navy);display:grid;place-items:center;padding:24px 16px}
 .gate-card{max-width:460px;width:100%;text-align:center;color:var(--head-fg);border-top:4px solid var(--gold);padding-top:22px}

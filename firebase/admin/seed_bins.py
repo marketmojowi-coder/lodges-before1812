@@ -10,6 +10,7 @@ BINS = [
  ("property", "Lots and property", "Lots, houses, deeds and leases"),
  ("newspapers", "Newspapers", "Notices, advertisements and reports naming the brethren"),
  ("parish", "Church and parish", "Vestries, pews, sermons, funerals and burials"),
+ ("corrections", "Suggested corrections", "Job-site placements and other index entries members say are wrong, with the source"),
 ]
 for i, (k, name, about) in enumerate(BINS):
     db.collection("bins").document(k).set({"name": name, "about": about, "order": i}, merge=True)

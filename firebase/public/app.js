@@ -426,30 +426,60 @@ const OWNER={"Capitol":"Commissioners for the District of Columbia","President's
  "Marine Barracks":"Marine Corps, under the Navy Department","Christ Church / parish":"Vestry of Washington Parish","Blodgett's Hotel":"Samuel Blodget, proprietor (lottery)","Union Tavern":"Private proprietors, George-Town",
  "City lots":"Commissioners and the original proprietors","Bridges":"Commissioners; bridge companies","Wharves":"Private owners","Quarries":"Commissioners (leases and purchases)"};
 const OWNER_SRC={"Commissioners for the District of Columbia":"Records of the Commissioners for the District of Columbia, RG 42, National Archives","Navy Department":"Naval Records Collection, RG 45, National Archives"};
-const TIERS=[["svc","Physicians, chaplains and services",/physician|doctor|surgeon|hospital|chaplain/i],["off","Officers and clerks",/secretary of the navy|sec\.? of (the )?navy|commandant|captain command|purser|naval storekeeper|clerk(?! of the works)|bookkeeper|paymaster/i],["arch","Architects and superintendents",/architect|superintend|plans of|clerk of the works|run the works|centre of the work|surveyor|wins the president/i],
+const TIERS=[["svc","Physicians, chaplains and services",/physician|doctor|surgeon|hospital|chaplain/i],["off","Officers and clerks",/secretary of the navy|sec\.? of (the )?navy|commandant|captain command|purser|naval storekeeper|clerk(?! of the works)|bookkeeper|paymaster/i],["arch","Architects and superintendents",/architect|superintend|plans? of|furnished the plan|plan [^.;]{0,60}furnished by|clerk of the works|run the works|centre of the work|surveyor|wins the president/i],
  ["contract","Contractors and suppliers",/contract|supplie|surety|bricks? for|money advance|sells?\b|buys?\b|timber|lime\b|bar iron|purveyor|undertak/i],
- ["fore","Foremen, masters and measurers",/foreman|overseer|measur|master (carpenter|mason|builder|stone|plumber|smith)|signatory|sets the cornerstone|lays the/i],
+ ["fore","Foremen, masters and measurers",/foreman|overseer|measur|master (carpenter|joiner|mason|builder|stone|plumber|smith|blacksmith|sawyer|rigger|caulker)|signatory|sets the cornerstone|lays the/i],
  ["hire","Hired labour paid through",/received by|enslaved|slaves?\b|hired out|negro/i]];
-const CREWRX=[["Carpenters and joiners",/carpent|joiner|framer/i],["Stone cutters, carvers and masons",/stone|carver|cutter|mason/i],["Bricklayers and brickmakers",/brick/i],
- ["Smiths and plumbers",/smith|plumb|iron/i],["Painters, glaziers and plasterers",/paint|glaz|plaster/i],["Shipwrights and yard hands",/ship|caulk|rigg|sawyer|yard/i]];
+const CREWRX=[["Carpenters and joiners",/carpent|joiner|framer/i],["Stone cutters, carvers and masons",/stone ?(cutter|mason|carver|setter)|stonecutter|carver|\bcutter|mason(?!ic)/i],["Bricklayers and brickmakers",/brick/i],
+ ["Smiths and plumbers",/smith|plumb|iron/i],["Painters, glaziers and plasterers",/paint|glaz|plaster/i],["Shipwrights and yard hands",/shipwright|ship carpenter|caulk|rigg|sawyer|yard hand|anchor smith|block maker/i]];
 const snOf=i=>norm(M[i].n.replace(/\(.*?\)+/g," ")).replace(/\b(jr|sr)\b/g,"").trim().split(/\s+/).filter(w=>w!=="of").slice(-1)[0]||"";
 function clauseOf(txt,i){const sn=snOf(i);if(!sn)return "";const fn=norm(M[i].n).split(/\s+/)[0];const parts=String(txt).split(/;\s+|\.\s+(?=[A-Z])|\s+\|\s+/);
   const rx=new RegExp("\\b"+sn+"\\b(?!\\s+[a-z]+\\s*['\u2019]s\\b)","i");
   return parts.find(p=>{const np=norm(p);if(!rx.test(np))return false;const m=p.match(new RegExp("\\b"+sn.charAt(0).toUpperCase()+sn.slice(1)+"\\s+([A-Z][a-z]+)"));return !m||norm(m[1])===fn||!SURN.has(norm(m[1]))&&!/^[A-Z][a-z]+['\u2019]s$/.test(m[1])})||""}
 const ownTrade=i=>(M[i].tr||"")+" "+(M[i].tg||"")+" "+occOf(i).map(k=>OC[k]).join(" ");
 const SURN=new Set(M.map((m,i)=>snOf(i)).filter(w=>w.length>2));
-function jobsite(b){const recs=R.filter(r=>r.b.includes(b)&&r.m.length);const place=new Map();
+const BRX={"Capitol":/capitol/i,"President's House":/president['\u2019]?s (house|building)|presidents house|white house|palace/i,"Navy Yard":/navy yard|the yard\b/i,"Treasury":/treasury/i,
+ "Christ Church / parish":/christ church|parish|vestry|pew/i,"Bridges":/bridge|causeway/i,"Quarries":/quarr/i,"Wharves":/wharf/i,"City lots":/\blots?\b|square/i,"Marine Barracks":/marine barracks/i,
+ "Commandant's House":/commandant/i,"Tripoli Monument":/tripoli/i,"Executive offices":/war office|executive office|navy office/i,"Blodgett's Hotel":/blodget/i,"Union Tavern":/union tavern/i};
+const LOTBUY=/sale of lots|\bbuys?\b|\bbought\b|purchas|\bsells?\b|\bsold\b/i;
+const OTHERB=p=>Object.entries(BRX).some(([k,rx])=>k!=="City lots"&&rx.test(p));
+/* the clause must name him: first name or initial before the surname, not a middle name, not just a place called after him */
+function nameIn(p,i){const sn=snOf(i);if(!sn)return false;const C=w=>w.charAt(0).toUpperCase()+w.slice(1);const fn=C(norm(M[i].n).split(/\s+/)[0]);
+  const rx=new RegExp("\\b(?:"+fn+"|"+fn.charAt(0)+"\\.?)\\s+(?:[A-Z]\\.\\s+)?"+C(sn)+"\\b(?!['\u2019]s)(?:\\s+([A-Z][a-z]+))?","g");let m;const t=String(p).replace(/\s+/g," ");
+  while((m=rx.exec(t))){if(!m[1]||!SURN.has(norm(m[1])))return true}return false}
+const NEAR=p=>String(p).replace(/\b(near|towards?|between|from) (the )?[A-Z][\w'\u2019-]*( [A-Z][\w'\u2019-]*)*/g,"");
+const WHY={query:"The record itself marks this as a question.",tie:"The record gives him this role, but not at this building in the same statement.",trade:"Placed only by his trade; no record here says he worked at this building at that trade.",named:"Named in a record about this place; what he did here is not stated."};
+function jobsite(b){const recs=R.filter(r=>r.b.includes(b)&&r.m.length);const place=new Map(),held=new Map();const brx=BRX[b]||/$^/;
   const rank=["arch","off","contract","fore","svc","hire","crew","other"];
-  const put=(i,tier,r,cl)=>{const cur=place.get(i);if(!cur||rank.indexOf(tier)<rank.indexOf(cur.tier))place.set(i,{tier,r,cl})};
+  const SPL=t=>String(t).split(/;\s+|[.!][\u201d"\u2019]?\s+(?=[A-Z\u201c])|\s+\|\s+|\s+\/\s+(?=[A-Z])/);
   for(const r of recs){const txt=r.f.filter(([k])=>!/^(source|book note|name|spellings|lodges|years on rolls)$/i.test(k)).map(x=>x[1]).join("; ");
-    for(const i of r.m){const cl=r.m.length===1?txt:clauseOf(txt,i);let t=null;if(cl)for(const [k,,rx] of TIERS)if(rx.test(cl)){t=k;break}
-      if(!t)t=CREWRX.some(([,rx])=>rx.test(ownTrade(i)))?"crew":"other";
-      if(/ledger/i.test(cl)&&t==="crew"&&place.has(i))continue;put(i,t,r,/ledger/i.test(cl)?"":cl)}}
+    const parts=SPL(txt);
+    for(const i of r.m){const sn=snOf(i);
+      const fn=norm(M[i].n).split(/\s+/)[0],f0=norm(r.f[0][1]);
+      const own=r.m.length===1&&r.k!=="Newspaper"&&(/Person|Research note|Settled fact/.test(r.k)||r.s.startsWith("Lodge rolls")||/people of the lodge|\broll\b/i.test(r.t)||(f0.includes(sn)&&(f0.includes(fn)||f0.split(/\s+/).length<=3)));
+      const mine=own?parts:parts.filter(p=>nameIn(p,i));
+      let t=null,cl="",why=null;
+      const ok=(k,p)=>!(k==="contract"&&LOTBUY.test(p))&&!(b==="City lots"&&OTHERB(p));
+      const q=mine.find(p=>/\?/.test(p)&&brx.test(p));
+      {const pos=(rx,x)=>{const g=new RegExp(rx.source,"gi"),o=[];let m;while((m=g.exec(x))){o.push(m.index);if(!m[0])g.lastIndex++}return o};let best=1e9;
+       for(const p of mine){if(/\?/.test(p))continue;const x=NEAR(p),bp=pos(brx,x),useT=!bp.length&&own&&brx.test(r.t);if(!bp.length&&!useT)continue;
+        for(const [k,,rx] of TIERS){if(!ok(k,p))continue;const tp=pos(rx,x);if(!tp.length)continue;
+          const d=useT?500:Math.min(...tp.flatMap(a=>bp.map(c=>Math.abs(a-c))));if(d<best){best=d;t=k;cl=p}}}}
+      if(!t&&q){const tt=TIERS.find(([,,rx])=>rx.test(q));t=tt?tt[0]:"other";cl=q;why="query"}
+      if(!t){for(const [k,,rx] of TIERS){const hit=mine.find(p=>rx.test(p)&&ok(k,p));if(hit){t=k;cl=hit;why="tie";break}}}
+      if(!t){const tradeHere=own?(mine.find(p=>brx.test(NEAR(p))&&CREWRX.some(([,rx])=>rx.test(p)))||(brx.test(r.t)&&CREWRX.some(([,rx])=>rx.test(r.t))?r.t:"")):"";
+        if(CREWRX.some(([,rx])=>rx.test(ownTrade(i)))||tradeHere){t="crew";cl=tradeHere||mine[0]||"";if(!tradeHere)why="trade"}
+        else{t="other";cl=mine[0]||"";why="named"}}
+      if(/ledger/i.test(cl))cl="";
+      const tgt=why?held:place,cur=tgt.get(i);
+      if(!cur||rank.indexOf(t)<rank.indexOf(cur.tier))tgt.set(i,{tier:t,r,cl,why})}}
+  place.forEach((v,i)=>held.delete(i));
   const firms=new Set();recs.forEach(r=>{const txt=r.f.map(x=>x[1]).join(" ");
     (txt.match(/\b[A-Z][a-z]+\s&\s(?:Co\.?|[A-Z][a-z]+)|\b[A-Z][a-z]+\sand\s(?:Company|Co\.)|\b[A-Z][a-z]+\sand\s[A-Z][a-z]+/g)||[]).forEach(f=>{
       const w=f.split(/\s(?:&|and)\s/).map(x=>norm(x).trim());
       if(/&|Company|Co\./.test(f)||(SURN.has(w[0])&&SURN.has(w[1])))firms.add(f)})});
-  return {place,firms:[...firms].slice(0,12),recs}}
+  return {place,held,firms:[...firms].slice(0,12),recs}}
+const rx2=cl=>/run the works|centre of the work|foundation|works\b/i.test(cl);
 function evid(r,cl){const y=yof2(r);const t=(cl&&cl.length>8?cl:(r.f.filter(([k])=>!/^(name|spellings|lodges?|years on rolls|source|book note|year|date)$/i.test(k)).map(x=>x[1]).sort((a,b)=>b.length-a.length)[0]||r.t)).replace(/^\d{4}\s+/,"");return `${y?y+": ":""}${t}`.slice(0,96)}
 function jobsiteHTML(b){const J=jobsite(b);const by={};J.place.forEach((v,i)=>(by[v.tier]=by[v.tier]||[]).push([i,v.r,v.cl]));
   const person=([i,r,cl])=>`<span class="p"><button type="button" data-m="${i}">${esc(M[i].n)}</button><small data-rk="${R.indexOf(r)}" title="Open the record">${esc(evid(r,cl))}</small></span>`;
@@ -460,8 +490,25 @@ function jobsiteHTML(b){const J=jobsite(b);const by={};J.place.forEach((v,i)=>(b
   if(by.crew){const g={};by.crew.forEach(x=>{const c=(CREWRX.find(([,rx])=>rx.test(ownTrade(x[0])))||["Other trades"])[0];(g[c]=g[c]||[]).push(x)});
     h+=`<div class="tier"><h4>Crews by trade<span class="n">${by.crew.length}</span></h4>${Object.entries(g).map(([c,list])=>`<div class="crew"><b>${esc(c)} (${list.length})</b><div class="who" style="margin-top:4px">${list.map(person).join("")}</div></div>`).join("")}</div>`}
   if(by.hire)h+=`<div class="tier"><h4>Hired labour paid through<span class="n">${by.hire.length}</span></h4><p class="stats" style="margin:0 0 6px">Men paid for the labour of others, often enslaved workers hired out to the works.</p><div class="who">${by.hire.map(person).join("")}</div></div>`;
-  if(by.other)h+=`<div class="tier"><h4>Also named at this site<span class="n">${by.other.length}</span></h4><div class="who">${by.other.map(person).join("")}</div></div>`;
+  const HB=[...J.held].map(([i,v])=>[i,v]);
+  if(HB.length)h+=`<details class="tier held"><summary><b>Held back for review (${HB.length})</b>: placements the records do not state clearly enough to index. Suggest a correction with its source.</summary>
+    ${HB.map(([i,v])=>`<div class="hb"><button type="button" class="linkbtn" data-m="${i}">${esc(M[i].n)}</button> <small>as ${esc((TIERS.find(t=>t[0]===v.tier)||[0,v.tier==="crew"?"crew by trade":"named only"])[1].toLowerCase())}</small>
+      <div class="stats" style="margin:2px 0">${esc(WHY[v.why])} <span data-rk="${R.indexOf(v.r)}" class="linkbtn" role="button" tabindex="0">Read the record</span></div>
+      <button type="button" class="copy" data-sug="${i}" data-tier="${v.tier}">Suggest a correction</button></div>`).join("")}</details>`;
   return h+`</div>`}
+function suggest(i,b,tier){let dlg=$("reader");if(!dlg){dlg=document.createElement("dialog");dlg.id="reader";dlg.className="reader";document.body.appendChild(dlg);dlg.addEventListener("click",e=>{if(e.target===dlg)dlg.close()})}
+  const opts=[...TIERS.map(t=>[t[0],t[1]]),["crew","Crew by trade"],["none","He did not work here"]];
+  dlg.innerHTML=`<form class="paper" id="sg"><div class="kind">Suggest a correction</div><h3>${esc(M[i].n)}</h3><div class="date">${esc(b)}</div>
+   <dl><dt>His place on this job site</dt><dd><select id="sg-t" style="font:inherit;min-height:40px">${opts.map(([k,n])=>`<option value="${k}" ${k===tier?"selected":""}>${esc(n)}</option>`).join("")}</select></dd>
+   <dt>What the source says</dt><dd><textarea id="sg-c" rows="3" required style="width:100%;font:inherit"></textarea></dd>
+   <dt>Source (record, date, page)</dt><dd><input id="sg-s" required style="width:100%;font:inherit;min-height:40px"></dd>
+   <dt>Where the original is held</dt><dd><input id="sg-h" required style="width:100%;font:inherit;min-height:40px" placeholder="e.g. National Archives, Record Group 42"></dd></dl>
+   <p class="date" id="sg-m"></p><div class="acts"><button type="submit" class="pri">Send for review</button><button type="button" id="sg-x">Cancel</button></div></form>`;
+  $("sg-x").onclick=()=>dlg.close();
+  $("sg").onsubmit=async e=>{e.preventDefault();const s={bin:"corrections",man:M[i].n,lodge:M[i].l.join("; "),year:"",claim:`${b}: ${$("sg-t").selectedOptions[0].text}. ${$("sg-c").value.trim()}`,citation:$("sg-s").value.trim(),held_at:$("sg-h").value.trim()};
+    if(window.LB_SUGGEST){try{await window.LB_SUGGEST(s);$("sg-m").textContent="Sent. The editor will check it against the source.";setTimeout(()=>dlg.close(),1400)}catch(err){$("sg-m").textContent="Could not send: "+err.message}}
+    else{const t=`${s.man} | ${s.claim} | Source: ${s.citation} | Held at: ${s.held_at}`;(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>$("sg-m").textContent="This preview cannot send. The suggestion is copied; members send it from the app.",()=>prompt("Copy this suggestion:",t))}};
+  dlg.showModal()}
 /* ---------- Atlas: the buildings, mapped (schematic; 1800 shoreline approximate) ---------- */
 const BLD={
  "Capitol":{ll:[38.8899,-77.0091],w:"Begun 1793; north wing in use 1800",q:"United States Capitol 1800"},
@@ -475,6 +522,15 @@ const BLD={
  "Christ Church / parish":{ll:[38.8826,-76.9963],w:"Christ Church, Washington Parish, built 1806–1807",q:"Christ Church Washington Parish"},
  "Blodgett's Hotel":{ll:[38.8968,-77.0228],w:"Begun 1793",q:"Blodgett's Hotel Washington"},
  "Union Tavern":{ll:[38.9058,-77.0626],w:"George-Town, 1796",q:"Union Tavern Georgetown"},
+ "Little Hotel":{ll:[38.8977,-77.0327],w:"F Street, built by Hoban and Purcell; Federal Lodge room, 1796–1804",q:"Little Hotel F Street Washington",hall:1},
+ "Lovell's Hotel":{ll:[38.8966,-77.0331],w:"Pennsylvania Avenue near 15th; first home of Columbia Lodge, 1802–1804",q:"Lovell's Hotel Washington Pennsylvania Avenue",hall:1},
+ "Tunnicliff's Hotel":{ll:[38.8907,-77.0046],w:"First and A Streets NE; Stelle's Hotel from 1805",q:"Tunnicliff's Tavern Capitol Hill",hall:1},
+ "Union Lodge Room":{ll:[38.8941,-77.0271],w:"Masonic Hall, 11th Street below the Avenue, 1804–1820s; Grand Lodge of DC formed here, 1811",q:"Old Post Office Pennsylvania Avenue Eleventh Street",hall:1},
+ "Masonic Hall, 4½ and D":{ll:[38.8949,-77.0179],w:"Built by four lodges, 1826; given up 1843",q:"Masonic Hall Washington D.C. 1826",hall:1},
+ "Medical College hall":{ll:[38.8964,-77.0256],w:"Leased, 1843–1854",q:"Medical College Tenth and E Streets Washington",hall:1},
+ "Keyworth Building":{ll:[38.8949,-77.0244],w:"Leased, 1854–1870",q:"Ninth and D Streets Washington nineteenth century",hall:1},
+ "Masonic Temple, 9th and F":{ll:[38.8975,-77.0244],w:"Completed 1870; still standing",q:"Masonic Temple Ninth and F Streets Washington",hall:1},
+ "Masonic Temple, New York Avenue":{ll:[38.9000,-77.0293],w:"New Temple, begun 1906",q:"Masonic Temple New York Avenue Thirteenth Street Washington",hall:1},
  "Bridges":{w:"Rock Creek and Eastern Branch crossings",q:"bridge Washington D.C. early nineteenth century"},
  "Quarries":{w:"Aquia Creek, Virginia, and other quarries (off the map)",q:"Aquia Creek quarry sandstone"},
  "Wharves":{w:"George-Town and the Eastern Branch",q:"Georgetown wharf"},
@@ -484,6 +540,18 @@ const CREEK=[[38.9160,-77.0525],[38.9100,-77.0555],[38.9030,-77.0585]];
 const TIBER=[[38.8893,-77.0385],[38.8905,-77.0250],[38.8920,-77.0130]];
 const PX=([la,lo])=>[(lo+77.078)*6400,(38.920-la)*6400*1.28];
 let ATB=null;
+/* close-up street plan for the lodge halls (modern street lines, approximate) */
+function hallMap(cur){const X=lo=>(lo+77.0345)*20300,Y=la=>(38.9015-la)*20300*1.28;
+  const NS=[["15th",-77.0335],["14th",-77.0319],["13th",-77.0296],["12th",-77.0283],["11th",-77.0268],["10th",-77.0257],["9th",-77.0242],["8th",-77.0229],["7th",-77.0219],["6th",-77.0200],["4½",-77.0178]];
+  const EW=[["C",38.8932],["D",38.8951],["E",38.8962],["F",38.8974],["G",38.8986],["H",38.8998]];
+  const halls=Object.keys(BLD).filter(b=>BLD[b].hall);/* listed in order of first use */
+  return `<figure class="map hallmap"><svg viewBox="0 0 630 340" role="img" aria-label="Street plan of the lodge halls, numbered in order of use">
+   ${NS.map(([n,lo])=>`<line class="st" x1="${X(lo)}" y1="0" x2="${X(lo)}" y2="${Y(38.8925)}"/>${/^(15th|13th|11th|9th|7th|4½)$/.test(n)?`<text class="lbl" x="${X(lo)+3}" y="12">${n}</text>`:""}`).join("")}
+   ${EW.map(([n,la])=>`<line class="st" x1="0" y1="${Y(la)}" x2="${X(-77.0165)}" y2="${Y(la)}"/><text class="lbl" x="3" y="${Y(la)-3}">${n}</text>`).join("")}
+   <line class="ave" x1="${X(-77.0335)}" y1="${Y(38.8966)}" x2="${X(-77.0092)}" y2="${Y(38.8899)}"/><circle class="cap" cx="${X(-77.0091)}" cy="${Y(38.8899)}" r="9"/><text class="lbl" x="${X(-77.0091)-20}" y="${Y(38.8899)+24}">Capitol</text><text class="lbl" x="${X(-77.0245)}" y="${Y(38.8941)+16}">Pennsylvania Ave.</text>
+   <line class="ave" x1="${X(-77.0335)}" y1="${Y(38.8987)}" x2="${X(-77.0255)}" y2="${Y(38.9013)}"/>
+   ${halls.map((b,j)=>{const [la,lo]=BLD[b].ll;return `<g class="pin${b===cur?" on":""}" data-bd2="${esc(b)}" tabindex="0" role="button" aria-label="${esc(b)}"><circle cx="${X(lo)}" cy="${Y(la)}" r="12"/><text x="${X(lo)}" y="${Y(la)+4}">${j+1}</text></g>`}).join("")}</svg>
+   <figcaption class="stats" style="margin:4px 6px 0">The lodge halls in order of use: ${halls.map((b,j)=>`${j+1}. ${esc(b)} (${esc(BLD[b].w.split(";")[0])})`).join("; ")}. Corners from the newspaper descriptions on modern streets.</figcaption></figure>`}
 function bstats(b){const recs=R.filter(r=>r.b.includes(b)),men=new Map();recs.forEach(r=>r.m.forEach(i=>men.set(i,(men.get(i)||0)+1)));
   const docs=new Set(recs.filter(PRIM).map(r=>r.d??("o"+r.o)));const ys=recs.map(yof2).filter(Boolean);return {recs,men,docs,y0:ys.length?Math.min(...ys):0,y1:ys.length?Math.max(...ys):0}}
 function atlas(){const names=Object.keys(BLD).filter(b=>R.some(r=>r.b.includes(b)));if(!ATB)ATB=names[0];
@@ -505,8 +573,10 @@ function atlas(){const names=Object.keys(BLD).filter(b=>R.some(r=>r.b.includes(b
    ${Object.keys(tc).length?`<div class="k">Their callings</div><div>${Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)} (${v})`).join(", ")}</div>`:""}
    <div class="k">The men</div><div>${men.length?men.slice(0,40).map(([i,n])=>`<button type="button" class="linkbtn" data-m="${i}">${esc(M[i].n)}</button>`).join(", "):"No lodge man is named in these records."}</div>
    <div><button type="button" class="copy" data-bd="${esc(ATB)}">All ${st.recs.length} records</button></div>
-   <a class="loc" href="https://www.loc.gov/photos/?q=${encodeURIComponent(B.q)}" target="_blank" rel="noopener">Pictures at the Library of Congress ↗</a></div>${jobsiteHTML(ATB)}`;
-  wire($("at-info"));$("at-info").querySelectorAll("[data-rk]").forEach(e=>e.onclick=()=>reader(+e.dataset.rk));
+   <a class="loc" href="https://www.loc.gov/photos/?q=${encodeURIComponent(B.q)}" target="_blank" rel="noopener">Pictures at the Library of Congress ↗</a></div>${B.hall?hallMap(ATB):jobsiteHTML(ATB)}`;
+  wire($("at-info"));$("at-info").querySelectorAll("[data-rk]").forEach(e=>{e.onclick=()=>reader(+e.dataset.rk);e.onkeydown=k=>{if(k.key==="Enter")reader(+e.dataset.rk)}});
+  $("at-info").querySelectorAll(".hallmap [data-bd2]").forEach(g=>{const go=()=>{ATB=g.dataset.bd2;atlas()};g.onclick=go;g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
+  $("at-info").querySelectorAll("[data-sug]").forEach(e=>e.onclick=()=>suggest(+e.dataset.sug,ATB,e.dataset.tier));
   $("at-list").innerHTML=`<h3 class="h3s">All buildings and places</h3><div class="tscroll"><table class="stt"><thead><tr><th>No.</th><th>Building or place</th><th>Built or in use</th><th>Lodge men</th><th>Records</th><th>Originals</th><th>Pictures</th></tr></thead><tbody>${names.map((b,j)=>{const t=bstats(b);return `<tr><td>${j+1}</td><td style="text-align:left"><button type="button" class="linkbtn" data-at="${esc(b)}">${esc(b)}</button>${BLD[b].ll?"":" <small>(not mapped)</small>"}</td><td style="text-align:left">${esc(BLD[b].w)}</td><td>${t.men.size}</td><td>${t.recs.length}</td><td>${t.docs.size}</td><td><a href="https://www.loc.gov/photos/?q=${encodeURIComponent(BLD[b].q)}" target="_blank" rel="noopener">LOC ↗</a></td></tr>`}).join("")}</tbody></table></div>`;
   $("at-list").querySelectorAll("[data-at]").forEach(b=>b.onclick=()=>{ATB=b.dataset.at;atlas();window.scrollTo({top:0})})}
 /* ---------- A man's profile: primary sources first, cross-references apart ---------- */
