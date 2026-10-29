@@ -20,13 +20,11 @@ Google Play does not allow an app to sell digital content through Stripe or to l
 ## Steps
 1. Deploy the member site first (SETUP.md) so https://lodges.mktmojox.com works.
 2. Google Play Console (play.google.com/console): developer account for **Market Mojo LLC**, $25 one time. An organization account needs a D-U-N-S number for the LLC (free from Dun & Bradstreet; the SAM.gov UEI is a different number).
-3. Build the Android package at **pwabuilder.com**: enter https://lodges.mktmojox.com > Package for stores > Android >
-   - Package ID: `com.marketmojo.lodges1812`
-   - App name: Lodges Before 1812; Launcher name: Lodges 1812
-   - Start URL: `/?source=twa`
-   - Theme and background color: #14243a
-   - Signing key: let PWABuilder create one and keep the key file and passwords safe.
-   Download the .aab file.
+3. The Android package is built for you by GitHub Actions from the `android/` folder (workflow "Android app bundle", on every push to `paid-firebase`, or Actions > Android app bundle > Run workflow). It produces `app-release.aab` (for Play) and `app-debug.apk` (to install on a phone for testing) under the run's Artifacts.
+   - Package ID `com.marketmojo.lodges1812`; app name Lodges Before 1812; launcher name Lodges 1812; opens `https://lodges.mktmojox.com/?source=twa`; navy #14243A.
+   - **Upload key (one time, on your own computer):** `keytool -genkeypair -v -keystore lodges-upload.jks -alias lodges -keyalg RSA -keysize 2048 -validity 10000`. Keep the file and passwords safe and out of the repository.
+   - Add four repository secrets (GitHub > Settings > Secrets and variables > Actions): `ANDROID_KEYSTORE_BASE64` (output of `base64 -w0 lodges-upload.jks`), `KEYSTORE_PASSWORD`, `KEY_ALIAS` (`lodges`), `KEY_PASSWORD`. The next run signs the bundle. Without them the bundle is unsigned and Play will not accept it.
+   - Raise `versionCode` in `android/app/build.gradle` for each new upload.
 4. Play Console > Create app > upload the .aab to **Internal testing** first.
 5. Play Console > Setup > App signing: copy the **SHA-256 certificate fingerprint** into public/.well-known/assetlinks.json, then `firebase deploy --only hosting`. (Without this the app shows a browser bar.)
 6. Fill in the store listing and the forms below, then move from Internal testing to Production.
