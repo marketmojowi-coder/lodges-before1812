@@ -3,7 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta charset="utf-8">
-<title>Civic Vault</title>
+<title>Civic Vault · Potomac Territory, 1700–1811</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&display=swap">
@@ -15,7 +15,7 @@
 <body>
 <div id="gate" class="gate">
   <div class="gate-card">
-    <h1 class="brand">Civic <span>Vault</span></h1>
+    <div class="brandbox"><h1 class="brand">Civic <span>Vault</span></h1><p class="region">Potomac Territory <i>1700–1811</i></p></div>
     <p class="sub2">The lodges of George-Town and the City of Washington before 1812: every man, lodge, year and trade in the book series by Thomas M. Saharsky, each record with its source and where the original is held.</p>
     <div id="gate-out">
       <button id="g-google" class="gbtn" type="button">Sign in with Google</button>
@@ -31,13 +31,13 @@
       <button id="g-out" class="linkbtn" type="button">Sign out</button>
     </div>
     <p id="g-msg" class="gmsg" role="status"></p>
-    <p class="gmsg">© 2026 Market Mojo LLC · <a href="terms.html" style="color:#d1b477">Terms</a> · <a href="terms.html#disclaimer" style="color:#d1b477">Disclaimer</a> · <a href="privacy.html" style="color:#d1b477">Privacy</a></p>
+    <p class="gmsg gfoot">© 2026 Market Mojo LLC · <a href="sources.html">Sources</a> · <a href="disclaimer.html">Disclaimer</a> · <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="copyright.html">Copyright</a> · <a href="contact.html">Contact</a></p>
   </div>
 </div>
 <div id="app" hidden>
-<nav class="topnav"><div class="wrap"><a href="index.html">Search</a> · <a href="bins.html">Fact bins</a> · <a href="terms.html">Terms</a> · <a href="account.html">My account</a> · <a href="privacy.html">Privacy</a> · <button id="signout" class="linkbtn" type="button">Sign out</button></div></nav>
+<nav class="topnav"><div class="wrap"><a href="index.html">Search</a> · <a href="bins.html">Fact bins</a> · <a href="account.html">My account</a> · <a href="contact.html">Contact</a> · <button id="signout" class="linkbtn" type="button">Sign out</button></div></nav>
 <header><div class="wrap">
-  <h1 class="brand">Civic <span>Vault</span> <small class="era">1700s–1812</small></h1>
+  <div class="brandbox"><h1 class="brand">Civic <span>Vault</span></h1><p class="region">Potomac Territory <i>1700–1811</i></p></div>
   <form id="f" role="search"><input id="q" type="search" placeholder="A man, trade, building or year" aria-label="Search the lodge records" autocomplete="off"><button type="submit">Search</button></form>
 </div></header>
 
@@ -57,7 +57,8 @@
   <button type="button" class="tab" data-v="build">Census tables</button>
   <button type="button" class="tab" data-v="compare">Compare lodges</button>
   <button type="button" class="tab" data-v="search">All records</button>
-  <button type="button" class="tab" data-v="about">About and sources</button>
+  <button type="button" class="tab" data-v="sources">Sources</button>
+  <button type="button" class="tab" data-v="about">About</button>
 </div></nav>
 <section id="v-index" class="view"><div class="wrap">
   <div id="ix-hi"></div>
@@ -71,8 +72,8 @@
 </div></section>
 <section id="v-atlas" class="view" hidden><div class="wrap">
   <h2 class="sec">Atlas of the buildings</h2>
-  <p class="stats">The public works and places the lodge men built, supplied or served, from the book data sets. Tap a building for its men, records and pictures.</p>
-  <div class="atlas"><figure class="map" id="at-map"></figure><div id="at-info"></div></div>
+  <p class="stats">The public works and places the lodge men built, supplied or served, from the book data sets. Tap a building on the map or in the guide for its men, crews and records.</p>
+  <div class="atlas"><div class="atl-left"><figure class="map" id="at-map"></figure><h3 class="h3s">Building guide</h3><p class="stats" style="margin:0 0 6px">Numbers match the map. Tap a tile to open the building.</p><div class="btiles" id="at-tiles"></div></div><div id="at-info"></div></div>
   <div id="at-list"></div>
 </div></section>
 <section id="v-man" class="view" hidden><div class="wrap" id="man-out"></div></section>
@@ -99,6 +100,7 @@
   <div class="tscroll" id="cp-table"></div>
   <p class="stats">Men are counted from the surviving returns and rolls; documents are the originals cited for the lodge. A blank year means no return survives.</p>
 </div></section>
+<section id="v-sources" class="view" hidden><div class="wrap about" id="src-out"></div></section>
 <section id="v-about" class="view" hidden><div class="wrap about" id="about-out"></div></section>
 <main id="v-search" hidden><div class="wrap">
   <section id="out" aria-live="polite"></section>

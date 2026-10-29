@@ -1,4 +1,4 @@
-# Civic Vault (1700s–1812)
+# Civic Vault: Potomac Territory, 1700–1811
 
 A searchable index of the lodges of George-Town and the City of Washington, 1789-1811, from the book series by Thomas M. Saharsky. Search by man, lodge, year, trade or building; every record names its book citation and where the original is held.
 

@@ -52,6 +52,23 @@ service cloud.firestore {
             && str(request.resource.data.by_name, 0, 40));
       allow delete: if editor() || (signedIn() && resource.data.by == request.auth.uid && resource.data.status == "pending");
     }
+    // Messages from the contact page: any signed-in person may send one, signed with their own uid and email; only editors
+    // read and answer them. The sender may delete their own (Delete my account does). "expires" drives a Firestore TTL policy
+    // (about twelve months), as the privacy policy says.
+    match /messages/{id} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(["topic", "message", "by", "email", "created", "expires"])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.created == request.time
+        && request.resource.data.expires is timestamp
+        && request.resource.data.expires > request.time
+        && request.resource.data.expires < request.time + duration.value(400, "d")
+        && str(request.resource.data.topic, 3, 60)
+        && str(request.resource.data.message, 10, 4000);
+      allow read, delete: if editor() || (signedIn() && resource.data.by == request.auth.uid);
+      allow update: if editor();
+    }
     // Stripe extension data: a user sees only their own customer record and starts their own checkout.
     match /customers/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;

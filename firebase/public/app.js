@@ -10,8 +10,10 @@ let man=null, shown=25, last=[], docSel=null;
 function opts(sel,vals){[...new Set(vals)].filter(Boolean).sort().forEach(v=>{const o=document.createElement("option");o.value=o.textContent=v;sel.appendChild(o)})}
 DATA.lodges.forEach(l=>{const o=document.createElement("option");o.value=o.textContent=l.n;$("fl").appendChild(o)});
 opts($("fs"),R.map(r=>r.s));const RPS=DATA.repos;Object.entries(RPS).forEach(([k,v])=>{if(!v.n)return;const o=document.createElement("option");o.value=k;o.textContent=`${v.name} (${v.n})`;$("fo").appendChild(o)});opts($("ft"),R.flatMap(r=>r.tr));opts($("fb"),R.flatMap(r=>r.b));
-$("foot").innerHTML=`<nav class="flinks" aria-label="Legal and sources"><span class="fco">© 2026 Market Mojo LLC</span><button type="button" class="linkbtn" data-ab="sources">Sources</button><button type="button" class="linkbtn" data-ab="disclaimer">Disclaimer</button><button type="button" class="linkbtn" data-ab="terms">Terms</button><button type="button" class="linkbtn" data-ab="privacy">Privacy</button><button type="button" class="linkbtn" data-ab="contact">Contact</button></nav>`;
-document.addEventListener("click",e=>{const b=e.target.closest("[data-ab]");if(!b)return;show("about");setTimeout(()=>{const el=$("ab-"+b.dataset.ab);if(el)el.scrollIntoView({block:"start"})},30)});
+const LEGAL=document.querySelector('script[src="auth.js"],script[src="./auth.js"]')?"":"https://marketmojowi-coder.github.io/lodges-before1812/";
+const MMLOGO="data:image/png;base64,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";
+$("foot").innerHTML=`<div class="pub"><img src="${MMLOGO}" width="32" height="32" alt="Market Mojo LLC logo"><span><i>Civic Vault</i> is published by Market Mojo LLC · <a href="https://www.mktmojox.com/" target="_blank" rel="noopener">www.mktmojox.com</a> · <a href="mailto:marketmojowi@gmail.com">marketmojowi@gmail.com</a></span></div><nav class="flinks" aria-label="Legal and sources"><span class="fco">© 2026 Market Mojo LLC and Thomas M. Saharsky</span><button type="button" class="linkbtn" data-ab="sources">Sources</button><a class="linkbtn" href="${LEGAL}disclaimer.html">Disclaimer</a><a class="linkbtn" href="${LEGAL}terms.html">Terms</a><a class="linkbtn" href="${LEGAL}privacy.html">Privacy</a><a class="linkbtn" href="${LEGAL}copyright.html">Copyright</a><a class="linkbtn" href="${LEGAL}contact.html">Contact</a></nav>`;
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ab]");if(!b)return;if(b.dataset.ab==="sources"){show("sources");return}show("about");setTimeout(()=>{const el=$("ab-"+b.dataset.ab);if(el)el.scrollIntoView({block:"start"})},30)});
 
 function terms(q){const t=[];q.replace(/"([^"]+)"|(\S+)/g,(m,a,b)=>{const x=norm(a||b).replace(/^[^\w']+|[^\w']+$/g,"");if(x)t.push(x)});return t}
 function run(){
@@ -103,7 +105,7 @@ function fullCite(r){const F=Object.fromEntries(r.f);const date=F["Issue date"]|
   const book=r.o==="AUTHOR_WB"?r.c.replace(/\.$/,""):(bookRefs([r.c])||r.c).replace(/\.$/,"");
   const today=new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
   return [`“${r.o==="NEWS"?r.f[0][1]:r.t}”${date?", "+date:""}`,men?`names ${men}`:"",ox?`original: ${ox}`:"",held?held.charAt(0).toLowerCase()+held.slice(1):"",book&&book!==ox?`printed in ${book}`:"",
-    `Civic Vault, 1700s–1812 (Market Mojo LLC, 2026), record ${r.k.toLowerCase()}, accessed ${today}`].filter(Boolean).join("; ")+"."}
+    `Civic Vault: Potomac Territory, 1700–1811 (Market Mojo LLC, 2026), record ${r.k.toLowerCase()}, accessed ${today}`].filter(Boolean).join("; ")+"."}
 function citeText(r){const p=DATA.repos[r.o];let t=r.c.replace(/\.$/,"");if(r.d!=null)return t+". Original: "+DATA.docs[r.d].x.replace(/\.$/,"")+(r.dl?", "+r.dl:"")+".";if(r.o!=="BOOK"&&r.od&&!r.c.includes(r.od))t+=`. Original: ${r.od}${r.oh?", "+r.oh:""}`;return t+"."}
 function pick(i){profile(i)}
 function count(a){const c={};a.forEach(v=>c[v]=(c[v]||0)+1);return Object.entries(c).sort((x,y)=>y[1]-x[1])}
@@ -147,14 +149,52 @@ run();
 /* ---------- Views ---------- */
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>show(b.dataset.v));
 /* ---------- About and sources: what the data is, how it was checked, the legal terms ---------- */
-function about(){const D=DATA,RP=Object.entries(D.repos);const prim=R.filter(PRIM).length,notes=R.filter(r=>r.o==="AUTHOR_WB").length,book=R.filter(r=>r.o==="BOOK").length;
-  const rrows=RP.filter(([o,v])=>v.nd||o==="AUTHOR_WB"||o==="BOOK").map(([o,v])=>{const n=R.filter(r=>r.o===o).length;return `<tr><td><b>${esc(v.name)}</b></td><td>${esc(v.holder||"Named in each record")}</td><td>${v.nd||"–"}</td><td>${n.toLocaleString()}</td><td>${esc(v.access||"")}</td></tr>`}).join("");
-  $("about-out").innerHTML=`<h2 class="sec">About and sources</h2>
-  <p class="lead"><i>Civic Vault, 1700s–1812</i> brings together the records of the Masonic lodges of George-Town and the City of Washington, 1789–1811: the men, their trades, the buildings they raised and the city they served. It is the research data set behind the book series by Thomas M. Saharsky, published by Market Mojo LLC. Search by man, lodge, year, trade or building; every record names its source and where the original is held.</p>
-  <p class="stats">${D.meta.count.toLocaleString()} records, ${D.meta.linked.toLocaleString()} linked to a named man; ${M.length} men; ${D.docs.length} original documents in ${Object.values(D.repos).filter(v=>v.nd).length} collections. Data set of ${esc(D.meta.built)}.</p>
+function about(){const D=DATA;const prim=R.filter(PRIM).length;
+  $("about-out").innerHTML=`<h2 class="sec">About</h2>
+  <p class="lead"><i>Civic Vault: Potomac Territory, 1700–1811</i> brings together the records of the Masonic lodges of George-Town and the City of Washington, 1789–1811: the men, their trades, the buildings they raised and the city they served. It is the research data set behind the book series by Thomas M. Saharsky, published by Market Mojo LLC. Search by man, lodge, year, trade or building; every record names its source and where the original is held.</p>
+  <p class="stats">${D.meta.count.toLocaleString()} records, ${D.meta.linked.toLocaleString()} linked to a named man; ${M.length} men; ${D.docs.length} original documents in ${D.register.filter(r=>r.id!=="UNPLACED").length} archives and libraries. Data set of ${esc(D.meta.built)}.</p>
   <div class="statgrid"><div><b>${D.meta.count.toLocaleString()}</b><span>records</span></div><div><b>${M.length}</b><span>men</span></div><div><b>${D.docs.length}</b><span>original documents</span></div><div><b>${prim.toLocaleString()}</b><span>records from originals</span></div></div>
+  <p><button type="button" class="copy" data-ab="sources">Sources: the archives, their record groups and series, credit lines and terms of use</button></p>
+  <h3 class="h3s">How to use it</h3>
+  <ol class="method">
+   <li><b>Index.</b> Browse men A to Z, trades, lodges, years, buildings, original documents and funerals.</li>
+   <li><b>Search.</b> Type a man, trade, building or year in the box at the top; narrow by lodge, source, holder, trade, building or years under All records.</li>
+   <li><b>Profiles.</b> Open a man for his fact card, life at a glance and every record that names him; tap a line to read it with its full citation.</li>
+   <li><b>Atlas.</b> Pick a building on the map or from the numbered guide to see its men, crews and records.</li>
+   <li><b>Census tables and Compare lodges.</b> Count the men on the returns and rolls by lodge, year, office or calling, and download the table.</li>
+   <li><b>Corrections.</b> Use Suggest a correction on any record; members can add facts with their source in the fact bins.</li>
+  </ol>
+  <h3 class="h3s" id="ab-credits">Credits</h3>
+  <p><b>Author and archivist:</b> Thomas M. Saharsky. <b>Series editors:</b> Josh Withrow and Brent Morris. <b>With thanks to:</b> John Payne and Linda Mellgren; the U.S. Senate Historical Office; Jordan Zappala; Sandy Hussey, for Christ Church Washington Parish archives; the Stephen J. Ponzillo Jr. Memorial Library and Museum of the Grand Lodge of Maryland; the National Archives; and the Library of Congress, whose Chronicling America newspapers and pictures are linked throughout. <b>Published by</b> Market Mojo LLC.</p>
 
-  <h3 class="h3s" id="ab-sources">Sources and method</h3>
+  
+  <h3 class="h3s" id="ab-disclaimer">Disclaimer</h3>
+  <p>A work of historical research, for information and study. Historical records are incomplete and sometimes contradictory, so readings, dates, identifications of men and map positions can be wrong. Nothing here is legal, genealogical, title or property advice, or proof of descent, membership or lineage. <i>Civic Vault</i> is independent: it is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge, chapter or Masonic body, nor by any archive, library or government agency named in it. <a href="${LEGAL}disclaimer.html">Full disclaimer</a></p>
+  <h3 class="h3s" id="ab-terms">Terms of use</h3>
+  <p>A membership gives one person a personal right to search, read and cite the records for research. Quote individual records with their citations; do not copy, scrape, resell or redistribute the data set, or use it to train or build another database or service, without written permission. <a href="${LEGAL}terms.html">Full terms of use</a> · <a href="${LEGAL}copyright.html">Copyright notice</a></p>
+  <h3 class="h3s" id="ab-privacy">Privacy</h3>
+  <p>We keep only what runs your membership: your name, email address, member number, membership status and the facts you add. Card details go to Stripe and never reach us. No advertising, no tracking, no sale of data. You can see, download, correct or delete your information at any time, wherever you live. <a href="${LEGAL}privacy.html">Full privacy policy</a></p>
+  <h3 class="h3s" id="ab-contact">Contact and corrections</h3>
+  <p>To report an error, use <b>Suggest a correction</b> on the record or the Atlas and name your source; every correction is checked against the original before it changes the data. For membership, permissions, privacy requests or anything else, write to Market Mojo LLC at <a href="mailto:marketmojowi@gmail.com">marketmojowi@gmail.com</a> or see <a href="https://www.mktmojox.com/" target="_blank" rel="noopener">www.mktmojox.com</a>. <a href="${LEGAL}contact.html">Contact page</a></p>
+  <p class="stats">Data set of ${esc(D.meta.built)}. App version 1.1.</p>`;
+  wire($("about-out"))}
+/* ---------- Sources: every original placed in its archive's own order, with the holder's credit line and terms ---------- */
+function sources(){const D=DATA,RP=Object.entries(D.repos);const prim=R.filter(PRIM).length,notes=R.filter(r=>r.o==="AUTHOR_WB").length,book=R.filter(r=>r.o==="BOOK").length;
+  const rrows=RP.filter(([o,v])=>v.nd||o==="AUTHOR_WB"||o==="BOOK").map(([o,v])=>{const n=R.filter(r=>r.o===o).length;return `<tr><td><b>${esc(v.name)}</b></td><td>${esc(v.holder||"Named in each record")}</td><td>${v.nd||"–"}</td><td>${n.toLocaleString()}</td><td>${esc(v.access||"")}</td></tr>`}).join("");
+  const SHORT=[/^Washington, D\.C\., National Archives, RG \d+, (Records of the Commissioners for the District of Columbia|Naval Records Collection of the Office of Naval Records and Library), /,/^Washington, D\.C\., National Archives, RG \d+, /,/^Baltimore, Stephen J\. Ponzillo Jr\. Memorial Library and Museum, Grand Lodge of A\.F\. & A\.M\. of Maryland, Membership Rolls, Collection of Lodge Returns, 1793–1811: /,/^Washington, D\.C\., Library of Congress, Manuscript Division, /,/^Washington, D\.C\., Recorder of Deeds, land records of the District of Columbia, /,/^Washington, D\.C\., Christ Church, Washington Parish, archives \(private\): /,/^Washington, D\.C\., Navy Department Library, /,/^Proceedings of the Grand Lodge of Maryland, /];
+  const short=x=>{let t=x;for(const rx of SHORT)t=t.replace(rx,"");t=t.replace(/; printed in Edward T\. Schultz.*$/,"");return t.charAt(0).toUpperCase()+t.slice(1)};
+  const reg=D.register.map((rp,ri)=>`<details class="repo"${ri===0?" open":""}><summary><span class="rn">${esc(rp.name)}</span><span class="rk">${esc(rp.kind)}</span><span class="rc">${rp.docs} document${rp.docs===1?"":"s"} · ${rp.n.toLocaleString()} records</span></summary>
+    <dl class="rmeta">${rp.place?`<dt>Where</dt><dd>${esc(rp.place)}</dd>`:""}${rp.find?`<dt>Finding aids</dt><dd>${esc(rp.find)}</dd>`:""}${rp.credit?`<dt>Credit line</dt><dd><b>${esc(rp.credit)}</b></dd>`:""}<dt>Use and rights</dt><dd>${esc(rp.use)}</dd></dl>
+    ${rp.groups.map(g=>`<div class="rg"><div class="rgt">${esc(g.title)}</div>${g.sub?`<div class="rgs">${esc(g.sub)}</div>`:""}
+      ${g.sets.map(st=>`<div class="rs"><div class="rst">${esc(st.series)} <small>${st.items.length} document${st.items.length===1?"":"s"} · ${st.n} records</small></div>${st.unit?`<div class="rsu">${esc(st.unit)}</div>`:""}${st.note?`<div class="rsu">${esc(st.note)}</div>`:""}${st.gap?`<div class="rsu gap">${esc(st.gap)}</div>`:""}
+        <ul class="ri">${st.items.map(i=>`<li><button type="button" class="linkbtn" data-dc="${i}">${esc(short(D.docs[i].x))}</button> <small>${D.docs[i].n} record${D.docs[i].n===1?"":"s"}</small></li>`).join("")}</ul></div>`).join("")}</div>`).join("")}
+  </details>`).join("");
+  $("src-out").innerHTML=`<h2 class="sec">Sources</h2>
+  <p class="lead">Every record in <i>Civic Vault</i> names its source and, for an original, where the original is held. Below, each of the ${D.docs.length} original documents is placed in its archive's own order: the repository, the record group or collection, the series and entry, the volume, box or file, and the document itself, with the credit line each holder asks for and the terms on which its records are used. Open a document to see every record taken from it.</p>
+  <div class="statgrid"><div><b>${D.register.filter(r=>r.id!=="UNPLACED").length}</b><span>archives and libraries</span></div><div><b>${D.docs.length}</b><span>original documents</span></div><div><b>${prim.toLocaleString()}</b><span>records from originals</span></div><div><b>${book.toLocaleString()}</b><span>compiled in the books</span></div></div>
+  <h3 class="h3s">The archive register</h3>
+  <div class="register">${reg}</div>
+  <h3 class="h3s" id="src-method">Sources and method</h3>
   <ol class="method">
    <li><b>Primary records first.</b> Every record names its source in Oxford style and, for an original, where the original is held. Originals (lodge returns to the Grand Lodge of Maryland, the Proceedings of the Commissioners, Navy records, parish records, land records and newspapers of the day) outrank later histories; where they disagree, the original is followed and the difference is noted.</li>
    <li><b>Counted by document.</b> Statistics count original documents, not repeated mentions. ${D.meta.duplicates_removed} duplicate records were removed.</li>
@@ -168,25 +208,20 @@ function about(){const D=DATA,RP=Object.entries(D.repos);const prim=R.filter(PRI
   <h3 class="h3s">Where the originals are held</h3>
   <div class="tscroll"><table class="stt"><thead><tr><th>Collection</th><th>Holder</th><th>Documents</th><th>Records</th><th>Access</th></tr></thead><tbody>${rrows}</tbody></table></div>
 
-  <h3 class="h3s" id="ab-disclaimer">Disclaimer</h3>
-  <p>This app is a work of historical research, provided for information and study. It is compiled with care from the sources named in each record, but historical records are incomplete and sometimes contradictory, and readings, dates, identifications of men and locations of sites can be wrong. Nothing here is legal, genealogical, title or property advice, or proof of descent, membership or lineage; consult the original at its holder before relying on any record. Map positions are approximate, drawn from street corners and lots in the records and set on modern streets. Links to the Library of Congress, Chronicling America, the National Archives and Google Maps lead to services run by others, which Market Mojo LLC does not control. Masonic names, titles and emblems belong to their owners and are used only to describe history. <i>Civic Vault</i> is an independent historical research publication drawn from the book series by Thomas M. Saharsky. It is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge, chapter or Masonic body, nor by any archive or library named here. The app is provided "as is," without warranty of any kind; to the extent the law allows, Market Mojo LLC is not liable for any loss arising from its use.</p>
-
-  <h3 class="h3s" id="ab-terms">Terms of use</h3>
-  <p>The compilation, its arrangement, the statistics, the narrative text and the software are © 2026 Market Mojo LLC and Thomas M. Saharsky. A membership gives one person a personal, non-transferable right to search, read and cite the records for research. You may quote individual records with their citations. You may not copy, scrape, resell, republish or redistribute the data set or substantial parts of it, or use it to train or build another database or service, without written permission. Facts you add must be your own work or properly cited; by adding one you allow Market Mojo LLC to review, edit, publish or decline it. Memberships are for people 18 or older, are bought on the website and can be cancelled at any time; access ends at the close of the paid period. These terms are governed by the laws of the United States and the state where Market Mojo LLC is organized.</p>
-
-  <h3 class="h3s" id="ab-privacy">Privacy</h3>
-  <p>The app keeps your name, email address and membership status, and the facts and corrections you add. Card payments are handled by Stripe on the website; card details never reach us. There are no advertisements and no tracking for advertising. Your information is not sold or shared, except with the service providers that run the app (Google Firebase for sign-in and storage, Stripe for payments). You can delete your account and its data at any time from the account deletion page; facts you added that were accepted may be kept without your name.</p>
-
-  <h3 class="h3s" id="ab-credits">Credits</h3>
-  <p><b>Author and archivist:</b> Thomas M. Saharsky. <b>Series editors:</b> Josh Withrow and Brent Morris. <b>With thanks to:</b> John Payne and Linda Mellgren; the U.S. Senate Historical Office; Jordan Zappala; Sandy Hussey, for Christ Church Washington Parish archives; the Stephen J. Ponzillo Jr. Memorial Library and Museum of the Grand Lodge of Maryland; the National Archives; and the Library of Congress, whose Chronicling America newspapers and pictures are linked throughout. <b>Published by</b> Market Mojo LLC.</p>
-
-  <h3 class="h3s" id="ab-contact">Contact and corrections</h3>
-  <p>To report an error, use <b>Suggest a correction</b> on the record or the Atlas, or the fact bins, and name your source; every correction is checked against the original before it changes the data. For permissions and other questions, write to Market Mojo LLC through the website, lodges.mktmojox.com.</p>
-  <p class="stats">Data set of ${esc(D.meta.built)}. App version 1.0.</p>`;
-  wire($("about-out"))}
+  
+  <h3 class="h3s" id="src-kinds">Kinds of records and what each label means</h3>
+  <dl class="defs">${D.defined.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+  <h3 class="h3s">Background reading for the Potomac Territory</h3>
+  <p class="stats">Works consulted for context. They are not counted as records.</p>
+  <ul class="method">${(D.reference||[]).map(x=>`<li>${esc(x.cite)}. <small>${esc(x.about)} Held by: ${esc(x.holder)}. ${esc(x.use)}</small></li>`).join("")}</ul>
+  <h3 class="h3s">How to cite Civic Vault</h3>
+  <p>Cite the original first, from the record's <b>Cite this record</b> box, then the app: <i>Civic Vault: Potomac Territory, 1700–1811</i> (Market Mojo LLC, 2026), the kind of record, and the date you read it. Quote the original's holder exactly as its credit line above gives it.</p>
+  <h3 class="h3s">The book series</h3>
+  <p>Thomas M. Saharsky, <i>Origins of the Royal Arch</i>; <i>Potomac Lodge</i>; <i>Federal Lodge No. 15, 1793–1811</i>; <i>Naval Lodge No. 41</i>; <i>Columbia Lodge No. 35</i>; <i>Washington Parish</i>; and <i>Proto Lodges of the Potomac Area, 1787–1811</i> (Market Mojo LLC, through Lulu, 2026). Series editors: Josh Withrow and Brent Morris. Each book's notes give the full citation for every line drawn from it.</p>`;
+  wire($("src-out"))}
 function show(v){document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===v));
-  ["index","man","search","build","compare","atlas","about"].forEach(k=>$("v-"+k).hidden=v!==k);$("filt").hidden=v!=="search";
-  if(v==="build")tb();if(v==="compare")cp();if(v==="atlas")atlas();if(v==="about")about();window.scrollTo({top:0});}
+  ["index","man","search","build","compare","atlas","sources","about"].forEach(k=>$("v-"+k).hidden=v!==k);$("filt").hidden=v!=="search";
+  if(v==="build")tb();if(v==="compare")cp();if(v==="atlas")atlas();if(v==="about")about();if(v==="sources")sources();window.scrollTo({top:0});}
 /* ---------- Table builder (men named in the returns and rolls) ---------- */
 const C=DATA.census, LN=C.lodges, OC=C.occn, OFF=new Set(C.officer), MUL=new Set(C.multi_men);
 const occOf=i=>C.mocc[i]||[];
@@ -452,7 +487,7 @@ function reader(k){const r=R[k],kd=kindOf(r),y=yof2(r);let dlg=$("reader");if(!d
     dlg.addEventListener("click",e=>{if(e.target===dlg)dlg.close()})}
   const said=r.f.find(([f])=>/^the book says$/i.test(f)),date=(r.f.find(([f])=>/^(issue date|date)$/i.test(f))||[])[1];
   const ox=r.d!=null?DATA.docs[r.d].x.replace(/\.$/,"")+(r.dl?", "+r.dl:""):(PRIM(r)?(r.od||r.c):"");
-  const bld=r.b.filter(b=>BLD[b]);const ca=r.o==="NEWS"&&/chronicling/i.test(r.oh||"")?caLink(r):"";
+  const bld=r.b.filter(b=>BLD[b]);const ca=(r.f.map(x=>String(x[1])).join(" ").match(/https:\/\/chroniclingamerica\.loc\.gov\/lccn\/[^\s;,)]+/)||[])[0]||"";
   dlg.innerHTML=`<div class="paper" role="document"><div class="kind">${svgI(ICK[kd],KNAME[kd])} ${KNAME[kd]} · ${svgI(ICP[phaseOf(r,r.f.map(x=>x[1]).join(" "))],"phase")} ${phaseOf(r,r.f.map(x=>x[1]).join(" "))}</div>
   <h3>${esc(r.o==="NEWS"?r.f[0][1]:r.t)}</h3><div class="date">${esc(date||y||"Undated")}${r.m.length?" · "+r.m.map(i=>esc(M[i].n)).join(", "):""}</div>
   ${said?`<blockquote>${esc(said[1])}</blockquote>`:""}
@@ -461,8 +496,8 @@ function reader(k){const r=R[k],kd=kindOf(r),y=yof2(r);let dlg=$("reader");if(!d
   ${r.o==="AUTHOR_WB"||r.k==="Settled fact"?"":`<div class="cit"><b>In the books</b>${ct(bookRefs([r.c])||r.c)}</div>`}
   <details class="cite-box"><summary>Cite this record</summary><p><b>Full citation</b> <span id="rd-full">${esc(fullCite(r))}</span></p><p><b>Short citation (Oxford)</b> <span>${esc(citeText(r))}</span></p></details>
   <div class="acts"><button type="button" class="pri" id="rd-copy">Copy full citation</button><button type="button" id="rd-copy2">Copy short citation</button><button type="button" id="rd-print">Print or save as PDF</button>
-  ${ca?`<a href="${ca}" target="_blank" rel="noopener">${svgI(ICK.news,"newspaper")} Find the issue at Chronicling America ↗</a>`:""}
-  ${bld.map(b=>`<button type="button" data-atb="${esc(b)}">${svgI(ICK.map,"map")} ${esc(b)} on the Atlas</button><a href="https://www.loc.gov/photos/?q=${encodeURIComponent(BLD[b].q)}" target="_blank" rel="noopener">${svgI(ICK.pic,"pictures")} Pictures ↗</a>`).join("")}
+  ${ca?`<a href="${ca}" target="_blank" rel="noopener">${svgI(ICK.news,"newspaper")} Read the issue at Chronicling America ↗</a>`:""}
+  ${bld.map(b=>`<button type="button" data-atb="${esc(b)}">${svgI(ICK.map,"map")} ${esc(b)} on the Atlas</button>`).join("")}
   <button type="button" id="rd-close">Close</button></div></div>`;
   $("rd-close").onclick=()=>dlg.close();$("rd-print").onclick=()=>window.print();
   const cp=(id,t)=>$(id).onclick=()=>(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>$(id).textContent="Copied",()=>prompt("Copy this citation:",t));
@@ -652,6 +687,15 @@ function hallMap(cur){const X=lo=>(lo+77.0345)*20300,Y=la=>(38.9015-la)*20300*1.
    <figcaption class="stats" style="margin:4px 6px 0">The lodge halls in order of use: ${halls.map((b,j)=>`${j+1}. ${esc(b)} (${esc(BLD[b].w.split(";")[0])})`).join("; ")}. Corners from the newspaper descriptions on modern streets.</figcaption></figure>`}
 function bstats(b){const recs=R.filter(r=>r.b.includes(b)),men=new Map();recs.forEach(r=>r.m.forEach(i=>men.set(i,(men.get(i)||0)+1)));
   const docs=new Set(recs.filter(PRIM).map(r=>r.d??("o"+r.o)));const ys=recs.map(yof2).filter(Boolean);return {recs,men,docs,y0:ys.length?Math.min(...ys):0,y1:ys.length?Math.max(...ys):0}}
+/* plain icons for the building guide (one per kind of place) */
+const BICON={dome:'<path d="M4 20h16M6 20v-6h12v6M8 14a4 4 0 0 1 8 0M12 6v4M10 6h4"/>',house:'<path d="M3 11l9-7 9 7M5 10v10h14V10M10 20v-5h4v5"/>',
+ office:'<path d="M3 9l9-5 9 5M4 20h16M6 10v8M10 10v8M14 10v8M18 10v8"/>',anchor:'<circle cx="12" cy="5" r="2"/><path d="M12 7v13M8 11h8M5 14a7 7 0 0 0 14 0"/>',
+ flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',obelisk:'<path d="M10 20l1-14 1-2 1 2 1 14M7 20h10"/>',church:'<path d="M12 2v4M10 4h4M8 21V11l4-4 4 4v10M4 21h16M11 21v-4h2v4"/>',
+ inn:'<path d="M4 21V9l8-5 8 5v12M4 21h16M9 21v-5h6v5M15 12h3v3h-3z"/>',hall:'<path d="M3 9h18L12 4zM5 9v10M9 9v10M15 9v10M19 9v10M3 20h18"/>',
+ bridge:'<path d="M2 16h20M4 16a8 8 0 0 1 16 0M7 16v-3M12 16v-6M17 16v-3"/>',quarry:'<path d="M3 20l5-9 4 5 3-4 6 8zM14 5l4 4M18 5l-4 4"/>',
+ wharf:'<path d="M2 18c2 1.5 4 1.5 6 0s4-1.5 6 0 4 1.5 6 0M4 14h16M6 14V9M18 14V9M12 4v10M12 4l5 5h-5"/>',lots:'<path d="M4 4h16v16H4zM4 10h16M4 16h16M10 4v16M16 4v16"/>'};
+const BKIND=b=>BLD[b].hall?"hall":({"Capitol":"dome","President's House":"house","Commandant's House":"house","Treasury":"office","Executive offices":"office","Navy Yard":"anchor","Marine Barracks":"flag","Tripoli Monument":"obelisk","Christ Church / parish":"church","Blodgett's Hotel":"inn","Union Tavern":"inn","Bridges":"bridge","Quarries":"quarry","Wharves":"wharf","City lots":"lots"}[b]||"lots");
+const bicon=b=>`<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${BICON[BKIND(b)]}</svg>`;
 function atlas(){const names=Object.keys(BLD).filter(b=>R.some(r=>r.b.includes(b)));if(!ATB)ATB=names[0];
   const W=640,H=465,NS="http://www.w3.org/2000/svg";
   const line=(pts,cls)=>`<polyline class="${cls}" points="${pts.map(p=>PX(p).join(",")).join(" ")}"/>`;
@@ -671,11 +715,13 @@ function atlas(){const names=Object.keys(BLD).filter(b=>R.some(r=>r.b.includes(b
    ${Object.keys(tc).length?`<div class="k">Their callings</div><div>${Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)} (${v})`).join(", ")}</div>`:""}
    <div class="k">The men</div><div>${men.length?men.slice(0,40).map(([i,n])=>`<button type="button" class="linkbtn" data-m="${i}">${esc(M[i].n)}</button>`).join(", "):"No lodge man is named in these records."}</div>
    <div><button type="button" class="copy" data-bd="${esc(ATB)}">All ${st.recs.length} records</button></div>
-   <a class="loc" href="https://www.loc.gov/photos/?q=${encodeURIComponent(B.q)}" target="_blank" rel="noopener">Pictures at the Library of Congress ↗</a>${gmaps(B)}</div>${B.hall?hallMap(ATB):jobsiteHTML(ATB)}`;
+   ${gmaps(B)}</div>${B.hall?hallMap(ATB):jobsiteHTML(ATB)}`;
   wire($("at-info"));$("at-info").querySelectorAll("[data-rk]").forEach(e=>{e.onclick=()=>reader(+e.dataset.rk);e.onkeydown=k=>{if(k.key==="Enter")reader(+e.dataset.rk)}});
   $("at-info").querySelectorAll(".hallmap [data-bd2]").forEach(g=>{const go=()=>{ATB=g.dataset.bd2;atlas()};g.onclick=go;g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
   $("at-info").querySelectorAll("[data-sug]").forEach(e=>e.onclick=()=>suggest(+e.dataset.sug,ATB,e.dataset.tier));
-  $("at-list").innerHTML=`<h3 class="h3s">All buildings and places</h3><div class="tscroll"><table class="stt"><thead><tr><th>No.</th><th>Building or place</th><th>Built or in use</th><th>Lodge men</th><th>Records</th><th>Originals</th><th>Pictures</th></tr></thead><tbody>${names.map((b,j)=>{const t=bstats(b);return `<tr><td>${j+1}</td><td style="text-align:left"><button type="button" class="linkbtn" data-at="${esc(b)}">${esc(b)}</button>${BLD[b].ll?"":" <small>(not mapped)</small>"}</td><td style="text-align:left">${esc(BLD[b].w)}</td><td>${t.men.size}</td><td>${t.recs.length}</td><td>${t.docs.size}</td><td><a href="https://www.loc.gov/photos/?q=${encodeURIComponent(BLD[b].q)}" target="_blank" rel="noopener">LOC ↗</a></td></tr>`}).join("")}</tbody></table></div>`;
+  $("at-tiles").innerHTML=names.map((b,j)=>{const t=bstats(b);return `<button type="button" class="btile${b===ATB?" on":""}" data-tl="${esc(b)}" aria-pressed="${b===ATB}"><span class="tn">${j+1}</span><span class="ti">${bicon(b)}</span><span class="tt"><b>${esc(b)}</b><small>${esc(BLD[b].w.split(";")[0])}</small><small>${t.men.size} men · ${t.recs.length} records${BLD[b].ll?"":" · off the map"}</small></span></button>`}).join("");
+  $("at-tiles").querySelectorAll("[data-tl]").forEach(b=>b.onclick=()=>{ATB=b.dataset.tl;atlas();if(matchMedia("(max-width:820px)").matches)$("at-info").scrollIntoView({block:"start"})});
+  $("at-list").innerHTML=`<h3 class="h3s">All buildings and places</h3><div class="tscroll"><table class="stt"><thead><tr><th>No.</th><th>Building or place</th><th>Built or in use</th><th>Lodge men</th><th>Records</th><th>Originals</th></tr></thead><tbody>${names.map((b,j)=>{const t=bstats(b);return `<tr><td>${j+1}</td><td style="text-align:left"><button type="button" class="linkbtn" data-at="${esc(b)}">${esc(b)}</button>${BLD[b].ll?"":" <small>(not mapped)</small>"}</td><td style="text-align:left">${esc(BLD[b].w)}</td><td>${t.men.size}</td><td>${t.recs.length}</td><td>${t.docs.size}</td></tr>`}).join("")}</tbody></table></div>`;
   $("at-list").querySelectorAll("[data-at]").forEach(b=>b.onclick=()=>{ATB=b.dataset.at;atlas();window.scrollTo({top:0})})}
 /* ---------- A man's fact card: offices spelled out with their years, callings as written, settled facts ---------- */
 const OFFX=[[/^(w\.?\s*m\.?\.?|w,m,|worshipful master|master)$/i,"Worshipful Master"],[/^(s\.?\s*w\.?\/?|senior warden)$/i,"Senior Warden"],[/^(j\.?\s*w\.?|junior warden)$/i,"Junior Warden"],
@@ -702,7 +748,7 @@ function service(i){const m=M[i],sn=snOf(i),rows=new Map(),calls=new Map();
     const lodge=F.lodge&&F.lodge!=="–"?F.lodge:(r.l[0]||m.l[0]||"");
     const off=offName(F.office||F.grade||"");
     const key=y+"|"+lodge,cur=rows.get(key)||{y,lodge,off:new Set(),src:new Set(),as:new Set()};
-    if(off)cur.off.add(off);if(F.name)cur.as.add(F.name.replace(/\s+/g," ").trim());cur.src.add(r.s.startsWith("Lodge rolls")?"Return to the Grand Lodge of Maryland":"Roster in the series book");rows.set(key,cur)}
+    if(off)cur.off.add(off);if(F.name)cur.as.add(F.name.replace(/\s+/g," ").trim());cur.src.add(r.s.startsWith("Lodge rolls")?(/Virginia/.test(r.s)?"Roll under the Grand Lodge of Virginia":"Return to the Grand Lodge of Maryland"):"Roster in the series book");rows.set(key,cur)}
   const list=[...rows.values()].sort((a,b)=>a.y-b.y||a.lodge.localeCompare(b.lodge));
   list.forEach(x=>{if(x.off.size>1)[...x.off].filter(o=>DEGREES.has(o)).forEach(o=>x.off.delete(o))});
   const byOff=new Map();list.forEach(x=>x.off.forEach(o=>{if(!DEGREES.has(o)){if(!byOff.has(o))byOff.set(o,[]);byOff.get(o).push(x.y)}}));
@@ -712,9 +758,6 @@ function service(i){const m=M[i],sn=snOf(i),rows=new Map(),calls=new Map();
 const twinsOf=i=>{const f=norm(M[i].n).split(/\s+/)[0],sn=snOf(i);return M.map((m,j)=>j).filter(j=>j!==i&&snOf(j)===sn&&norm(M[j].n).split(/\s+/)[0]===f)};
 const SRCN={"Roster in the series book":"Series book","Return to the Grand Lodge of Maryland":"Maryland return"};
 /* outside searches by name: they find candidates, they do not prove the same man (checked against the dates before use) */
-function lookups(i){const n=M[i].n.replace(/\(.*?\)/g,"").replace(/\b(Jr|Sr|Junr|Senr|2nd|Second)\b\.?/gi,"").replace(/\s+/g," ").trim(),q=encodeURIComponent(n);
-  return [["Congressional Cemetery",`https://congressionalcemetery.org/?s=${q}`],["National Park Service",`https://www.nps.gov/search/?affiliate=nps&query=${encodeURIComponent('"'+n+'"')}`],
-    ["Library of Congress",`https://www.loc.gov/search/?q=${encodeURIComponent('"'+n+'"')}&dates=1750/1830`]].map(([t,u])=>`<a class="chip" href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join("")}
 function factCard(i){const m=M[i],S=service(i),cal=callings(i);
   const lodges=m.l.map(l=>{const ys=S.byLodge.get(l);return `<span class="ib-v"><b>${esc(l)}</b>${ys?` · on the rolls ${yrs(ys)} <small>(${ys.length} year${ys.length>1?"s":""} recorded)</small>`:m.yr?` · ${esc(m.yr)}`:""}</span>`}).join("");
   const offs=[...S.byOff].sort((a,b)=>Math.min(...a[1])-Math.min(...b[1])).map(([o,ys])=>`<span class="ib-v">${esc(o)} <small>${yrs(ys)}</small></span>`).join("");
@@ -727,7 +770,6 @@ function factCard(i){const m=M[i],S=service(i),cal=callings(i);
    ${m.sp.length?`<div class="ib-row"><span class="k">Also written</span><span>${esc(m.sp.join(" · "))}</span></div>`:""}
    ${twinsOf(i).length?`<div class="ib-row"><span class="k">Same name on the rolls</span><span class="chips">${twinsOf(i).map(j=>`<button type="button" class="chip" data-m="${j}">${esc(M[j].n)}</button>`).join("")}</span></div>`:""}
 
-   <div class="ib-row"><span class="k">Search elsewhere</span><span class="chips">${lookups(i)}</span></div>
   </div>
   ${m.fx?`<div class="settled"><div class="k">Settled facts <small>checked against the originals across the series</small></div><ul>${m.fx.map(f=>`<li>${esc(f.replace(/;?\s*settled$/i,""))}</li>`).join("")}</ul></div>`:""}
   ${S.list.length?(()=>{const own=norm(m.n).trim(),asW=S.list.some(x=>[...x.as].some(a=>norm(a).trim()!==own));
