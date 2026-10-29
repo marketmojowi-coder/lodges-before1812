@@ -3,3 +3,4 @@
 .firebase/
 node_modules/
 app_data*.json
+__pycache__/
