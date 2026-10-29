@@ -73,7 +73,7 @@ function home(){
 function render(T){
   const o=$("out");
   if(!last.length){o.innerHTML=`<p class="empty">No records match. Try another spelling, fewer words, or "Start over".</p>`;return}
-  let h=`<p class="stats">${last.length.toLocaleString()} records${man!==null?` naming <b>${esc(M[man].n)}</b> <button class="linkbtn" id="unman" type="button">(show all men)</button>`:""}</p>`;
+  let h=`${$("ft").value?`<p><button class="copy" type="button" id="totrade">Open the ${esc($("ft").value)} table: men by first appearance, linked to their profiles</button></p>`:""}<p class="stats">${last.length.toLocaleString()} records${man!==null?` naming <b>${esc(M[man].n)}</b> <button class="linkbtn" id="unman" type="button">(show all men)</button>`:""}</p>`;
   for(const r of last.slice(0,shown)){
     const rest=r.f.slice(1).filter(([k])=>k!=="Source").map(([k,v])=>`<b>${esc(k)}:</b> ${hi(v,T)}`).join(" · ");
     h+=`<article class="res"><div class="crumb"><span class="pill">${esc(r.k)}</span><span>${esc(r.s)}</span><span>›</span><span>${esc(r.t)}</span>${r.y.length?`<span>· ${r.y[0]}${r.y.length>1&&r.y.at(-1)!==r.y[0]?"–"+r.y.at(-1):""}</span>`:""}</div>
@@ -88,6 +88,7 @@ function render(T){
   o.innerHTML=h;
   o.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{docSel=+b.dataset.d;man=null;$("q").value="";run();window.scrollTo({top:0})});
   o.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{const t=citeText(R[+b.dataset.c]);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{b.textContent="Copied"},()=>{prompt("Copy this citation:",t)})});
+  const tt=$("totrade");if(tt)tt.onclick=()=>{const t=$("ft").value;show("index");ix("trades",t)};
   const mb=$("more");if(mb)mb.onclick=()=>{shown+=25;render(T)};
   const u=$("unman");if(u)u.onclick=()=>{man=null;run()};
   o.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>pick(+b.dataset.m));
@@ -258,9 +259,9 @@ function ix(k,arg){IX=k;document.querySelectorAll("#ix-btns [data-ix]").forEach(
     const sn=m=>m.n.replace(/,?\s*(Jr|Sr|Junior|Senior)\.?$/i,"").trim().split(/\s+/).at(-1);
     const list=M.map((m,i)=>i).filter(i=>sn(M[i])[0]?.toUpperCase()===L).sort((a,b)=>sn(M[a]).localeCompare(sn(M[b]))||M[a].n.localeCompare(M[b].n));
     h=`<div class="letters">${ls.map(l=>`<button type="button" data-ix="men" data-arg="${l}" class="${l===L?"on":""}">${l}</button>`).join("")}</div><p class="stats">${list.length} men, by surname</p>${nameBtns(list)}`}
-  if(k==="trades"){if(arg!==undefined){const c=+arg,list=M.map((m,i)=>i).filter(i=>occOf(i).includes(c)).sort((a,b)=>ND[b]-ND[a]);
-      h=`<button class="linkbtn back" type="button" data-ix="trades">‹ All trades</button><h3 class="h3s">${esc(OC[c])}: ${list.length} men</h3>${nameBtns(list)}`}
-    else h=`<p class="stats">Trades and callings as the records give them, grouped. A man with two callings is under both.</p><div class="ixbtns">${C.occ.map(([n,v])=>`<button type="button" data-ix="trades" data-arg="${OC.indexOf(n)}">${esc(n)}<br><small>${v} men</small></button>`).join("")}</div>`}
+  if(k==="trades"){if(arg!==undefined){P.innerHTML="";tradeTable(arg);return}
+    const rc={};R.forEach(r=>r.tr.forEach(t=>rc[t]=(rc[t]||0)+1));
+    h=`<p class="stats">Trades and callings as the records give them, grouped. Each opens a table of the men, in order of first appearance, with every record behind it.</p><div class="ixbtns">${OC.map(n=>[n,(C.occ.find(x=>x[0]===n)||[0,0])[1],rc[n]||0]).sort((a,b)=>b[2]-a[2]).map(([n,v,r])=>`<button type="button" data-ix="trades" data-arg="${esc(n)}">${esc(n)}<br><small>${v} men by calling · ${r} records</small></button>`).join("")}</div>`}
   if(k==="lodges"){if(arg!==undefined){const l=DATA.lodges.find(x=>x.n===arg)||{},ci=LN.indexOf(arg);
       const list=M.map((m,i)=>i).filter(i=>M[i].l.includes(arg)).sort((a,b)=>M[a].n.localeCompare(M[b].n));
       const ys=ci>=0?C.years.filter(y=>y.c[ci]).map(y=>`${y.y}: ${y.c[ci]}`).join(" · "):"";
@@ -272,6 +273,44 @@ function ix(k,arg){IX=k;document.querySelectorAll("#ix-btns [data-ix]").forEach(
   if(k==="buildings"){const c={};R.forEach(r=>r.b.forEach(b=>c[b]=(c[b]||0)+1));h=`<div class="ixbtns">${Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([b,n])=>`<button type="button" data-bd="${esc(b)}">${esc(b)}<br><small>${n} records</small></button>`).join("")}</div>`}
   if(k==="docs"){h=Object.entries(DATA.repos).filter(([o,v])=>v.nd).map(([o,v])=>`<h3 class="h3s">${esc(v.name)}</h3><p class="stats">${esc(v.holder||"")} ${esc(v.access||"")}</p><div class="rows">${DATA.docs.map((d,i)=>[d,i]).filter(([d])=>d.o===o).map(([d,i])=>`<button type="button" data-dc="${i}"><span>${esc(d.x.replace(/^.*?, (?=[A-Z][a-z]+ of|Proceedings|Return|Roster)/,""))}</span><span>${d.n}</span></button>`).join("")}</div>`).join("")}
   P.innerHTML=h;wire(P)}
+
+/* ---------- Trade table: men in order of first appearance, then every record by date ---------- */
+function sortable(id,cols,rows,sortIx,asc){const el=$(id);let k=sortIx,up=asc;
+  const draw=()=>{const rs=[...rows].sort((a,b)=>{const x=a[k].s??a[k].v,y=b[k].s??b[k].v;return (typeof x==="number"&&typeof y==="number"?x-y:String(x).localeCompare(String(y),undefined,{numeric:true}))*(up?1:-1)});
+    el.innerHTML=`<table class="stt"><thead><tr>${cols.map((c,i)=>`<th><button type="button" class="linkbtn sorth" data-k="${i}" aria-sort="${i===k?(up?"ascending":"descending"):"none"}">${esc(c)}${i===k?(up?" ▲":" ▼"):""}</button></th>`).join("")}</tr></thead><tbody>${rs.map(r=>`<tr>${r.map(c=>`<td>${c.h??esc(c.v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    el.querySelectorAll(".sorth").forEach(b=>b.onclick=()=>{const i=+b.dataset.k;up=i===k?!up:true;k=i;draw()});wire(el)};draw()}
+function tradeTable(t){
+  const recs=R.map((r,k)=>[r,k]).filter(([r])=>r.tr.includes(t));
+  const ci=OC.indexOf(t),men=new Map();
+  const get=i=>{if(!men.has(i))men.set(i,{cal:false,rec:[],y:[],pd:new Set()});return men.get(i)};
+  if(ci>=0)M.forEach((m,i)=>{if(occOf(i).includes(ci))get(i).cal=true});
+  recs.forEach(([r,k])=>r.m.forEach(i=>{const x=get(i);x.rec.push(k);r.y.forEach(y=>{if(y>=1750&&y<=1830)x.y.push(y)});if(PRIM(r))x.pd.add(r.d??("o"+r.o))}));
+  men.forEach((x,i)=>{C.obs.forEach(o=>{if(o[0]===i)x.y.push(o[2])})});
+  const docs=new Set(recs.filter(([r])=>PRIM(r)).map(([r])=>r.d??("o"+r.o)));
+  const mrows=[...men].map(([i,x])=>{const y0=x.y.length?Math.min(...x.y):9999,y1=x.y.length?Math.max(...x.y):0,m=M[i];
+    return [{v:y0<9999?y0:"–",s:y0},{v:m.n,h:`<button type="button" class="linkbtn" data-m="${i}">${esc(m.n)}</button>`},{v:y1?y1:"–",s:y1},
+      {v:m.tr||m.tg||"–"},{v:m.l.join("; ")},{v:x.rec.length,s:x.rec.length},{v:x.pd.size,s:x.pd.size},{v:x.cal&&x.rec.length?"Calling and records":x.cal?"Calling on the rolls":"Named in the records"}]});
+  const yof=r=>r.y.find(y=>y>=1750&&y<=1830)||+((r.t.match(/\b1[78]\d\d\b/)||(r.d!=null&&DATA.docs[r.d].x.match(/\b1[78]\d\d\b/))||(r.od||"").match(/\b1[78]\d\d\b/)||r.c.match(/\b1[789]\d\d\b(?!-)/)||[0])[0])||0;
+  const rrows=recs.map(([r,k])=>{const y=yof(r);const src=r.d!=null?DATA.docs[r.d].x:(PRIM(r)?(r.od||r.c):r.c);
+    return [{v:y||"–",s:y||9999},{v:r.f[0][1]},{v:r.t},{v:"",h:r.m.map(i=>`<button type="button" class="linkbtn" data-m="${i}">${esc(M[i].n)}</button>`).join(", ")||"–",s:r.m.map(i=>M[i].n).join()},
+      {v:PRIM(r)?"Original":"Cross-reference"},{v:src.replace(/\.$/,"")}]});
+  $("ix-panel").innerHTML=`<button class="linkbtn back" type="button" data-ix="trades">‹ All trades</button>
+  <h3 class="h3s">${esc(t)}</h3>
+  <div class="statgrid"><div><b>${men.size}</b><span>men</span></div><div><b>${recs.length}</b><span>records</span></div><div><b>${docs.size}</b><span>original documents</span></div><div><b>${recs.length-recs.filter(([r])=>PRIM(r)).length}</b><span>cross-references</span></div></div>
+  <p class="stats">Men in this trade, by first appearance. A man is here if the rolls give him this calling or a record of this trade names him. Tap a column to sort; tap a name for his profile.</p>
+  <div class="tscroll" id="tt-men"></div>
+  <h3 class="h3s">Every record, by date</h3>
+  <p class="stats">"Original" rows come from a surviving document (cited in full); "Cross-reference" rows are entries compiled in the series books.</p>
+  <div class="tscroll" id="tt-recs"></div>
+  <button class="copy" type="button" id="tt-csv">Download CSV</button>`;
+  wire($("ix-panel"));
+  sortable("tt-men",["First year","Man","Last year","Trade as written","Lodges","Records","Originals","Basis"],mrows,0,true);
+  sortable("tt-recs",["Year","Record","Table","Men named","Kind","Source"],rrows,0,true);
+  $("tt-csv").onclick=()=>{const q=v=>`"${String(v).replace(/"/g,'""')}"`;const L=[["First year","Man","Last year","Trade as written","Lodges","Records","Originals","Basis"].map(q).join(",")];
+    mrows.sort((a,b)=>a[0].s-b[0].s).forEach(r=>L.push(r.map(c=>q(c.v)).join(",")));L.push("");L.push(["Year","Record","Table","Men named","Kind","Source"].map(q).join(","));
+    recs.forEach(([r],j)=>{const x=rrows[j];L.push([x[0].v,x[1].v,x[2].v,r.m.map(i=>M[i].n).join("; "),x[4].v,x[5].v].map(q).join(","))});
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([L.join("\n")],{type:"text/csv"}));a.download=`lodges_before_1812_${t.replace(/\W+/g,"_")}.csv`;a.click()};
+}
 /* ---------- A man's profile: primary sources first, cross-references apart ---------- */
 function brief(r){return r.f.filter(([k])=>k!=="Source").slice(0,4).map(([k,v])=>`<b>${esc(k)}:</b> ${esc(v)}`).join(" · ")}
 function profile(i){const m=M[i],P=MP[i];
