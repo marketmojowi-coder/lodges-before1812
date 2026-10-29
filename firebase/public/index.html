@@ -27,11 +27,11 @@
       <button id="g-out" class="linkbtn" type="button">Sign out</button>
     </div>
     <p id="g-msg" class="gmsg" role="status"></p>
-    <p class="gmsg">Published by Market Mojo LLC. Payments by Stripe. <a href="terms.html" style="color:#d1b477">Terms</a> · <a href="privacy.html" style="color:#d1b477">Privacy</a></p>
+    <p class="gmsg">Published by Market Mojo LLC. Payments by Stripe. <a href="terms.html" style="color:#d1b477">Terms</a> · <a href="terms.html#disclaimer" style="color:#d1b477">Disclaimer</a> · <a href="privacy.html" style="color:#d1b477">Privacy</a><br>© 2026 Market Mojo LLC. Not affiliated with or endorsed by any Grand Lodge or Masonic body.</p>
   </div>
 </div>
 <div id="app" hidden>
-<nav class="topnav"><div class="wrap"><a href="index.html">Search</a> · <a href="bins.html">Fact bins</a> · <a href="privacy.html">Privacy</a> · <a href="delete-account.html">Delete account</a> · <button id="signout" class="linkbtn" type="button">Sign out</button></div></nav>
+<nav class="topnav"><div class="wrap"><a href="index.html">Search</a> · <a href="bins.html">Fact bins</a> · <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="delete-account.html">Delete account</a> · <button id="signout" class="linkbtn" type="button">Sign out</button></div></nav>
 <header><div class="wrap">
   <h1 class="brand">Lodges <span>Before 1812</span></h1>
   <p class="sub">The lodges of George-Town and the City of Washington, 1789-1811, from the book series by Thomas M. Saharsky. Search by man, lodge, year, trade or building. Every record names its source.</p>
@@ -54,6 +54,7 @@
   <button type="button" class="tab" data-v="build">Census tables</button>
   <button type="button" class="tab" data-v="compare">Compare lodges</button>
   <button type="button" class="tab" data-v="search">All records</button>
+  <button type="button" class="tab" data-v="about">About and sources</button>
 </div></nav>
 <section id="v-index" class="view"><div class="wrap">
   <div id="ix-hi"></div>
@@ -61,7 +62,7 @@
   <div class="ixbtns" id="ix-btns">
     <button type="button" data-ix="men">Men A–Z</button><button type="button" data-ix="trades">Trades and callings</button>
     <button type="button" data-ix="lodges">Lodges</button><button type="button" data-ix="years">Years</button>
-    <button type="button" data-ix="atlas">Atlas of buildings</button><button type="button" data-ix="docs">Original documents</button>
+    <button type="button" data-ix="atlas">Atlas of buildings</button><button type="button" data-ix="docs">Original documents</button><button type="button" data-ix="funeral">Deaths, funerals and burials</button>
   </div>
   <div id="ix-panel"></div>
 </div></section>
@@ -95,6 +96,7 @@
   <div class="tscroll" id="cp-table"></div>
   <p class="stats">Men are counted from the surviving returns and rolls; documents are the originals cited for the lodge. A blank year means no return survives.</p>
 </div></section>
+<section id="v-about" class="view" hidden><div class="wrap about" id="about-out"></div></section>
 <main id="v-search" hidden><div class="wrap">
   <section id="out" aria-live="polite"></section>
   <aside id="side"></aside>

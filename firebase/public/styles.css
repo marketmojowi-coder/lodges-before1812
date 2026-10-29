@@ -189,6 +189,15 @@ footer{font-family:var(--sans);font-size:.78rem;color:var(--muted);border-top:1p
 footer .wrap{padding-block:14px 24px}
 :focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .hallmap{margin-top:12px}.hallmap .st{stroke:var(--line,#c9ced6);stroke-width:1}.hallmap .cap{fill:none;stroke:var(--muted,#8a93a3);stroke-width:2}.hallmap .ave{stroke:var(--muted,#8a93a3);stroke-width:3}
+.terms{margin:10px 0 14px}.terms summary{cursor:pointer;min-height:40px;display:flex;align-items:center;gap:6px}
+.gm{display:flex;gap:8px;flex-wrap:wrap}.gm .loc{margin-top:8px}
+.about p{max-width:760px}.about .lead{font-size:1.05rem}.method{max-width:760px;padding-left:1.2em}.method li{margin:0 0 8px}
+footer .fstat{margin-bottom:8px}footer .flinks{display:flex;flex-wrap:wrap;gap:4px 14px;margin:6px 0}footer .flinks .linkbtn{min-height:40px}footer .fco{font-size:.85rem;opacity:.85}
+.legend{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:4px;padding:8px 10px;margin:0 0 12px;font:.8rem var(--sans)}
+.legend .lg-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin:2px 0}
+.legend .lg-h{font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:.68rem;color:var(--muted);min-width:96px}
+.legend .lg{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--line);border-radius:999px;background:var(--bg);white-space:nowrap}
+.legend .lg .ic{color:var(--gold-2)}.legend .lg-tip{color:var(--muted);margin-top:4px}
 /* Sign-in gate and nav */
 .gate{min-height:100vh;background:var(--navy);display:grid;place-items:center;padding:24px 16px}
 .gate-card{max-width:460px;width:100%;text-align:center;color:var(--head-fg);border-top:4px solid var(--gold);padding-top:22px}

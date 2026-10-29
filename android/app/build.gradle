@@ -1,0 +1,49 @@
+// Lodges Before 1812: Android app (Trusted Web Activity around the member site). Market Mojo LLC.
+plugins { id 'com.android.application' }
+
+def HOST = 'lodges.mktmojox.com'
+def KS = System.getenv('KEYSTORE_FILE')
+
+android {
+    namespace 'com.marketmojo.lodges1812'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'com.marketmojo.lodges1812'
+        minSdk 21
+        targetSdk 34
+        versionCode 1
+        versionName '1.0.0'
+        resValue 'string', 'appName', 'Lodges Before 1812'
+        resValue 'string', 'launcherName', 'Lodges 1812'
+        resValue 'string', 'hostName', HOST
+        resValue 'string', 'launchUrl', "https://${HOST}/?source=twa"
+        resValue 'string', 'providerAuthority', 'com.marketmojo.lodges1812.fileprovider'
+        resValue 'color', 'colorPrimary', '#14243A'
+        resValue 'color', 'navigationColor', '#14243A'
+        resValue 'color', 'backgroundColor', '#14243A'
+    }
+    signingConfigs {
+        release {
+            if (KS) {
+                storeFile file(KS)
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                keyAlias System.getenv('KEY_ALIAS')
+                keyPassword System.getenv('KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (KS) signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+}

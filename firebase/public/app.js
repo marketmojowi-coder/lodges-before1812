@@ -10,7 +10,10 @@ let man=null, shown=25, last=[], docSel=null;
 function opts(sel,vals){[...new Set(vals)].filter(Boolean).sort().forEach(v=>{const o=document.createElement("option");o.value=o.textContent=v;sel.appendChild(o)})}
 DATA.lodges.forEach(l=>{const o=document.createElement("option");o.value=o.textContent=l.n;$("fl").appendChild(o)});
 opts($("fs"),R.map(r=>r.s));const RPS=DATA.repos;Object.entries(RPS).forEach(([k,v])=>{if(!v.n)return;const o=document.createElement("option");o.value=k;o.textContent=`${v.name} (${v.n})`;$("fo").appendChild(o)});opts($("ft"),R.flatMap(r=>r.tr));opts($("fb"),R.flatMap(r=>r.b));
-$("foot").innerHTML=`${DATA.meta.count.toLocaleString()} records, ${DATA.meta.linked.toLocaleString()} of them linked to a named man; ${M.length} men from the series cross-reference. Built ${esc(DATA.meta.built)}. The Commissioners' records are a separate program. Not included: ${esc(DATA.meta.excluded)}.`;
+$("foot").innerHTML=`<div class="fstat">${DATA.meta.count.toLocaleString()} records, ${DATA.meta.linked.toLocaleString()} linked to a named man; ${M.length} men; ${DATA.docs.length} original documents in ${Object.values(DATA.repos).filter(v=>v.nd).length} collections. Data set of ${esc(DATA.meta.built)}.</div>
+ <nav class="flinks" aria-label="About this app"><button type="button" class="linkbtn" data-ab="sources">Sources and method</button><button type="button" class="linkbtn" data-ab="disclaimer">Disclaimer</button><button type="button" class="linkbtn" data-ab="terms">Terms of use</button><button type="button" class="linkbtn" data-ab="privacy">Privacy</button><button type="button" class="linkbtn" data-ab="credits">Credits</button><button type="button" class="linkbtn" data-ab="contact">Contact</button></nav>
+ <div class="fco">© 2026 Market Mojo LLC. All rights reserved. <i>Lodges Before 1812</i> is an independent historical research publication drawn from the book series by Thomas M. Saharsky. It is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge or Masonic body.</div>`;
+document.addEventListener("click",e=>{const b=e.target.closest("[data-ab]");if(!b)return;show("about");setTimeout(()=>{const el=$("ab-"+b.dataset.ab);if(el)el.scrollIntoView({block:"start"})},30)});
 
 function terms(q){const t=[];q.replace(/"([^"]+)"|(\S+)/g,(m,a,b)=>{const x=norm(a||b).replace(/^[^\w']+|[^\w']+$/g,"");if(x)t.push(x)});return t}
 function run(){
@@ -139,9 +142,46 @@ run();
 
 /* ---------- Views ---------- */
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>show(b.dataset.v));
+/* ---------- About and sources: what the data is, how it was checked, the legal terms ---------- */
+function about(){const D=DATA,RP=Object.entries(D.repos);const prim=R.filter(PRIM).length,notes=R.filter(r=>r.o==="AUTHOR_WB").length,book=R.filter(r=>r.o==="BOOK").length;
+  const rrows=RP.filter(([o,v])=>v.nd||o==="AUTHOR_WB"||o==="BOOK").map(([o,v])=>{const n=R.filter(r=>r.o===o).length;return `<tr><td><b>${esc(v.name)}</b></td><td>${esc(v.holder||"Named in each record")}</td><td>${v.nd||"–"}</td><td>${n.toLocaleString()}</td><td>${esc(v.access||"")}</td></tr>`}).join("");
+  $("about-out").innerHTML=`<h2 class="sec">About and sources</h2>
+  <p class="lead"><i>Lodges Before 1812</i> brings together the records of the Masonic lodges of George-Town and the City of Washington from 1789 to 1811: the men, their trades, the buildings they raised and the city they served. It is the research data set behind the book series by Thomas M. Saharsky, published by Market Mojo LLC.</p>
+  <div class="statgrid"><div><b>${D.meta.count.toLocaleString()}</b><span>records</span></div><div><b>${M.length}</b><span>men</span></div><div><b>${D.docs.length}</b><span>original documents</span></div><div><b>${prim.toLocaleString()}</b><span>records from originals</span></div></div>
+
+  <h3 class="h3s" id="ab-sources">Sources and method</h3>
+  <ol class="method">
+   <li><b>Primary records first.</b> Every record names its source in Oxford style and, for an original, where the original is held. Originals (lodge returns to the Grand Lodge of Maryland, the Proceedings of the Commissioners, Navy records, parish records, land records and newspapers of the day) outrank later histories; where they disagree, the original is followed and the difference is noted.</li>
+   <li><b>Counted by document.</b> Statistics count original documents, not repeated mentions. ${D.meta.duplicates_removed} duplicate records were removed.</li>
+   <li><b>Names from the lodge rolls.</b> The lodge rolls are the authority for the spelling of a member's name; other spellings are kept as variants.</li>
+   <li><b>Marked by kind.</b> Each line shows whether it comes from an original (●), a cross-reference compiled in the books (${book.toLocaleString()} records), or the author's research notes (${notes.toLocaleString()} records, never counted as primary).</li>
+   <li><b>Settled facts.</b> Facts that were checked against the originals across the series are kept in one register and applied to every book and to this app.</li>
+   <li><b>Held back when unclear.</b> Where the records do not state a man's role plainly, the Atlas holds the placement back from the index and shows why, rather than guess.</li>
+   <li><b>Reviewed additions.</b> Facts added by members, from Schultz, Harper, Dove or other sources, wait in the fact bins until the editor checks them against the cited page. Suggested corrections take the same path.</li>
+   <li><b>Private records excluded.</b> Not included: ${esc(D.meta.excluded)}. The Commissioners' records (RG 42) are a separate program.</li>
+  </ol>
+  <h3 class="h3s">Where the originals are held</h3>
+  <div class="tscroll"><table class="stt"><thead><tr><th>Collection</th><th>Holder</th><th>Documents</th><th>Records</th><th>Access</th></tr></thead><tbody>${rrows}</tbody></table></div>
+
+  <h3 class="h3s" id="ab-disclaimer">Disclaimer</h3>
+  <p>This app is a work of historical research, provided for information and study. It is compiled with care from the sources named in each record, but historical records are incomplete and sometimes contradictory, and readings, dates, identifications of men and locations of sites can be wrong. Nothing here is legal, genealogical, title or property advice, or proof of descent, membership or lineage; consult the original at its holder before relying on any record. Map positions are approximate, drawn from street corners and lots in the records and set on modern streets. Links to the Library of Congress, Chronicling America, the National Archives and Google Maps lead to services run by others, which Market Mojo LLC does not control. Masonic names, titles and emblems belong to their owners and are used only to describe history. <i>Lodges Before 1812</i> is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge, chapter or Masonic body, nor by any archive or library named here. The app is provided "as is," without warranty of any kind; to the extent the law allows, Market Mojo LLC is not liable for any loss arising from its use.</p>
+
+  <h3 class="h3s" id="ab-terms">Terms of use</h3>
+  <p>The compilation, its arrangement, the statistics, the narrative text and the software are © 2026 Market Mojo LLC and Thomas M. Saharsky. A membership gives one person a personal, non-transferable right to search, read and cite the records for research. You may quote individual records with their citations. You may not copy, scrape, resell, republish or redistribute the data set or substantial parts of it, or use it to train or build another database or service, without written permission. Facts you add must be your own work or properly cited; by adding one you allow Market Mojo LLC to review, edit, publish or decline it. Memberships are bought on the website and can be cancelled at any time; access ends at the close of the paid period. These terms are governed by the laws of the United States and the state where Market Mojo LLC is organized.</p>
+
+  <h3 class="h3s" id="ab-privacy">Privacy</h3>
+  <p>The app keeps your name, email address and membership status, and the facts and corrections you add. Card payments are handled by Stripe on the website; card details never reach us. There are no advertisements and no tracking for advertising. Your information is not sold or shared, except with the service providers that run the app (Google Firebase for sign-in and storage, Stripe for payments). You can delete your account and its data at any time from the account deletion page; facts you added that were accepted may be kept without your name.</p>
+
+  <h3 class="h3s" id="ab-credits">Credits</h3>
+  <p><b>Author and archivist:</b> Thomas M. Saharsky. <b>Series editors:</b> Josh Withrow and Brent Morris. <b>With thanks to:</b> John Payne and Linda Mellgren; the U.S. Senate Historical Office; Jordan Zappala; Sandy Hussey, for Christ Church Washington Parish archives; the Stephen J. Ponzillo Jr. Memorial Library and Museum of the Grand Lodge of Maryland; the National Archives; and the Library of Congress, whose Chronicling America newspapers and pictures are linked throughout. <b>Published by</b> Market Mojo LLC.</p>
+
+  <h3 class="h3s" id="ab-contact">Contact and corrections</h3>
+  <p>To report an error, use <b>Suggest a correction</b> on the record or the Atlas, or the fact bins, and name your source; every correction is checked against the original before it changes the data. For permissions and other questions, write to Market Mojo LLC through the website, lodges.mktmojox.com.</p>
+  <p class="stats">Data set of ${esc(D.meta.built)}. App version 1.0.</p>`;
+  wire($("about-out"))}
 function show(v){document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===v));
-  ["index","man","search","build","compare","atlas"].forEach(k=>$("v-"+k).hidden=v!==k);$("filt").hidden=v!=="search";
-  if(v==="build")tb();if(v==="compare")cp();if(v==="atlas")atlas();window.scrollTo({top:0});}
+  ["index","man","search","build","compare","atlas","about"].forEach(k=>$("v-"+k).hidden=v!==k);$("filt").hidden=v!=="search";
+  if(v==="build")tb();if(v==="compare")cp();if(v==="atlas")atlas();if(v==="about")about();window.scrollTo({top:0});}
 /* ---------- Table builder (men named in the returns and rolls) ---------- */
 const C=DATA.census, LN=C.lodges, OC=C.occn, OFF=new Set(C.officer), MUL=new Set(C.multi_men);
 const occOf=i=>C.mocc[i]||[];
@@ -237,7 +277,8 @@ function wire(el){el.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>profi
   el.querySelectorAll("[data-yr]").forEach(b=>b.onclick=()=>{goSearch({y1:b.dataset.yr,y2:b.dataset.yr})});
   el.querySelectorAll("[data-bd]").forEach(b=>b.onclick=()=>goSearch({fb:b.dataset.bd}));
   el.querySelectorAll("[data-dc]").forEach(b=>b.onclick=()=>{goSearch({});docSel=+b.dataset.dc;run()});
-  el.querySelectorAll("[data-ix]").forEach(b=>b.onclick=()=>ix(b.dataset.ix,b.dataset.arg));}
+  el.querySelectorAll("[data-ix]").forEach(b=>b.onclick=()=>ix(b.dataset.ix,b.dataset.arg));
+  el.querySelectorAll("[data-rk]").forEach(b=>{if(b.onclick)return;b.onclick=()=>reader(+b.dataset.rk);b.onkeydown=e=>{if(e.key==="Enter")reader(+b.dataset.rk)}});}
 function goSearch(f){docSel=null;man=null;["q","fo","fl","fs","ft","fb","y1","y2"].forEach(id=>$(id).value=f[id]||"");show("search");run()}
 const CU=(C.culture||[]);
 const CSHORT={"Irish":"Irish by birth or descent","Scottish":"Scottish by birth or descent","German":"Of German descent","French":"French by birth or descent","English":"English by birth",
@@ -293,14 +334,53 @@ function ix(k,arg){if(k==="atlas"){show("atlas");return}IX=k;document.querySelec
     document.querySelectorAll("#ix-btns [data-ix]").forEach(b=>b.classList.remove("on"))}
   if(k==="years")h=`<p class="stats">Men named on the surviving returns and rolls each year. Tap a year for its records.</p><div class="ixbtns">${C.years.map(y=>`<button type="button" data-yr="${y.y}">${y.y}<br><small>${y.t} men</small></button>`).join("")}</div>`;
   if(k==="buildings"){const c={};R.forEach(r=>r.b.forEach(b=>c[b]=(c[b]||0)+1));h=`<div class="ixbtns">${Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([b,n])=>`<button type="button" data-bd="${esc(b)}">${esc(b)}<br><small>${n} records</small></button>`).join("")}</div>`}
+  if(k==="funeral"){const F=funerary(),own=F.filter(x=>x.own),rites=F.filter(x=>!x.own);
+    P.innerHTML=`<h3 class="h3s">Funerary index</h3><p class="stats">The deaths, funerals and burials of the lodge men, from the statements in the records that name the man and the event together. ${own.length} entries for ${new Set(own.map(x=>x.i)).size} men; ${rites.length} more record the funerals they took part in. Tap a source to read the record; primary sources are marked ●.</p>
+     <div class="tscroll" id="fu-own"></div><h3 class="h3s">Funerals and burial grounds they took part in</h3><p class="stats">Pall bearers, processions and Masonic funeral rites, such as General Washington's in December 1799, and the choosing and buying of burial grounds.</p><div class="tscroll" id="fu-rites"></div>`;
+    const cols=["Year","Man","Lodges","Event","Place","The record says","Source"];
+    const row=x=>[{v:x.y||"–",s:x.y||9999},{v:M[x.i].n,h:`<button type="button" class="linkbtn" data-m="${x.i}">${esc(M[x.i].n)}</button>`},{v:M[x.i].l.join("; ")},{v:x.ev},{v:x.pl||"–"},{v:x.t},
+      {v:shortSrc(R[x.k]),h:`<span class="linkbtn" role="button" tabindex="0" data-rk="${x.k}">${PRIM(R[x.k])?"● ":""}${esc(shortSrc(R[x.k]))}</span>`}];
+    sortable("fu-own",cols,own.map(row),0,true);sortable("fu-rites",cols,rites.map(row),0,true);wire(P);return}
   if(k==="docs"){h=Object.entries(DATA.repos).filter(([o,v])=>v.nd).map(([o,v])=>`<h3 class="h3s">${esc(v.name)}</h3><p class="stats">${esc(v.holder||"")} ${esc(v.access||"")}</p><div class="rows">${DATA.docs.map((d,i)=>[d,i]).filter(([d])=>d.o===o).map(([d,i])=>`<button type="button" data-dc="${i}"><span>${esc(d.x.replace(/^.*?, (?=[A-Z][a-z]+ of|Proceedings|Return|Roster)/,""))}</span><span>${d.n}</span></button>`).join("")}</div>`).join("")}
   P.innerHTML=h;wire(P)}
 
+/* ---------- Funerary index: a man's own death, funeral or burial, and the funerals he took part in ---------- */
+const FUN=/\b(died|dies|death|deceased|departed this life|funeral|buried|burial|interred|interment|grave|obituar|the late|pall ?-?bear|tomb|vault|cemetery|burying ground|graveyard|churchyard)\b/i;
+const FPLACE=/congressional cemetery|washington parish burial ground|christ church (burial ground|graveyard|yard)|grave ?yard of christ church|st\.? patrick'?s (burying ground|cemetery|church)|rock creek (church|cemetery)|oak hill|glenwood|mount olivet|holmead'?s|pomona|presbyterian (burying ground|cemetery)|mount vernon|western burying ground|eastern burying ground|family (burying ground|graveyard|vault)|st\.? john'?s church|trinity|old presbyterian|methodist burying ground/i;
+let FCACHE=null;
+function funerary(){if(FCACHE)return FCACHE;const out=new Map();
+  const SPL=t=>String(t).split(/;\s+|[.!][”"’]?\s+(?=[A-Z“])|\s+\|\s+/);
+  const GROUND=/(burying|burial)[ -]ground|square [\d]+[^.;]*burial|for a burying/i;
+  M.forEach((m,i)=>{const sn=snOf(i);if(!sn||sn.length<3)return;const rx=new RegExp("\\b"+sn+"\\b","i");
+    for(const k of [...MP[i].p,...MP[i].x]){const r=R[k];
+      const txt=r.f.filter(([h])=>!/^(source|book note|lodges?|years on rolls|spellings)$/i.test(h)).map(x=>x[1]).join("; ");
+      const f0=norm(r.f[0][1]),own1=r.m.length===1&&(/Person|Research note|Roll/.test(r.k)||/Settled fact|Record|Timeline/.test(r.k)&&f0.includes(sn));
+      for(const c of SPL(txt)){if(!FUN.test(c)||/find a ?grave/i.test(c))continue;
+        if(!(rx.test(norm(c))||own1))continue;
+        const ground=GROUND.test(c)&&!new RegExp(sn+"[^.;]{0,40}(buried|interred)","i").test(norm(c));
+        const rite=ground||/washington|pall ?-?bear|procession|funeral lodge|funeral (service|rites)|burial service|masonic (honou?rs|ceremony)|attended the funeral|assisted|conducted|mourn/i.test(c)&&!new RegExp(sn+"[^.;]{0,25}(died|was buried|death)","i").test(norm(c));
+        const ev=ground?"Burial ground business":rite?"Took part in a funeral":/buried|burial|interred|interment|grave|tomb|vault|cemetery|burying ground|graveyard|churchyard/i.test(c)?"Burial":/funeral/i.test(c)?"Funeral":"Death";
+        const after=c.slice(c.search(FUN));const ym=after.match(/\b(17[5-9]\d|18[0-6]\d)\b/)||c.match(/\b(17[5-9]\d|18[0-6]\d)\b/);const y=ym?+ym[1]:yof2(r);
+        const pl=(c.match(FPLACE)||txt.match(FPLACE)||[""])[0];
+        const key=i+"|"+(ev==="Burial"||ev==="Funeral"||ev==="Death"?"own":ev)+"|"+(y||"");const cur=out.get(key);
+        const item={i,k,y,ev,own:!rite,pl,t:c.replace(/\s+/g," ").trim().slice(0,220),pr:PRIM(r)};
+        if(!cur)out.set(key,item);else{if(!cur.pl&&pl)cur.pl=pl;if(item.pr&&!cur.pr){item.pl=item.pl||cur.pl;out.set(key,item)}}
+        break}}});
+  return FCACHE=[...out.values()].sort((a,b)=>(a.y||9999)-(b.y||9999))}
 /* ---------- Trade table: men in order of first appearance, then every record by date ---------- */
 function sortable(id,cols,rows,sortIx,asc){const el=$(id);let k=sortIx,up=asc;
   const draw=()=>{const rs=[...rows].sort((a,b)=>{const x=a[k].s??a[k].v,y=b[k].s??b[k].v;return (typeof x==="number"&&typeof y==="number"?x-y:String(x).localeCompare(String(y),undefined,{numeric:true}))*(up?1:-1)});
     el.innerHTML=`<table class="stt"><thead><tr>${cols.map((c,i)=>`<th><button type="button" class="linkbtn sorth" data-k="${i}" aria-sort="${i===k?(up?"ascending":"descending"):"none"}">${esc(c)}${i===k?(up?" ▲":" ▼"):""}</button></th>`).join("")}</tr></thead><tbody>${rs.map(r=>`<tr>${r.map(c=>`<td>${c.h??esc(c.v)}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
     el.querySelectorAll(".sorth").forEach(b=>b.onclick=()=>{const i=+b.dataset.k;up=i===k?!up:true;k=i;draw()});wire(el)};draw()}
+/* the names of each calling by period: Dublin guild 1564, Moxon 1703, the Federal City records, today's federal series */
+function termsHTML(t){const T=(C.terms||[]).filter(x=>x.group===t);if(!T.length)return "";
+  return `<details class="terms" open><summary><b>Names of the calling by period</b> (${T.length})</summary><div class="tscroll"><table class="stt"><thead><tr><th>Calling</th><th>Dublin guild, 1564</th><th>Moxon, 1703</th><th>Encyclopédie plates, 1762–1772</th><th>Federal City records, 1791–1800</th><th>Today</th></tr></thead><tbody>
+   ${T.map(x=>`<tr><td><b>${esc(x.calling)}</b>${x.note?`<br><small class="stats">${esc(x.note)}</small>`:""}</td><td>${esc(x.dublin||"–")}</td>
+    <td>${x.moxon?`${esc(x.moxon)}<br><small class="stats">${esc(x.moxon_cite.replace(/^Joseph Moxon, Mechanick Exercises[^)]*\), /,"Moxon, "))}</small>`:"–"}</td>
+    <td>${x.enc?`<a href="${esc(x.enc_url)}" target="_blank" rel="noopener">${esc(x.enc)} ↗</a>`:"–"}</td>
+    <td>${x.city?`${esc(x.city)}<br><small class="stats">${esc(x.city_cite)}</small>`:"–"}</td>
+    <td>${esc(x.fws)}${x.fws_status&&x.fws_status!=="Confirmed"?` <small class="stats">(${esc(x.fws_status.toLowerCase())})</small>`:""}<br><small class="stats">${esc(x.soc)}</small></td></tr>`).join("")}</tbody></table></div>
+   <p class="stats">Sources: Joseph Moxon, <i>Mechanick Exercises: or, the Doctrine of Handy-Works</i> (London, 1703), printed pages; Proceedings of the Commissioners and the Treasury Office estimate, RG 42, National Archives; Diderot and d'Alembert, <i>Encyclopédie</i>, plates (Paris, 1762–1772), plate sets by title at the University of Michigan's Collaborative Translation Project; federal wage-grade series of the U.S. Office of Personnel Management; Standard Occupational Classification of the Bureau of Labor Statistics. Today's titles are the nearest equivalents, not one-to-one.</p></details>`}
 function tradeTable(t){
   const recs=R.map((r,k)=>[r,k]).filter(([r])=>r.tr.includes(t));
   const ci=OC.indexOf(t),men=new Map();
@@ -319,6 +399,7 @@ function tradeTable(t){
   $("ix-panel").innerHTML=`<button class="linkbtn back" type="button" data-ix="trades">‹ All trades</button>
   <h3 class="h3s">${esc(t)}</h3>
   <div class="statgrid"><div><b>${men.size}</b><span>men</span></div><div><b>${recs.length}</b><span>records</span></div><div><b>${docs.size}</b><span>original documents</span></div><div><b>${recs.length-recs.filter(([r])=>PRIM(r)).length}</b><span>cross-references</span></div></div>
+  ${termsHTML(t)}
   <p class="stats">Men in this trade, by first appearance. A man is here if the rolls give him this calling or a record of this trade names him. Tap a column to sort; tap a name for his profile.</p>
   <div class="tscroll" id="tt-men"></div>
   <h3 class="h3s">Every record, by date</h3>
@@ -416,8 +497,11 @@ function lifeHTML(i){const ev=lifeEvents(i);const by={};ev.forEach(e=>(by[e.ph]=
   const shown=ev.filter(e=>!LPH||e.ph===LPH);
   return `<h2 class="sec" style="font-size:1.35rem">Life at a glance</h2>
   <div class="phases"><button type="button" data-lph="" class="${LPH?"":"on"}">All<small>${ev.length} events</small></button>${PHASES.filter(p=>by[p]).map(p=>`<button type="button" data-lph="${p}" class="${LPH===p?"on":""}">${svgI(ICP[p],p)}${p}<small>${by[p].length} · ${span(by[p])}</small></button>`).join("")}</div>
+  <div class="legend" role="note" aria-label="What the icons mean"><div class="lg-row"><span class="lg-h">Phase of life</span>${PHASES.map(p=>`<span class="lg">${svgI(ICP[p],p)}${p}</span>`).join("")}</div>
+   <div class="lg-row"><span class="lg-h">Kind of source</span>${Object.keys(ICK).map(k=>`<span class="lg">${svgI(ICK[k],KNAME[k])}${KNAME[k]}</span>`).join("")}</div>
+   <div class="lg-tip">Tap a line to read the record.</div></div>
   <ol class="tl">${shown.map(e=>`<li tabindex="0" role="button" data-rk="${e.k}" aria-label="Open: ${esc(e.t)}"><span class="yr">${e.y||"n.d."}</span><span class="icons">${svgI(ICP[e.ph],e.ph)}${svgI(ICK[e.kd],KNAME[e.kd])}</span><span class="ph">${e.ph}</span>${esc(e.t)}<span class="src">${esc(e.src)}</span></li>`).join("")}</ol>
-  <p class="stats">Tap a line to read the record. Icons: ${PHASES.map(p=>svgI(ICP[p],p)+" "+p).join(" · ")} · ${Object.keys(ICK).map(k=>svgI(ICK[k],KNAME[k])+" "+KNAME[k]).join(" · ")}</p>`}
+`}
 
 
 /* ---------- Job site: who stood where on each building, from the records ---------- */
@@ -540,6 +624,8 @@ const CREEK=[[38.9160,-77.0525],[38.9100,-77.0555],[38.9030,-77.0585]];
 const TIBER=[[38.8893,-77.0385],[38.8905,-77.0250],[38.8920,-77.0130]];
 const PX=([la,lo])=>[(lo+77.078)*6400,(38.920-la)*6400*1.28];
 let ATB=null;
+/* the site on the live Google map (view, or directions from where you stand) */
+const gmaps=B=>B.ll?`<div class="gm"><a class="loc" href="https://www.google.com/maps/search/?api=1&query=${B.ll[0]},${B.ll[1]}" target="_blank" rel="noopener">See the site on Google Maps ↗</a><a class="loc" href="https://www.google.com/maps/dir/?api=1&destination=${B.ll[0]},${B.ll[1]}&travelmode=walking" target="_blank" rel="noopener">Walk there ↗</a></div><p class="stats" style="margin:4px 0 0">Today: ${B.ll[0].toFixed(4)}, ${B.ll[1].toFixed(4)}. Positions are street corners and lots from the records on modern streets.</p>`:"";
 /* close-up street plan for the lodge halls (modern street lines, approximate) */
 function hallMap(cur){const X=lo=>(lo+77.0345)*20300,Y=la=>(38.9015-la)*20300*1.28;
   const NS=[["15th",-77.0335],["14th",-77.0319],["13th",-77.0296],["12th",-77.0283],["11th",-77.0268],["10th",-77.0257],["9th",-77.0242],["8th",-77.0229],["7th",-77.0219],["6th",-77.0200],["4½",-77.0178]];
@@ -573,7 +659,7 @@ function atlas(){const names=Object.keys(BLD).filter(b=>R.some(r=>r.b.includes(b
    ${Object.keys(tc).length?`<div class="k">Their callings</div><div>${Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)} (${v})`).join(", ")}</div>`:""}
    <div class="k">The men</div><div>${men.length?men.slice(0,40).map(([i,n])=>`<button type="button" class="linkbtn" data-m="${i}">${esc(M[i].n)}</button>`).join(", "):"No lodge man is named in these records."}</div>
    <div><button type="button" class="copy" data-bd="${esc(ATB)}">All ${st.recs.length} records</button></div>
-   <a class="loc" href="https://www.loc.gov/photos/?q=${encodeURIComponent(B.q)}" target="_blank" rel="noopener">Pictures at the Library of Congress ↗</a></div>${B.hall?hallMap(ATB):jobsiteHTML(ATB)}`;
+   <a class="loc" href="https://www.loc.gov/photos/?q=${encodeURIComponent(B.q)}" target="_blank" rel="noopener">Pictures at the Library of Congress ↗</a>${gmaps(B)}</div>${B.hall?hallMap(ATB):jobsiteHTML(ATB)}`;
   wire($("at-info"));$("at-info").querySelectorAll("[data-rk]").forEach(e=>{e.onclick=()=>reader(+e.dataset.rk);e.onkeydown=k=>{if(k.key==="Enter")reader(+e.dataset.rk)}});
   $("at-info").querySelectorAll(".hallmap [data-bd2]").forEach(g=>{const go=()=>{ATB=g.dataset.bd2;atlas()};g.onclick=go;g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
   $("at-info").querySelectorAll("[data-sug]").forEach(e=>e.onclick=()=>suggest(+e.dataset.sug,ATB,e.dataset.tier));
