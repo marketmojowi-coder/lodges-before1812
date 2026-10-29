@@ -1,16 +1,17 @@
 // Fact bins: members add facts (pending); editors accept or reject them. Counts are live.
-import { auth, db, role } from "./firebase-init.js";
+import { auth, db, role, memberNumber } from "./firebase-init.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-let bins = [], facts = [], cur = "", editor = false, me = null, sources = [], picked = new Set();
+let bins = [], facts = [], cur = "", editor = false, me = null, sources = [], picked = new Set(), MEMBER_NO = "";
 
 onAuthStateChanged(auth, async user => {
   if (!user) { location.href = "index.html"; return; }
   const r = await role(user);
   if (!r.member) { location.href = "index.html"; return; }
   me = user; editor = r.editor;
+  try { MEMBER_NO = await memberNumber(user); } catch (_) {}
   $("who").textContent = `Signed in as ${user.email || user.displayName}${editor ? " (editor)" : ""}.`;
   onSnapshot(collection(db, "sources"), s => { sources = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
     $("a-src").innerHTML = `<option value="">Another source (type the citation below)</option>` + sources.map(x => `<option value="${x.id}">${esc(x.short)}: ${esc(x.about || "")}</option>`).join(""); });
@@ -38,7 +39,7 @@ function draw() {
   const list = facts.filter(f => (!cur || f.bin === cur) && (!st || f.status === st)).sort((a, b) => (b.created?.seconds || 0) - (a.created?.seconds || 0));
   $("facts").innerHTML = list.length ? list.map(f => `<div class="fact"><span class="st ${f.status}">${f.status}</span>
     <p><b>${esc(f.man)}</b>${f.lodge ? " · " + esc(f.lodge) : ""}${f.year ? " · " + esc(f.year) : ""}</p><p>${esc(f.claim)}</p>
-    <p class="tally"><b>Source:</b> ${esc(f.citation)}. <b>Held at:</b> ${esc(f.held_at)}. Added by ${esc(f.by_name || f.by)}${f.agent ? " (agent)" : ""}.</p>
+    <p class="tally"><b>Source:</b> ${esc(f.citation)}. <b>Held at:</b> ${esc(f.held_at)}. Added by ${editor || f.by === me.uid ? esc(f.by_name || "a member") : "a member"}${f.agent ? " (agent)" : ""}.</p>
     ${f.review_note ? `<p class="tally"><b>Review:</b> ${esc(f.review_note)}</p>` : ""}
     ${editor && f.status === "pending" ? `<label class="tally"><input type="checkbox" data-pick="${f.id}" ${picked.has(f.id) ? "checked" : ""}> select</label><div class="acts"><button data-a="accepted" data-f="${f.id}">Accept</button><button data-a="rejected" data-f="${f.id}">Reject</button></div>` : ""}</div>`).join("")
     : `<p class="tally">No facts here yet.</p>`;
@@ -80,7 +81,7 @@ $("bulk").onsubmit = async e => { e.preventDefault(); const rows = parseCSV(awai
   for (const [j, r] of rows.entries()) { const v = k => (r[h.indexOf(k)] || "").trim(); const s = srcOf(v("source").toLowerCase());
     if (!s || !v("man") || !v("claim") || !v("page") || !bins.some(b => b.id === v("bin")) || (v("year") && !/^1[78]\d\d$/.test(v("year")))) { bad.push(j + 2); continue; }
     batch.set(doc(collection(db, "facts")), { bin: v("bin"), source: s.id, volume: v("volume"), page: v("page"), man: v("man"), lodge: v("lodge"), year: v("year"), claim: v("claim"),
-      citation: oxford(s, v("volume"), v("page")), held_at: s.held_at, status: "pending", by: me.uid, by_name: me.email || me.displayName, agent: false, created: serverTimestamp() });
+      citation: oxford(s, v("volume"), v("page")), held_at: s.held_at, status: "pending", by: me.uid, by_name: MEMBER_NO, agent: false, created: serverTimestamp() });
     ok++; if (++n === 400) { await batch.commit(); batch = writeBatch(db); n = 0; } }
   if (n) await batch.commit();
   $("b-msg").textContent = `${ok} facts are in the bins for review.${bad.length ? ` Not added (check bin, source, page, man, fact, year): lines ${bad.slice(0, 20).join(", ")}${bad.length > 20 ? "…" : ""}.` : ""}`; };
@@ -89,7 +90,7 @@ $("add").onsubmit = async e => {
   const v = id => $(id).value.trim();
   if (v("a-year") && !/^1[78]\d\d$/.test(v("a-year"))) { $("a-msg").textContent = "Year must be four digits, e.g. 1795."; return; }
   await addDoc(collection(db, "facts"), { source: v("a-src"), volume: v("a-src") ? v("a-vol") : "", page: v("a-src") ? v("a-page") : "", bin: v("a-bin"), man: v("a-man"), lodge: v("a-lodge"), year: v("a-year"), claim: v("a-claim"),
-    citation: v("a-cite"), held_at: v("a-held"), status: "pending", by: me.uid, by_name: me.email || me.displayName, agent: false,
+    citation: v("a-cite"), held_at: v("a-held"), status: "pending", by: me.uid, by_name: MEMBER_NO, agent: false,
     created: serverTimestamp() });
   $("add").reset(); $("a-msg").textContent = "In the bin. An editor will check it against the source.";
 };

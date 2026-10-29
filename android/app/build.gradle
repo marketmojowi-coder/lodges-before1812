@@ -1,23 +1,23 @@
-// Lodges Before 1812: Android app (Trusted Web Activity around the member site). Market Mojo LLC.
+// Civic Vault: Android app (Trusted Web Activity around the member site). Market Mojo LLC.
 plugins { id 'com.android.application' }
 
 def HOST = 'lodges.mktmojox.com'
 def KS = System.getenv('KEYSTORE_FILE')
 
 android {
-    namespace 'com.marketmojo.lodges1812'
+    namespace 'com.marketmojo.civicvault'
     compileSdk 36
     defaultConfig {
-        applicationId 'com.marketmojo.lodges1812'
+        applicationId 'com.marketmojo.civicvault'
         minSdk 21
         targetSdk 36
         versionCode 2
         versionName '1.0.1'
-        resValue 'string', 'appName', 'Lodges Before 1812'
-        resValue 'string', 'launcherName', 'Lodges 1812'
+        resValue 'string', 'appName', 'Civic Vault'
+        resValue 'string', 'launcherName', 'Civic Vault'
         resValue 'string', 'hostName', HOST
         resValue 'string', 'launchUrl', "https://${HOST}/?source=twa"
-        resValue 'string', 'providerAuthority', 'com.marketmojo.lodges1812.fileprovider'
+        resValue 'string', 'providerAuthority', 'com.marketmojo.civicvault.fileprovider'
         resValue 'color', 'colorPrimary', '#14243A'
         resValue 'color', 'navigationColor', '#14243A'
         resValue 'color', 'backgroundColor', '#14243A'
@@ -34,7 +34,9 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
             if (KS) signingConfig signingConfigs.release
         }
     }

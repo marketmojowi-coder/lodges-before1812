@@ -1,4 +1,4 @@
-# Lodges Before 1812: paid member site (Firebase + Stripe)
+# Civic Vault: paid member site (Firebase + Stripe)
 
 Seller: Market Mojo LLC. Address: lodges.mktmojox.com. Cost at this size: Firebase free (Spark), then pay-as-you-go (Blaze) is required by the Stripe extension, typically under $1/month here; Stripe about 2.9% + 30c per payment.
 
@@ -11,9 +11,9 @@ Seller: Market Mojo LLC. Address: lodges.mktmojox.com. Cost at this size: Fireba
 
 ## 2. Stripe (Market Mojo LLC)
 1. stripe.com > create the account under **Market Mojo LLC** (EIN and bank account from your SAM.gov registration).
-2. Products > Add product "Lodges Before 1812 membership", with a recurring price (e.g. monthly and yearly).
+2. Products > Add product "Civic Vault membership", with a recurring price (e.g. monthly and yearly).
 3. On the product, add metadata **firebaseRole = member**. This is what unlocks the data.
-4. Copy the price id (`price_...`) into `firebase/public/firebase-init.js` as MEMBER_PRICE.
+4. On the membership product in Stripe, add the metadata `firebaseRole` = `member`. The app reads the active price from the Stripe extension's copy in Firestore (`products`), so prices changed in Stripe reach the app with no code change. (MEMBER_PRICE in `firebase-init.js` is only a fallback.)
 
 ## 3. Stripe extension in Firebase
 Extensions > install **Run Payments with Stripe** (invertase/firestore-stripe-payments):
@@ -59,3 +59,9 @@ Hosting > Add custom domain > `lodges.mktmojox.com`. Firebase shows two DNS reco
 3. You (editor) review in the same page: Accept, Reject with a note, or select many and **Accept selected**. Only accepted facts leave the bins.
 4. Publish: `python3 admin/export_accepted.py <grand-lodge-app>/contributions/accepted_facts.csv`, rebuild (`python3 build_app.py`), then `python3 admin/upload_data.py <grand-lodge-app>/app_data.json`.
    Accepted facts count in the statistics as printed sources: one document per volume, the page as its locator, each linked to the man named. Facts citing the lodge's minute books or ledger are never ingested.
+
+## Sign-in and security (October 29, 2026)
+- Firebase Auth: turn on Google and Email/Password (with Email link). Turn on email enumeration protection and a password policy of at least 15 characters.
+- Members get a member number on first sign-in after paying (Firestore `members/{uid}`); only the member and editors can read it.
+- Turn on App Check (Play Integrity for Android, reCAPTCHA Enterprise for the web) and enforce it for Firestore and Storage.
+- Security checklist against the NIST Cybersecurity Framework: `firebase/SECURITY.md`.

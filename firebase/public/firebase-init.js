@@ -2,15 +2,52 @@
 // so no keys live in this code.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, query, where, getDocs, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 const cfg = await (await fetch("/__/firebase/init.json")).json();
 export const app = initializeApp(cfg);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
-// Price id of the membership plan in Stripe (set after creating the product; see SETUP.md).
+// The membership price comes from Stripe itself: the Stripe extension copies every active product and price into
+// Firestore (products/{id}/prices/{id}). The product whose metadata says firebaseRole = "member" is the membership,
+// so a price changed in the Stripe dashboard reaches the app with no code change. MEMBER_PRICE is only a fallback.
 export const MEMBER_PRICE = "price_REPLACE_ME";
+export async function memberPrice() {
+  try {
+    const prods = await getDocs(query(collection(db, "products"), where("active", "==", true), where("role", "==", "member")));
+    for (const p of prods.docs) {
+      const prices = await getDocs(query(collection(db, "products", p.id, "prices"), where("active", "==", true)));
+      const pr = prices.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.unit_amount || 0) - (b.unit_amount || 0))[0];
+      if (pr) return { id: pr.id, product: p.data().name || "Membership", amount: pr.unit_amount, currency: pr.currency, interval: pr.interval || pr.recurring?.interval || "" };
+    }
+  } catch (_) {}
+  return MEMBER_PRICE.startsWith("price_") && !MEMBER_PRICE.includes("REPLACE") ? { id: MEMBER_PRICE, product: "Membership" } : null;
+}
+export const priceText = p => !p || p.amount == null ? "" :
+  (p.amount / 100).toLocaleString(undefined, { style: "currency", currency: (p.currency || "usd").toUpperCase() }) + (p.interval ? ` a ${p.interval}` : "");
+
+// Member number: a random number made by the browser's cryptographic generator (100 bits), written once.
+// The database rules let only the member and the editors read it; nobody can change it afterwards.
+const B32 = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";   // Crockford base 32: no I, L, O or U
+export function newMemberNumber() {
+  const b = crypto.getRandomValues(new Uint8Array(20));
+  const c = [...b].map(x => B32[x & 31]).join("");
+  return "CV-" + c.match(/.{5}/g).join("-");
+}
+export async function memberNumber(user) {
+  const ref_ = doc(db, "members", user.uid);
+  const snap = await getDoc(ref_);
+  if (snap.exists()) return snap.data().no;
+  const no = newMemberNumber();
+  await setDoc(ref_, { no, created: serverTimestamp() });
+  return no;
+}
+// A strong password, made the same way, for members who want to sign in with email and password.
+export function newPassword() {
+  const b = crypto.getRandomValues(new Uint8Array(20));
+  return [...b].map(x => B32[x & 31]).join("").match(/.{5}/g).join("-");
+}
 // A member is anyone with an active Stripe subscription (claim set by the Stripe extension) or an editor.
 export async function role(user) {
   const t = await user.getIdTokenResult(true);

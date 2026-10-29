@@ -1,5 +1,5 @@
 name: Android app bundle
-# Builds the Play Store bundle (.aab) and a test APK for Lodges Before 1812.
+# Builds the Play Store bundle (.aab) and a test APK for Civic Vault.
 # Signing: add repository secrets ANDROID_KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, KEY_PASSWORD
 # (the upload key). Without them the bundle is built unsigned and the APK is a debug build for testing.
 on:
@@ -37,7 +37,7 @@ jobs:
         run: gradle --no-daemon bundleRelease assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: lodges-before-1812-android
+          name: civic-vault-android
           path: |
             android/app/build/outputs/bundle/release/*.aab
             android/app/build/outputs/apk/debug/*.apk

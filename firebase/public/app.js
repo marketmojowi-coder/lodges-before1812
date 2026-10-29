@@ -10,9 +10,7 @@ let man=null, shown=25, last=[], docSel=null;
 function opts(sel,vals){[...new Set(vals)].filter(Boolean).sort().forEach(v=>{const o=document.createElement("option");o.value=o.textContent=v;sel.appendChild(o)})}
 DATA.lodges.forEach(l=>{const o=document.createElement("option");o.value=o.textContent=l.n;$("fl").appendChild(o)});
 opts($("fs"),R.map(r=>r.s));const RPS=DATA.repos;Object.entries(RPS).forEach(([k,v])=>{if(!v.n)return;const o=document.createElement("option");o.value=k;o.textContent=`${v.name} (${v.n})`;$("fo").appendChild(o)});opts($("ft"),R.flatMap(r=>r.tr));opts($("fb"),R.flatMap(r=>r.b));
-$("foot").innerHTML=`<div class="fstat">${DATA.meta.count.toLocaleString()} records, ${DATA.meta.linked.toLocaleString()} linked to a named man; ${M.length} men; ${DATA.docs.length} original documents in ${Object.values(DATA.repos).filter(v=>v.nd).length} collections. Data set of ${esc(DATA.meta.built)}.</div>
- <nav class="flinks" aria-label="About this app"><button type="button" class="linkbtn" data-ab="sources">Sources and method</button><button type="button" class="linkbtn" data-ab="disclaimer">Disclaimer</button><button type="button" class="linkbtn" data-ab="terms">Terms of use</button><button type="button" class="linkbtn" data-ab="privacy">Privacy</button><button type="button" class="linkbtn" data-ab="credits">Credits</button><button type="button" class="linkbtn" data-ab="contact">Contact</button></nav>
- <div class="fco">© 2026 Market Mojo LLC. All rights reserved. <i>Lodges Before 1812</i> is an independent historical research publication drawn from the book series by Thomas M. Saharsky. It is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge or Masonic body.</div>`;
+$("foot").innerHTML=`<nav class="flinks" aria-label="Legal and sources"><span class="fco">© 2026 Market Mojo LLC</span><button type="button" class="linkbtn" data-ab="sources">Sources</button><button type="button" class="linkbtn" data-ab="disclaimer">Disclaimer</button><button type="button" class="linkbtn" data-ab="terms">Terms</button><button type="button" class="linkbtn" data-ab="privacy">Privacy</button><button type="button" class="linkbtn" data-ab="contact">Contact</button></nav>`;
 document.addEventListener("click",e=>{const b=e.target.closest("[data-ab]");if(!b)return;show("about");setTimeout(()=>{const el=$("ab-"+b.dataset.ab);if(el)el.scrollIntoView({block:"start"})},30)});
 
 function terms(q){const t=[];q.replace(/"([^"]+)"|(\S+)/g,(m,a,b)=>{const x=norm(a||b).replace(/^[^\w']+|[^\w']+$/g,"");if(x)t.push(x)});return t}
@@ -100,6 +98,12 @@ function orig(r){const p=DATA.repos[r.o];if(!p)return"";
   if(r.d!=null){const d=DATA.docs[r.d];return `<div class="orig"><b>Original:</b> ${ct(d.x.replace(/\.$/,""))}${r.dl?", "+esc(r.dl):""}. <span class="acc">${esc(p.access)}</span> <button class="linkbtn" type="button" data-d="${r.d}">All ${d.n} records from this document</button></div>`}
   if(r.o==="BOOK")return `<div class="orig"><b>Original:</b> <span class="acc">${esc(p.access)}</span></div>`;
   return `<div class="orig"><b>Original:</b> ${ct(r.od&&r.od!==r.c?r.od:p.cite||r.od)}${r.oh?`. <b>Held at:</b> ${esc(r.oh)}`:""}. <span class="acc">${esc(p.access)}</span></div>`}
+function fullCite(r){const F=Object.fromEntries(r.f);const date=F["Issue date"]||F["Date"]||(yof2(r)||"");const men=r.m.slice(0,6).map(i=>M[i].n).join(", ")+(r.m.length>6?" and others":"");
+  const ox=r.d!=null?DATA.docs[r.d].x.replace(/\.$/,"")+(r.dl?", "+r.dl:""):(PRIM(r)?(r.od||"").replace(/\.$/,""):"");const held=ox?heldAt(r).replace(/\.$/,""):"";
+  const book=r.o==="AUTHOR_WB"?r.c.replace(/\.$/,""):(bookRefs([r.c])||r.c).replace(/\.$/,"");
+  const today=new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+  return [`“${r.o==="NEWS"?r.f[0][1]:r.t}”${date?", "+date:""}`,men?`names ${men}`:"",ox?`original: ${ox}`:"",held?held.charAt(0).toLowerCase()+held.slice(1):"",book&&book!==ox?`printed in ${book}`:"",
+    `Civic Vault, 1700s–1812 (Market Mojo LLC, 2026), record ${r.k.toLowerCase()}, accessed ${today}`].filter(Boolean).join("; ")+"."}
 function citeText(r){const p=DATA.repos[r.o];let t=r.c.replace(/\.$/,"");if(r.d!=null)return t+". Original: "+DATA.docs[r.d].x.replace(/\.$/,"")+(r.dl?", "+r.dl:"")+".";if(r.o!=="BOOK"&&r.od&&!r.c.includes(r.od))t+=`. Original: ${r.od}${r.oh?", "+r.oh:""}`;return t+"."}
 function pick(i){profile(i)}
 function count(a){const c={};a.forEach(v=>c[v]=(c[v]||0)+1);return Object.entries(c).sort((x,y)=>y[1]-x[1])}
@@ -111,7 +115,7 @@ function side(T,q){
   let i=man; if(i===null&&nq.length>2){const k=M.findIndex(m=>m.keys.some(x=>x===nq||(nq.includes(" ")&&x.includes(nq))||x.split(/[\s,]+/).includes(nq)));if(k>=0)i=k}
   if(i!==null){const m=M[i];
     h+=`<div class="card"><h2>${esc(m.n)}</h2><div>${esc(m.l.join("; "))}</div>
-    ${m.tg?`<div class="k">Trade</div><div>${esc(m.tg)}${m.tr?" ("+esc(m.tr)+")":""}</div>`:""}
+    ${m.tr?`<div class="k">Calling</div><div>${esc(m.tr)}</div>`:""}${m.tg?`<div class="k">Trade group</div><div>${esc(m.tg)}</div>`:""}
     ${m.yr?`<div class="k">Years on the rolls</div><div>${esc(m.yr)}</div>`:""}
     ${(()=>{const S=service(i);const o=[...S.byOff].map(([a,ys])=>`${a} ${yrs(ys)}`).join("; ");return o?`<div class="k">Offices</div><div>${esc(o)}</div>`:""})()}
     ${m.fx?`<div class="k">Settled facts</div><ul>${m.fx.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>`:""}
@@ -146,7 +150,8 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>show(b.dataset.v));
 function about(){const D=DATA,RP=Object.entries(D.repos);const prim=R.filter(PRIM).length,notes=R.filter(r=>r.o==="AUTHOR_WB").length,book=R.filter(r=>r.o==="BOOK").length;
   const rrows=RP.filter(([o,v])=>v.nd||o==="AUTHOR_WB"||o==="BOOK").map(([o,v])=>{const n=R.filter(r=>r.o===o).length;return `<tr><td><b>${esc(v.name)}</b></td><td>${esc(v.holder||"Named in each record")}</td><td>${v.nd||"–"}</td><td>${n.toLocaleString()}</td><td>${esc(v.access||"")}</td></tr>`}).join("");
   $("about-out").innerHTML=`<h2 class="sec">About and sources</h2>
-  <p class="lead"><i>Lodges Before 1812</i> brings together the records of the Masonic lodges of George-Town and the City of Washington from 1789 to 1811: the men, their trades, the buildings they raised and the city they served. It is the research data set behind the book series by Thomas M. Saharsky, published by Market Mojo LLC.</p>
+  <p class="lead"><i>Civic Vault, 1700s–1812</i> brings together the records of the Masonic lodges of George-Town and the City of Washington, 1789–1811: the men, their trades, the buildings they raised and the city they served. It is the research data set behind the book series by Thomas M. Saharsky, published by Market Mojo LLC. Search by man, lodge, year, trade or building; every record names its source and where the original is held.</p>
+  <p class="stats">${D.meta.count.toLocaleString()} records, ${D.meta.linked.toLocaleString()} linked to a named man; ${M.length} men; ${D.docs.length} original documents in ${Object.values(D.repos).filter(v=>v.nd).length} collections. Data set of ${esc(D.meta.built)}.</p>
   <div class="statgrid"><div><b>${D.meta.count.toLocaleString()}</b><span>records</span></div><div><b>${M.length}</b><span>men</span></div><div><b>${D.docs.length}</b><span>original documents</span></div><div><b>${prim.toLocaleString()}</b><span>records from originals</span></div></div>
 
   <h3 class="h3s" id="ab-sources">Sources and method</h3>
@@ -164,10 +169,10 @@ function about(){const D=DATA,RP=Object.entries(D.repos);const prim=R.filter(PRI
   <div class="tscroll"><table class="stt"><thead><tr><th>Collection</th><th>Holder</th><th>Documents</th><th>Records</th><th>Access</th></tr></thead><tbody>${rrows}</tbody></table></div>
 
   <h3 class="h3s" id="ab-disclaimer">Disclaimer</h3>
-  <p>This app is a work of historical research, provided for information and study. It is compiled with care from the sources named in each record, but historical records are incomplete and sometimes contradictory, and readings, dates, identifications of men and locations of sites can be wrong. Nothing here is legal, genealogical, title or property advice, or proof of descent, membership or lineage; consult the original at its holder before relying on any record. Map positions are approximate, drawn from street corners and lots in the records and set on modern streets. Links to the Library of Congress, Chronicling America, the National Archives and Google Maps lead to services run by others, which Market Mojo LLC does not control. Masonic names, titles and emblems belong to their owners and are used only to describe history. <i>Lodges Before 1812</i> is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge, chapter or Masonic body, nor by any archive or library named here. The app is provided "as is," without warranty of any kind; to the extent the law allows, Market Mojo LLC is not liable for any loss arising from its use.</p>
+  <p>This app is a work of historical research, provided for information and study. It is compiled with care from the sources named in each record, but historical records are incomplete and sometimes contradictory, and readings, dates, identifications of men and locations of sites can be wrong. Nothing here is legal, genealogical, title or property advice, or proof of descent, membership or lineage; consult the original at its holder before relying on any record. Map positions are approximate, drawn from street corners and lots in the records and set on modern streets. Links to the Library of Congress, Chronicling America, the National Archives and Google Maps lead to services run by others, which Market Mojo LLC does not control. Masonic names, titles and emblems belong to their owners and are used only to describe history. <i>Civic Vault</i> is an independent historical research publication drawn from the book series by Thomas M. Saharsky. It is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge, chapter or Masonic body, nor by any archive or library named here. The app is provided "as is," without warranty of any kind; to the extent the law allows, Market Mojo LLC is not liable for any loss arising from its use.</p>
 
   <h3 class="h3s" id="ab-terms">Terms of use</h3>
-  <p>The compilation, its arrangement, the statistics, the narrative text and the software are © 2026 Market Mojo LLC and Thomas M. Saharsky. A membership gives one person a personal, non-transferable right to search, read and cite the records for research. You may quote individual records with their citations. You may not copy, scrape, resell, republish or redistribute the data set or substantial parts of it, or use it to train or build another database or service, without written permission. Facts you add must be your own work or properly cited; by adding one you allow Market Mojo LLC to review, edit, publish or decline it. Memberships are bought on the website and can be cancelled at any time; access ends at the close of the paid period. These terms are governed by the laws of the United States and the state where Market Mojo LLC is organized.</p>
+  <p>The compilation, its arrangement, the statistics, the narrative text and the software are © 2026 Market Mojo LLC and Thomas M. Saharsky. A membership gives one person a personal, non-transferable right to search, read and cite the records for research. You may quote individual records with their citations. You may not copy, scrape, resell, republish or redistribute the data set or substantial parts of it, or use it to train or build another database or service, without written permission. Facts you add must be your own work or properly cited; by adding one you allow Market Mojo LLC to review, edit, publish or decline it. Memberships are for people 18 or older, are bought on the website and can be cancelled at any time; access ends at the close of the paid period. These terms are governed by the laws of the United States and the state where Market Mojo LLC is organized.</p>
 
   <h3 class="h3s" id="ab-privacy">Privacy</h3>
   <p>The app keeps your name, email address and membership status, and the facts and corrections you add. Card payments are handled by Stripe on the website; card details never reach us. There are no advertisements and no tracking for advertising. Your information is not sold or shared, except with the service providers that run the app (Google Firebase for sign-in and storage, Stripe for payments). You can delete your account and its data at any time from the account deletion page; facts you added that were accepted may be kept without your name.</p>
@@ -243,7 +248,7 @@ $("tb-csv").onclick=()=>{if(!TB)return;const q=v=>`"${String(v).replace(/"/g,'""
   const lines=[[DIMS[TB.r].n,...(TB.c?TB.cols:[]),"All"].map(q).join(",")];
   for(const a of TB.rows)lines.push([a,...(TB.c?TB.cols.map(b=>TB.val(TB.cells.get(a+"\u0001"+b))):[]),TB.val(TB.rowT.get(a))].map(q).join(","));
   lines.push(["All",...(TB.c?TB.cols.map(b=>TB.val(TB.colT.get(b))):[]),TB.total].map(q).join(","));
-  lines.push("");lines.push(q("Lodges Before 1812. "+(TB.m==="men"?"Men":"Man-years")+" named in the surviving returns and rolls. Sources: Grand Lodge of Maryland returns (Stephen J. Ponzillo Jr. Memorial Library and Museum) and the series lodge rolls (Thomas M. Saharsky, 2026)."));
+  lines.push("");lines.push(q("Civic Vault. "+(TB.m==="men"?"Men":"Man-years")+" named in the surviving returns and rolls. Sources: Grand Lodge of Maryland returns (Stephen J. Ponzillo Jr. Memorial Library and Museum) and the series lodge rolls (Thomas M. Saharsky, 2026)."));
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/csv"}));a.download="lodges_before_1812_table.csv";a.click();};
 $("tb-link").onclick=()=>{const p=new URLSearchParams({t:1,m:$("tb-m").value,r:$("tb-r").value,c:$("tb-c").value,l:$("tb-l").value,o:$("tb-o").value,y1:$("tb-y1").value,y2:$("tb-y2").value});
   const u=location.href.split("#")[0]+"#"+p;try{history.replaceState(null,"","#"+p)}catch(_){}
@@ -407,9 +412,9 @@ function tradeTable(t){
   <div class="tscroll" id="tt-recs"></div>
   <button class="copy" type="button" id="tt-csv">Download CSV</button>`;
   wire($("ix-panel"));
-  sortable("tt-men",["First year","Man","Last year","Trade as written","Lodges","Records","Originals","Basis"],mrows,0,true);
+  sortable("tt-men",["First year","Man","Last year","Calling","Lodges","Records","Originals","Basis"],mrows,0,true);
   sortable("tt-recs",["Year","Record","Table","Men named","Kind","Source"],rrows,0,true);
-  $("tt-csv").onclick=()=>{const q=v=>`"${String(v).replace(/"/g,'""')}"`;const L=[["First year","Man","Last year","Trade as written","Lodges","Records","Originals","Basis"].map(q).join(",")];
+  $("tt-csv").onclick=()=>{const q=v=>`"${String(v).replace(/"/g,'""')}"`;const L=[["First year","Man","Last year","Calling","Lodges","Records","Originals","Basis"].map(q).join(",")];
     mrows.sort((a,b)=>a[0].s-b[0].s).forEach(r=>L.push(r.map(c=>q(c.v)).join(",")));L.push("");L.push(["Year","Record","Table","Men named","Kind","Source"].map(q).join(","));
     recs.forEach(([r],j)=>{const x=rrows[j];L.push([x[0].v,x[1].v,x[2].v,r.m.map(i=>M[i].n).join("; "),x[4].v,x[5].v].map(q).join(","))});
     const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([L.join("\n")],{type:"text/csv"}));a.download=`lodges_before_1812_${t.replace(/\W+/g,"_")}.csv`;a.click()};
@@ -454,12 +459,14 @@ function reader(k){const r=R[k],kd=kindOf(r),y=yof2(r);let dlg=$("reader");if(!d
   <dl>${r.f.filter(([f])=>!/^(source|the book says|book note)$/i.test(f)).map(([f,v])=>`<dt>${esc(f)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
   ${ox?`<div class="cit"><b>Original</b>${ct(ox)}.</div><div class="cit"><b>${holdLbl(r)}</b>${ct(heldAt(r).replace(/^(Held at|Read in) /,""))}</div>`:(r.o==="AUTHOR_WB"?`<div class="cit"><b>Research note</b>${ct(r.c)}. ${esc(DATA.repos.AUTHOR_WB.access)}</div>`:r.k==="Settled fact"?`<div class="cit"><b>Sources</b>${ct(r.c)}</div><div class="cit"><b>Status</b>Settled for the whole series: checked against these records and kept the same in every book.</div>`:`<div class="cit"><b>Original</b>Compiled in the series from several documents; see the book for its sources.</div>`)}
   ${r.o==="AUTHOR_WB"||r.k==="Settled fact"?"":`<div class="cit"><b>In the books</b>${ct(bookRefs([r.c])||r.c)}</div>`}
-  <div class="acts"><button type="button" class="pri" id="rd-copy">Copy citation</button><button type="button" id="rd-print">Print or save as PDF</button>
+  <details class="cite-box"><summary>Cite this record</summary><p><b>Full citation</b> <span id="rd-full">${esc(fullCite(r))}</span></p><p><b>Short citation (Oxford)</b> <span>${esc(citeText(r))}</span></p></details>
+  <div class="acts"><button type="button" class="pri" id="rd-copy">Copy full citation</button><button type="button" id="rd-copy2">Copy short citation</button><button type="button" id="rd-print">Print or save as PDF</button>
   ${ca?`<a href="${ca}" target="_blank" rel="noopener">${svgI(ICK.news,"newspaper")} Find the issue at Chronicling America ↗</a>`:""}
   ${bld.map(b=>`<button type="button" data-atb="${esc(b)}">${svgI(ICK.map,"map")} ${esc(b)} on the Atlas</button><a href="https://www.loc.gov/photos/?q=${encodeURIComponent(BLD[b].q)}" target="_blank" rel="noopener">${svgI(ICK.pic,"pictures")} Pictures ↗</a>`).join("")}
   <button type="button" id="rd-close">Close</button></div></div>`;
   $("rd-close").onclick=()=>dlg.close();$("rd-print").onclick=()=>window.print();
-  $("rd-copy").onclick=()=>{const t=citeText(r);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>$("rd-copy").textContent="Copied",()=>prompt("Copy this citation:",t))};
+  const cp=(id,t)=>$(id).onclick=()=>(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>$(id).textContent="Copied",()=>prompt("Copy this citation:",t));
+  cp("rd-copy",fullCite(r));cp("rd-copy2",citeText(r));
   dlg.querySelectorAll("[data-atb]").forEach(b=>b.onclick=()=>{dlg.close();ATB=b.dataset.atb;show("atlas")});
   dlg.showModal()}
 /* ---------- Life at a glance: one dated line per event, sorted into phases ---------- */
@@ -473,7 +480,7 @@ function phaseOf(r,txt,mi){const T=r.t+" "+txt,T2=T.replace(/naval lodge[^;,.]*|
   if(/\b(pews?|pewholders?|vestry|vestryman|vestries|rector|chaplain|presbyterian|catholic|episcopal)\b/i.test(T))return "Church";
   if(r.o==="GLMD_RET"||r.o==="GLMD_PROC"||r.s.startsWith("Lodge rolls"))return "Fraternal";
   if(r.o==="AUTHOR_WB"){const F=Object.fromEntries(r.f);if(F["Public building work"]||F["Private building work"])return "Work";
-    if(/\b(mayor|alderman|council|commission|justice|magistrate|lieut|captain|militia|war)\b/i.test(txt)){}else if(F["Office"])return "Fraternal";else if(F["Occupation"])return "Work"}
+    if(/\b(mayor|alderman|council|commission|justice|magistrate|lieut|captain|militia|war)\b/i.test(txt)){}else if(F["Office"])return "Fraternal";else if(F["Calling"]||F["Occupation"])return "Work"}
   if(r.o==="NARA_RG45"||/\b(navy|naval|militia|army|regiment|marines?|captain|lieutenant|commodore|sailing master|purser|gunner|frigate|tripoli|rifle volunteers|sergeant)\b/i.test(T2)&&!/worshipful master|warden|lodge no\./i.test(T2))return "Military";
   if(/\b(alderman|aldermen|council|councilman|mayor|justice of the peace|magistrate|levy court|corporation of|elected to|commissioner of|senate|house of representatives|postmaster|marshal|clerk of)\b/i.test(T))return "Civic";
   if(r.o==="NARA_RG42"||/payroll|pay roll|voucher|carvers at|cutters at|wages/i.test(r.t))return "Work";
@@ -484,7 +491,7 @@ function eventText(r,i){if(r.d!=null&&DATA.docs[r.d].x.includes(": ")){const x=D
     const off=(r.f.find(([k])=>/^office$/i.test(k))||[])[1],gr=(r.f.find(([k])=>/^grade$/i.test(k))||[])[1];
     const lodge=(x.match(/[A-Z][a-z]+ Lodge No\. \d+/)||[""])[0];
     return [tail.replace(lodge+", ",""),lodge&&!tail.includes(lodge)?lodge:"",off&&off!=="–"?off:"",gr&&gr!=="–"?gr:""].filter(Boolean).join("; ")}const nm=norm(M[i].n),keys=[nm,...M[i].sp.map(norm)];
-  const vals=r.f.filter(([k,v])=>k!=="Source"&&!/^(name|spellings|lodges|years on rolls)$/i.test(k)&&v&&v!=="–"&&!keys.includes(norm(v)))
+  const vals=r.f.filter(([k,v])=>k!=="Source"&&!/^(name|spellings|lodges|years on (the )?rolls)$/i.test(k)&&v&&v!=="–"&&!keys.includes(norm(v)))
     .map(([k,v])=>/^(office|grade|date|document|year|no\.?)$/i.test(k)?`${k} ${v}`:v).slice(0,3).join("; ");
   const t=r.t.replace(/\s+\d{4}(\s+\d{4})?$/,"").replace(/^the /i,"");
   return (t+(vals?": "+vals:"")).slice(0,220)}
@@ -541,7 +548,7 @@ const WHY={query:"The record itself marks this as a question.",tie:"The record g
 function jobsite(b){const recs=R.filter(r=>r.b.includes(b)&&r.m.length);const place=new Map(),held=new Map();const brx=BRX[b]||/$^/;
   const rank=["arch","off","contract","fore","svc","hire","crew","other"];
   const SPL=t=>String(t).split(/;\s+|[.!][\u201d"\u2019]?\s+(?=[A-Z\u201c])|\s+\|\s+|\s+\/\s+(?=[A-Z])/);
-  for(const r of recs){const txt=r.f.filter(([k])=>!/^(source|book note|name|spellings|lodges|years on rolls)$/i.test(k)).map(x=>x[1]).join("; ");
+  for(const r of recs){const txt=r.f.filter(([k])=>!/^(source|book note|name|spellings|lodges|years on (the )?rolls)$/i.test(k)).map(x=>x[1]).join("; ");
     const parts=SPL(txt);
     for(const i of r.m){const sn=snOf(i);
       const fn=norm(M[i].n).split(/\s+/)[0],f0=norm(r.f[0][1]);
@@ -678,21 +685,19 @@ const OFFX=[[/^(w\.?\s*m\.?\.?|w,m,|worshipful master|master)$/i,"Worshipful Mas
 const offName=o=>{const t=String(o).trim().replace(/\s+/g," ");if(!t||t==="–")return "";const hit=OFFX.find(([rx])=>rx.test(t));return hit?hit[1]:t};
 const DEGREES=new Set(["Member","Master Mason","Fellow Craft","Entered Apprentice"]);
 const yrs=list=>{const ys=[...new Set(list)].sort((a,b)=>a-b),out=[];for(let j=0;j<ys.length;j++){let k=j;while(k+1<ys.length&&ys[k+1]===ys[k]+1)k++;
-  out.push(k>j?`${ys[j]}–${String(ys[k]).slice(k>j&&String(ys[k]).slice(0,2)===String(ys[j]).slice(0,2)?2:0)}`:`${ys[j]}`);j=k}return out.join(", ")};
+  out.push(k>j?`${ys[j]}–${ys[k]}`:`${ys[j]}`);j=k}return out.join(", ")};
 /* the roll line must name this man: surname and the same first initial (Collen/Collin, not Lewis Williamson) */
 function sameMan(nm,i){const w=norm(nm).split(/\s+/).filter(Boolean),sn=snOf(i);if(!w.includes(sn))return false;
   const firsts=[M[i].n,...M[i].sp].map(x=>norm(x).split(/\s+/)[0]).filter(Boolean);return firsts.some(f=>f[0]===w[0][0])}
 /* a calling as the returns write it, without the compiler's notes ("Likely brother? to …", "who was …", lodge of origin) */
-function cleanCalls(t){const out=[];String(t).split(/\s*;\s*|\s*,\s*|\s+and\s+/).forEach(x=>{
-    x=x.replace(/^.*?\bwho was\s+/i,"").split(/\s+(?:likely|probably|possibly|perhaps|brother|son|father|nephew|see|lodge\b)|\?|["\u201c(]/i)[0].trim().replace(/[.:]+$/,"");
-    if(!x||x.length>48||/^(mr|mrs|dr)\b|^\d/i.test(x))return;out.push(x.charAt(0).toUpperCase()+x.slice(1))});return out}
+function cleanCalls(t){return String(t||"").split(/\s*;\s*/).map(x=>x.trim()).filter(Boolean)}
 const callKey=o=>norm(o).replace(/\s+/g,"").replace(/s$/,"");
-function callsOf(i,S){S=S||service(i);if(S.calls.length)return S.calls;const seen=new Set();
+function callsOf(i,S){S=S||service(i);if(S.calls.length){const lo=new Set(S.calls.map(c=>c.toLowerCase()));return S.calls.filter(c=>!lo.has("master "+c.toLowerCase())&&!lo.has("house "+c.toLowerCase()))}const seen=new Set();
   return cleanCalls(M[i].tr||"").filter(x=>!/^etc\b/i.test(x)&&!seen.has(callKey(x))&&seen.add(callKey(x)))}
 function service(i){const m=M[i],sn=snOf(i),rows=new Map(),calls=new Map();
   for(const k of [...MP[i].p,...MP[i].x]){const r=R[k];if(!/Roll/.test(r.k))continue;const F=Object.fromEntries(r.f.map(([a,b])=>[a.toLowerCase(),b]));
     if(F.name&&!sameMan(F.name,i))continue;
-    const occ=F.occupation;if(occ&&r.s.startsWith("Lodge rolls"))cleanCalls(occ).forEach(o=>{const key=callKey(o);if(key&&!calls.has(key))calls.set(key,o)});
+    const occ=F.calling||F.occupation;if(occ&&r.s.startsWith("Lodge rolls"))cleanCalls(occ).forEach(o=>{const key=callKey(o);if(key&&!calls.has(key))calls.set(key,o)});
     const y=+(F.year||"")||(r.y.length===1?r.y[0]:0);if(!y)continue;
     const lodge=F.lodge&&F.lodge!=="–"?F.lodge:(r.l[0]||m.l[0]||"");
     const off=offName(F.office||F.grade||"");
@@ -706,6 +711,10 @@ function service(i){const m=M[i],sn=snOf(i),rows=new Map(),calls=new Map();
 /* other men the rolls list under the same name (Senior, Junior, Second) */
 const twinsOf=i=>{const f=norm(M[i].n).split(/\s+/)[0],sn=snOf(i);return M.map((m,j)=>j).filter(j=>j!==i&&snOf(j)===sn&&norm(M[j].n).split(/\s+/)[0]===f)};
 const SRCN={"Roster in the series book":"Series book","Return to the Grand Lodge of Maryland":"Maryland return"};
+/* outside searches by name: they find candidates, they do not prove the same man (checked against the dates before use) */
+function lookups(i){const n=M[i].n.replace(/\(.*?\)/g,"").replace(/\b(Jr|Sr|Junr|Senr|2nd|Second)\b\.?/gi,"").replace(/\s+/g," ").trim(),q=encodeURIComponent(n);
+  return [["Congressional Cemetery",`https://congressionalcemetery.org/?s=${q}`],["National Park Service",`https://www.nps.gov/search/?affiliate=nps&query=${encodeURIComponent('"'+n+'"')}`],
+    ["Library of Congress",`https://www.loc.gov/search/?q=${encodeURIComponent('"'+n+'"')}&dates=1750/1830`]].map(([t,u])=>`<a class="chip" href="${u}" target="_blank" rel="noopener">${t} ↗</a>`).join("")}
 function factCard(i){const m=M[i],S=service(i),cal=callings(i);
   const lodges=m.l.map(l=>{const ys=S.byLodge.get(l);return `<span class="ib-v"><b>${esc(l)}</b>${ys?` · on the rolls ${yrs(ys)} <small>(${ys.length} year${ys.length>1?"s":""} recorded)</small>`:m.yr?` · ${esc(m.yr)}`:""}</span>`}).join("");
   const offs=[...S.byOff].sort((a,b)=>Math.min(...a[1])-Math.min(...b[1])).map(([o,ys])=>`<span class="ib-v">${esc(o)} <small>${yrs(ys)}</small></span>`).join("");
@@ -713,10 +722,12 @@ function factCard(i){const m=M[i],S=service(i),cal=callings(i);
   return `<div class="infobox">
    <div class="ib-row"><span class="k">Lodge</span><span>${lodges||"–"}</span></div>
    ${offs?`<div class="ib-row"><span class="k">Offices</span><span>${offs}</span></div>`:""}
-   ${callW.length?`<div class="ib-row"><span class="k">Calling as written</span><span>${esc(callW.join(" · "))}</span></div>`:""}
+   ${callW.length?`<div class="ib-row"><span class="k">Calling</span><span>${esc(callW.join(" · "))}</span></div>`:""}
    ${cal.length?`<div class="ib-row"><span class="k">In the trade index</span><span class="chips">${cal.map(c=>`<button type="button" class="chip" data-ix="trades" data-arg="${esc(c)}">${esc(c)}</button>`).join("")}</span></div>`:""}
    ${m.sp.length?`<div class="ib-row"><span class="k">Also written</span><span>${esc(m.sp.join(" · "))}</span></div>`:""}
    ${twinsOf(i).length?`<div class="ib-row"><span class="k">Same name on the rolls</span><span class="chips">${twinsOf(i).map(j=>`<button type="button" class="chip" data-m="${j}">${esc(M[j].n)}</button>`).join("")}</span></div>`:""}
+
+   <div class="ib-row"><span class="k">Search elsewhere</span><span class="chips">${lookups(i)}</span></div>
   </div>
   ${m.fx?`<div class="settled"><div class="k">Settled facts <small>checked against the originals across the series</small></div><ul>${m.fx.map(f=>`<li>${esc(f.replace(/;?\s*settled$/i,""))}</li>`).join("")}</ul></div>`:""}
   ${S.list.length?(()=>{const own=norm(m.n).trim(),asW=S.list.some(x=>[...x.as].some(a=>norm(a).trim()!==own));
