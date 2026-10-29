@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>My account · Civic Vault</title>
+<title>My account · Civic Atlas</title>
+<link rel="icon" type="image/svg+xml" href="icons/emblem.svg">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&display=swap">
 <link rel="stylesheet" href="styles.css">
 <link rel="manifest" href="manifest.webmanifest">
@@ -21,6 +22,9 @@
 .btn.main{background:var(--gold);border-color:var(--gold);color:#14243a}
 .btn.warn{border-color:#b4553f;color:#b4553f}
 .note{color:var(--muted);font-size:.85rem;margin:8px 0 0}
+.qr{display:block;width:180px;height:180px;margin:10px 0;background:#fff;padding:8px;border:1px solid var(--line);border-radius:4px;image-rendering:pixelated}
+.code{font:600 1.1rem ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;width:9ch;min-height:44px;padding:0 10px;border:1px solid var(--gold);border-radius:4px;margin:10px 8px 0 0}
+.secret{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;overflow-wrap:anywhere;background:var(--parch);padding:2px 6px;border-radius:3px}
 .facts{font-family:var(--sans)}
 .fact{border-bottom:1px solid var(--line);padding:10px 0}
 .fact p{margin:4px 0}
@@ -45,6 +49,11 @@
       <div id="mem-acts"></div>
       <p class="note" id="mem-note"></p>
     </section>
+    <section class="panel" aria-labelledby="h-2fa">
+      <h2 id="h-2fa">Two-step sign-in</h2>
+      <div id="tfa"></div>
+      <p class="note" id="tfa-note">After your password or Google sign-in, Civic Atlas also asks for a six-digit code from an authenticator app on your phone (Google Authenticator, Microsoft Authenticator, Authy or your password manager).</p>
+    </section>
     <section class="panel" aria-labelledby="h-prof">
       <h2 id="h-prof">Profile</h2>
       <dl class="kv" id="prof"></dl>
@@ -64,9 +73,11 @@
   </section>
 </div></main>
 <footer><div class="wrap"><p class="tally">© 2026 Market Mojo LLC · <a href="sources.html">Sources</a> · <a href="disclaimer.html">Disclaimer</a> · <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="copyright.html">Copyright</a> · <a href="contact.html">Contact</a></p></div></footer>
+<script src="vendor/qrcode.js"></script>
 <script type="module">
-import { app, auth, db, role, memberPrice, priceText, memberNumber, newPassword } from "./firebase-init.js";
-import { onAuthStateChanged, signOut, updatePassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { app, auth, db, role, memberPrice, priceText, memberNumber, newPassword, signedInBadge } from "./firebase-init.js";
+import { zelleBox, zelleReview } from "./zelle.js";
+import { onAuthStateChanged, signOut, updatePassword, linkWithCredential, EmailAuthProvider, multiFactor, TotpMultiFactorGenerator } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, query, where, getDocs, deleteDoc, doc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 const $ = id => document.getElementById(id);
@@ -84,12 +95,14 @@ onAuthStateChanged(auth, async user => {
   ME = user; $("who").textContent = ""; $("acct").hidden = $("mine").hidden = false;
   const r = await role(user);
   NO = "";
-  if (r.member) { try { NO = await memberNumber(user); } catch (_) {} }
+  if (r.member) { try { NO = await memberNumber(user); } catch (_) {} signedInBadge(user, { no: NO, editor: r.editor }); }
   $("prof").innerHTML = kv([["Member number", NO ? `<b>${esc(NO)}</b><br><small>Your username with the editor. Only you and the editors can see it.</small>` : ""], ["Name", esc(user.displayName || "–")], ["Email", esc(user.email || "–")],
     ["Signed in with", esc(user.providerData.map(p => p.providerId === "google.com" ? "Google" : p.providerId === "password" || p.providerId === "emailLink" ? "Email link" : p.providerId).join(", ") || "Email link")],
     ["Account opened", esc(day(user.metadata.creationTime))], ["Access", r.editor ? '<span class="pill ok">Editor</span>' : r.member ? '<span class="pill ok">Member</span>' : '<span class="pill off">No membership</span>']]);
   await loadMembership(user, r);
   passwordBox(user);
+  twoStep(user);
+  if (r.editor) { $("acct").insertAdjacentHTML("beforeend", '<section class="panel" aria-labelledby="h-zl"><h2 id="h-zl">Zelle payments to confirm</h2><div id="zl-review"></div></section>'); zelleReview($("zl-review")); }
   await loadFacts(user);
 });
 
@@ -112,7 +125,56 @@ function passwordBox(user) {
   };
 }
 
+// Two-step sign-in with an authenticator app (TOTP, RFC 6238). The secret is made by Firebase and shown once as a QR code;
+// Civic Atlas never stores it. Needs Identity Platform with TOTP turned on (SETUP.md).
+function twoStep(user) {
+  const box = $("tfa"), note = $("tfa-note");
+  const on = multiFactor(user).enrolledFactors.filter(f => f.factorId === TotpMultiFactorGenerator.FACTOR_ID);
+  if (on.length) {
+    box.innerHTML = `<dl class="kv"><dt>Status</dt><dd><span class="pill ok">On</span> · ${esc(on[0].displayName || "Authenticator app")}</dd></dl><button class="btn" type="button" id="tfa-off">Turn off two-step sign-in</button>`;
+    $("tfa-off").onclick = async () => {
+      if (!confirm("Turn off two-step sign-in? Your account will be protected by your password or Google sign-in only.")) return;
+      try { await multiFactor(user).unenroll(on[0]); note.textContent = "Two-step sign-in is off."; twoStep(user); }
+      catch (e) { note.textContent = e.code === "auth/requires-recent-login" ? "For your safety, sign out and sign in again, then turn it off within five minutes." : "It could not be turned off: " + e.message; }
+    };
+    return;
+  }
+  box.innerHTML = `<dl class="kv"><dt>Status</dt><dd><span class="pill off">Off</span></dd></dl><button class="btn main" type="button" id="tfa-on">Turn on two-step sign-in</button>`;
+  $("tfa-on").onclick = async () => {
+    if (!user.emailVerified) { note.textContent = "Confirm your email first: sign in once with Google or with an email link, then try again."; return; }
+    let secret;
+    try { secret = await TotpMultiFactorGenerator.generateSecret(await multiFactor(user).getSession()); }
+    catch (e) { note.textContent = e.code === "auth/requires-recent-login" ? "For your safety, sign out and sign in again, then turn it on within five minutes." : "Two-step sign-in is not available yet: " + e.message; return; }
+    const url = secret.generateQrCodeUrl(user.email || "member", "Civic Atlas");
+    let img = "";
+    try { const q = qrcode(0, "M"); q.addData(url); q.make(); img = `<img class="qr" alt="QR code for your authenticator app" src="${q.createDataURL(5, 2)}">`; } catch (_) {}
+    box.innerHTML = `<p class="note" style="margin-top:0">1. Scan this code with your authenticator app${img ? "" : " (or add the key below by hand)"}.</p>${img}
+      <p class="note">Or enter the key by hand: <span class="secret">${esc(secret.secretKey)}</span> · <a href="${esc(url)}">open in the app on this phone</a></p>
+      <p class="note">2. Type the six-digit code the app shows.</p>
+      <input class="code" id="tfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" aria-label="Six-digit code"><button class="btn main" type="button" id="tfa-ok">Confirm</button><button class="btn" type="button" id="tfa-cancel">Cancel</button>`;
+    $("tfa-cancel").onclick = () => twoStep(user);
+    $("tfa-ok").onclick = async () => {
+      const code = $("tfa-code").value.replace(/\D/g, "");
+      if (code.length !== 6) { note.textContent = "Type the six digits the app shows."; return; }
+      try { await multiFactor(user).enroll(TotpMultiFactorGenerator.assertionForEnrollment(secret, code), "Authenticator app"); note.textContent = "Two-step sign-in is on. Keep your phone's authenticator app; you will need it each time you sign in."; twoStep(user); }
+      catch (e) { note.textContent = e.code === "auth/invalid-verification-code" ? "That code did not match. Wait for the next code and try again." : "It could not be turned on: " + e.message; }
+    };
+  };
+}
+
 async function loadMembership(user, r) {
+  // One-time membership: the succeeded Stripe payment (recorded by the Stripe extension), or a membership switched on by hand.
+  let paid = null;
+  try { paid = (await getDocs(query(collection(db, "customers", user.uid, "payments"), where("status", "==", "succeeded")))).docs.map(d => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (a.created || 0) - (b.created || 0))[0] || null; } catch (_) {}
+  if (r.member && !r.editor && (paid || !r.sub)) {
+    const amt = paid && paid.amount != null ? (paid.amount / 100).toLocaleString(undefined, { style: "currency", currency: (paid.currency || "usd").toUpperCase() }) : "";
+    const on = paid && paid.created ? new Date(paid.created * 1000).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }) : "";
+    $("mem").innerHTML = kv([["Status", '<span class="pill ok">Member for life</span>'], ["Plan", esc("One-time membership" + (amt ? ` · ${amt}` : ""))], ["Paid", esc(on || (paid ? "Yes" : "Switched on by the editor"))]]);
+    $("mem-acts").innerHTML = "";
+    $("mem-note").textContent = ANDROID_APP ? "" : "Paid once; there is nothing to renew. For a receipt, see the email from Stripe or write to the contact address.";
+    return;
+  }
   let subs = [];
   try { subs = (await getDocs(query(collection(db, "customers", user.uid, "subscriptions"), where("status", "in", ["trialing", "active", "past_due"])))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (_) {}
   SUB = subs.sort((a, b) => (b.created?.seconds || 0) - (a.created?.seconds || 0))[0] || null;
@@ -142,11 +204,12 @@ async function loadMembership(user, r) {
   } else if (!r.editor) {
     const PRICE = await memberPrice();
     acts.innerHTML = `<button class="btn main" type="button" id="buy">Become a member${PRICE && priceText(PRICE) ? " · " + esc(priceText(PRICE)) : ""}</button>`;
-    $("mem-note").textContent = PRICE ? "Members get the full data set, the fact bins and downloads. Payments are taken by Stripe; card details never reach Civic Vault." : "Memberships are not on sale yet.";
-    $("buy").disabled = !PRICE;
+    $("mem-note").textContent = PRICE ? "Members get the full data set, the fact bins and downloads. Payments are taken by Stripe; card details never reach Civic Atlas." : "Memberships are not on sale yet.";
+    $("buy").disabled = !PRICE; if (!PRICE) $("buy").hidden = true;
+    acts.insertAdjacentHTML("beforeend", '<div id="acct-zelle"></div>'); zelleBox($("acct-zelle"), user, t => { $("mem-note").textContent = t; });
     $("buy").onclick = async () => {
       $("mem-note").textContent = "Opening checkout…";
-      const s = await addDoc(collection(db, "customers", user.uid, "checkout_sessions"), { price: PRICE.id, success_url: location.href, cancel_url: location.href });
+      const s = await addDoc(collection(db, "customers", user.uid, "checkout_sessions"), { price: PRICE.id, mode: "payment", automatic_tax: true, success_url: location.href, cancel_url: location.href });
       onSnapshot(s, snap => { const { url, error } = snap.data() || {}; if (error) $("mem-note").textContent = error.message; if (url) location.assign(url); });
     };
   }
@@ -181,12 +244,12 @@ function drawFacts() {
 $("export").onclick = () => {
   const plain = v => v && v.toDate ? v.toDate().toISOString() : v;
   const clean = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, plain(v)]));
-  const out = { exported: new Date().toISOString(), publisher: "Market Mojo LLC", app: "Civic Vault",
+  const out = { exported: new Date().toISOString(), publisher: "Market Mojo LLC", app: "Civic Atlas",
     profile: { uid: ME.uid, member_number: NO, name: ME.displayName || "", email: ME.email || "", created: ME.metadata.creationTime, last_sign_in: ME.metadata.lastSignInTime },
     membership: SUB ? { status: SUB.status, started: plain(SUB.created), current_period_end: plain(SUB.current_period_end), cancel_at_period_end: !!SUB.cancel_at_period_end } : null,
     facts: FACTS.map(clean) };
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
-  a.download = "civic-vault-my-data.json"; document.body.appendChild(a); a.click(); a.remove();
+  a.download = "civic-atlas-my-data.json"; document.body.appendChild(a); a.click(); a.remove();
 };
 </script>
 <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});</script>

@@ -1,4 +1,4 @@
-# Deploy Civic Vault and test it with an account
+# Deploy Civic Atlas and test it with an account
 
 Written October 29, 2026. Use branch `paid-firebase`.
 
@@ -12,14 +12,14 @@ live. Do everything first with Stripe in **test mode**, so no real card is charg
    - create Firestore and Storage;
    - move to the Blaze plan, with a $5 budget alert.
 2. **Stripe in test mode.** Follow SETUP.md section 2, with the Stripe dashboard switched to *Test mode*:
-   - create the product "Civic Vault membership" with a yearly price;
+   - create the product "Civic Atlas membership" with a **one-time** price (not recurring);
    - add the product metadata `firebaseRole` = `member`.
 3. **Stripe extension.** Follow SETUP.md section 3, using a *test* restricted key. Add the webhook it shows.
 4. **Deploy the site and the rules** from this repository:
    ```
    firebase login
    firebase use --add
-   firebase deploy --only hosting,firestore,storage
+   firebase deploy --only hosting,firestore,storage,functions
    ```
 5. **Message clean-up.** Delete contact messages after about a year, as the privacy policy says:
    ```
@@ -42,7 +42,7 @@ Use your own Google account (the editor) and a second account (a test member). S
 | 2 | Editor | Open a man, then a record, then **Cite this record** | Full and short citations, each with a copy button |
 | 3 | Editor | **Suggest a correction** on an Atlas placement | It appears in the fact bins as *pending* |
 | 4 | Test member | Sign in with an email link | The gate shows **Become a member** with the price from Stripe |
-| 5 | Test member | Pay with the test card | Back in the app with the records loaded. **My account** shows *Active*, a member number `CV-…` and the renewal date. |
+| 5 | Test member | Pay with the test card | Back in the app with the records loaded. **My account** shows *Active*, a member number `CA-…` and the renewal date. |
 | 6 | Test member | **My account** > Set a password, sign out, sign in with the password | The password sign-in works |
 | 7 | Test member | Open the app once, turn on airplane mode, reopen it | "Offline: showing the copy saved on this device", with search working |
 | 8 | Test member | **Contact** > send a message | The message appears in Firestore `messages` |
@@ -54,7 +54,7 @@ Use your own Google account (the editor) and a second account (a test member). S
 
 The Android app opens `lodges.mktmojox.com`, so it needs step D2 first.
 
-1. In GitHub, run **Actions > Android app bundle**. Download the `civic-vault-android` artifact (test APK and bundle).
+1. In GitHub, run **Actions > Android app bundle**. Download the `civic-atlas-android` artifact (test APK and bundle).
 2. Install the APK on a phone. Sign in as the test member. The app opens with no buy button, and it works offline after
    the first load.
 

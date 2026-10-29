@@ -1,4 +1,4 @@
-# Civic Vault: paid member site (Firebase + Stripe)
+# Civic Atlas: paid member site (Firebase + Stripe)
 
 Seller: Market Mojo LLC. Address: lodges.mktmojox.com. Cost at this size: Firebase free (Spark), then pay-as-you-go (Blaze) is required by the Stripe extension, typically under $1/month here; Stripe about 2.9% + 30c per payment.
 
@@ -11,7 +11,7 @@ Seller: Market Mojo LLC. Address: lodges.mktmojox.com. Cost at this size: Fireba
 
 ## 2. Stripe (Market Mojo LLC)
 1. stripe.com > create the account under **Market Mojo LLC** (EIN and bank account from your SAM.gov registration).
-2. Products > Add product "Civic Vault membership", with a recurring price (e.g. monthly and yearly).
+2. Products > Add product "Civic Atlas membership", with a **one-time** price. Members pay once; there is nothing to renew.
 3. On the product, add metadata **firebaseRole = member**. This is what unlocks the data.
 4. On the membership product in Stripe, add the metadata `firebaseRole` = `member`. The app reads the active price from the Stripe extension's copy in Firestore (`products`), so prices changed in Stripe reach the app with no code change. (MEMBER_PRICE in `firebase-init.js` is only a fallback.)
 
@@ -19,14 +19,18 @@ Seller: Market Mojo LLC. Address: lodges.mktmojox.com. Cost at this size: Fireba
 Extensions > install **Run Payments with Stripe** (invertase/firestore-stripe-payments):
 - Customers collection: `customers`; Products collection: `products`; Sync custom claims: **Yes**.
 - Paste the Stripe secret key (restricted key) when asked, and add the webhook it shows in Stripe > Developers > Webhooks.
-- Leave the extension's Cloud Functions location at **us-central1** (the account page calls its `createPortalLink` function there). In Stripe > Settings > Billing > Customer portal, turn on: update payment method, invoice history, cancel subscription (at period end).
+- Leave the extension's Cloud Functions location at **us-central1**.
+- The extension records each payment in `customers/{uid}/payments`. Our own function `grantMembership`
+  (`functions/index.js`, deployed with `firebase deploy --only functions`) switches the member on when the membership
+  payment has succeeded. To switch a member on or off by hand (a payment taken another way, a gift, a refund):
+  `python3 admin/set_member.py someone@example.com` (add `--remove` to switch off).
 
 ## 4. Deploy (from this repository)
 ```
 npm install -g firebase-tools
 firebase login
 firebase use --add            # pick lodges-before-1812
-firebase deploy --only hosting,firestore,storage
+firebase deploy --only hosting,firestore,storage,functions
 ```
 
 ## 5. Load the data and the bins (admin, one time)
