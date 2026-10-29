@@ -283,3 +283,18 @@ footer .flinks{display:flex;flex-wrap:wrap;align-items:center;gap:0 14px;margin:
 .gperks ul{margin:6px 0 0;padding-left:18px}.gperks li{margin:2px 0}.gprice{margin:0;display:flex;justify-content:space-between;gap:8px;color:#fffdf8}.gprice span{color:var(--gold);font-weight:600}
 .ginstall{display:block;margin:8px auto 0}
 .gate .emblem{margin:0 auto 6px}
+.gsteps{display:flex;gap:6px;list-style:none;margin:10px 0 12px;padding:0;counter-reset:st;font:600 .78rem var(--sans)}
+.gsteps li{flex:1;counter-increment:st;padding:6px 4px;border-top:3px solid rgba(185,152,88,.35);color:#b8ad98;text-align:center}
+.gsteps li::before{content:counter(st) ". "}
+.gsteps li.done{border-color:#3fa66b;color:#bfe8cf}.gsteps li.done::before{content:"✓ "}
+.gsteps li.now{border-color:var(--gold);color:#fffdf8}
+.zl-btn.zl-godaddy{background:var(--gold);border-color:var(--gold);color:#14243a}
+.zl-btn.zl-paypal{background:#fffdf8;border-color:var(--gold);color:#14243a}
+.zl-go{color:var(--gold);font-weight:600}
+.gnew summary{color:#fffdf8;font-weight:600}
+#g-verify p{font-family:var(--sans);color:#efe6d2}
+.intro[hidden]{display:none!important}
+[hidden]{display:none!important}
+.zl-card form{border:0;background:none;padding:0;border-radius:0;max-width:none;box-shadow:none}
+.zl-card button.linkbtn{background:none;color:#d1b477;min-height:32px;font-weight:400;text-decoration:underline;padding:0}
+.panel .zl-card button.linkbtn{color:var(--gold-2,#7d6738)}

@@ -77,7 +77,7 @@
 <script type="module">
 import { app, auth, db, role, memberPrice, priceText, memberNumber, newPassword, signedInBadge } from "./firebase-init.js";
 import { zelleBox, zelleReview } from "./zelle.js";
-import { onAuthStateChanged, signOut, updatePassword, linkWithCredential, EmailAuthProvider, multiFactor, TotpMultiFactorGenerator } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { onAuthStateChanged, signOut, sendEmailVerification, updatePassword, linkWithCredential, EmailAuthProvider, multiFactor, TotpMultiFactorGenerator } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, query, where, getDocs, deleteDoc, doc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 const $ = id => document.getElementById(id);
@@ -102,7 +102,7 @@ onAuthStateChanged(auth, async user => {
   await loadMembership(user, r);
   passwordBox(user);
   twoStep(user);
-  if (r.editor) { $("acct").insertAdjacentHTML("beforeend", '<section class="panel" aria-labelledby="h-zl"><h2 id="h-zl">Zelle payments to confirm</h2><div id="zl-review"></div></section>'); zelleReview($("zl-review")); }
+  if (r.editor) { $("acct").insertAdjacentHTML("beforeend", '<section class="panel" aria-labelledby="h-zl"><h2 id="h-zl">Payments to confirm</h2><div id="zl-review"></div></section>'); zelleReview($("zl-review")); }
   await loadFacts(user);
 });
 
@@ -201,10 +201,14 @@ async function loadMembership(user, r) {
         const { data } = await fn({ returnUrl: location.href }); location.assign(data.url);
       } catch (e) { $("mem-note").textContent = "The billing page could not be opened: " + e.message; }
     };
+  } else if (!r.editor && !user.emailVerified) {
+    acts.innerHTML = `<button class="btn main" type="button" id="verify">Send the confirmation link again</button>`;
+    $("mem-note").textContent = "Confirm your email first: open the link we sent you, then reload this page. Payment opens after that.";
+    $("verify").onclick = () => sendEmailVerification(user, { url: location.origin + "/index.html" }).then(() => { $("mem-note").textContent = "Sent. Check your inbox and spam folder."; }).catch(e => { $("mem-note").textContent = e.message; });
   } else if (!r.editor) {
     const PRICE = await memberPrice();
     acts.innerHTML = `<button class="btn main" type="button" id="buy">Become a member${PRICE && priceText(PRICE) ? " · " + esc(priceText(PRICE)) : ""}</button>`;
-    $("mem-note").textContent = PRICE ? "Members get the full data set, the fact bins and downloads. Payments are taken by Stripe; card details never reach Civic Atlas." : "Memberships are not on sale yet.";
+    $("mem-note").textContent = PRICE ? "Members get the full data set, the fact bins and downloads. Card payments are taken by Stripe; card and bank details never reach Civic Atlas." : "Memberships are not on sale yet.";
     $("buy").disabled = !PRICE; if (!PRICE) $("buy").hidden = true;
     acts.insertAdjacentHTML("beforeend", '<div id="acct-zelle"></div>'); zelleBox($("acct-zelle"), user, t => { $("mem-note").textContent = t; });
     $("buy").onclick = async () => {

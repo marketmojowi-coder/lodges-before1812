@@ -1,7 +1,7 @@
 // Sign-in gate: Google or email link; members get the data set from Cloud Storage and the search app starts.
 import { auth, db, storage, role, memberPrice, priceText, memberNumber, signedInBadge } from "./firebase-init.js";
 import { zelleBox } from "./zelle.js";
-import { GoogleAuthProvider, signInWithPopup, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+import { GoogleAuthProvider, signInWithPopup, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendEmailVerification, onAuthStateChanged, signOut,
   getMultiFactorResolver, TotpMultiFactorGenerator } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { ref, getBlob } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
@@ -13,7 +13,8 @@ const ANDROID_APP = (() => { try { if (new URLSearchParams(location.search).get(
 // Opening screen: the Market Mojo film (intro.mp4, if present) or the Civic Atlas emblem, once per visit; Skip ends it.
 (() => {
   const box = $("intro"); let seen = false; try { seen = sessionStorage.getItem("intro") === "1"; sessionStorage.setItem("intro", "1"); } catch (_) {}
-  if (!box || seen || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (!box) return;
+  if (seen || matchMedia("(prefers-reduced-motion: reduce)").matches) { box.remove(); return; }
   const end = () => { box.classList.add("out"); setTimeout(() => box.remove(), 500); };
   box.hidden = false; $("intro-skip").onclick = end;
   const v = $("intro-v"); let t = setTimeout(end, 3200);
@@ -51,6 +52,36 @@ $("g-pw").onsubmit = e => {
   signInWithEmailAndPassword(auth, $("g-pw-addr").value.trim(), $("g-pw-pass").value)
     .catch(e => e.code === "auth/multi-factor-auth-required" ? twoStep(e) : msg("That email and password do not match an account. Try Google or an email link, or set a password on the My account page."));
 };
+// New account: username, email and password, then a confirmation link to the email. Payment opens only once the email
+// is confirmed (the database rules check it too). Nothing else is collected.
+$("g-new").onsubmit = async e => {
+  e.preventDefault();
+  const name = $("g-new-user").value.trim(), email = $("g-new-addr").value.trim(), pw = $("g-new-pass").value;
+  if (pw !== $("g-new-pass2").value) { msg("The two passwords do not match."); return; }
+  msg("Creating your account…");
+  try {
+    const { user } = await createUserWithEmailAndPassword(auth, email, pw);
+    await updateProfile(user, { displayName: name });
+    await sendEmailVerification(user, { url: location.origin + location.pathname });
+    verifyScreen(user);
+  } catch (x) {
+    msg(x.code === "auth/email-already-in-use" ? "That email already has an account. Sign in with your password, Google or an email link."
+      : x.code === "auth/weak-password" ? "Choose a longer password (15 characters or more)." : x.message);
+  }
+};
+function verifyScreen(user) {
+  $("gate-out").hidden = true; $("gate-sub").hidden = true; $("g-verify").hidden = false; $("g-member").hidden = true;
+  $("g-v-addr").textContent = user.email; msg("");
+}
+$("g-v-done").onclick = async () => {
+  const u = auth.currentUser; if (!u) return;
+  await u.reload();
+  if (!u.emailVerified) { msg("Not confirmed yet. Open the link in the email we sent (check spam), then press the button again."); return; }
+  await u.getIdToken(true); $("g-verify").hidden = true; route(u);
+};
+$("g-v-again").onclick = () => { const u = auth.currentUser; if (u) sendEmailVerification(u, { url: location.origin + location.pathname }).then(() => msg("Sent again. Check your inbox and spam folder.")).catch(x => msg(x.message)); };
+$("g-v-out").onclick = () => signOut(auth);
+
 // Offline copy (the Android app should work with no signal): after each download the data set is kept on this device in
 // IndexedDB for the signed-in member only. It is used when the network or the membership check cannot be reached, replaced
 // on the next download, and deleted at sign-out or when the account is no longer a member.
@@ -81,24 +112,27 @@ $("g-buy").onclick = async () => {
 };
 
 let started = false;
-onAuthStateChanged(auth, async user => {
-  $("gate-out").hidden = !!user; $("gate-sub").hidden = true; $("g-member").hidden = !!user || ANDROID_APP;
+onAuthStateChanged(auth, user => route(user));
+async function route(user) {
+  $("gate-out").hidden = !!user; $("gate-sub").hidden = true; $("g-verify").hidden = true; $("g-member").hidden = !!user || ANDROID_APP;
   if (!user) { $("gate").hidden = false; $("app").hidden = true; return; }
   let r;
   try { r = await role(user); }
   catch (_) { const c = await kept(user.uid); if (c) { startWith(c, true); signedInBadge(user, { offline: true }); return; } msg("No connection. Connect once to sign in and save the records on this device."); return; }
   if (!r.member) { forget();
-    $("g-who").textContent = user.email || user.displayName; $("gate-sub").hidden = false;
+    if (!user.emailVerified) { verifyScreen(user); return; }
+    $("g-who").textContent = user.displayName ? `${user.displayName} (${user.email})` : user.email; $("gate-sub").hidden = false;
     if (ANDROID_APP) { $("g-buy").hidden = true; $("g-note").textContent = "This account does not have a membership."; }
     else { PRICE = await memberPrice(); if (PRICE && priceText(PRICE)) $("g-buy").textContent = `Pay by card · ${priceText(PRICE)}`; else $("g-buy").hidden = true;
       zelleBox($("g-zelle"), user, msg); }
+    if (ANDROID_APP) $("g-steps").hidden = true;
     return;
   }
   try { window.LB_MEMBER_NO = await memberNumber(user); } catch (_) {}
   msg("Loading the records…");
   try { const text = await (await getBlob(ref(storage, "data/data.json"))).text(); keep(user.uid, text); startWith({ text }, false); signedInBadge(user, { no: window.LB_MEMBER_NO, editor: r.editor }); }
   catch (_) { const c = await kept(user.uid); if (c) { startWith(c, true); signedInBadge(user, { offline: true, no: window.LB_MEMBER_NO }); } else msg("The records could not be loaded. Check your connection and try again."); }
-});
+}
 function startWith(c, offline) {
   const DATA = JSON.parse(c.text);
   $("gate").hidden = true; $("app").hidden = false; msg("");
