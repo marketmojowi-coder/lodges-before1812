@@ -3,11 +3,11 @@
 <title>Delete my account · Civic Vault</title><link rel="stylesheet" href="styles.css"></head>
 <body><header><div class="wrap"><h1 class="brand">Delete <span>my account</span></h1></div></header>
 <main><div class="wrap" style="display:block;max-width:720px">
-<p>This deletes your sign-in, your membership record and the facts you added that are still waiting for review. Accepted facts stay in the data set without your name. Cancel any paid membership first under <a href="account.html">My account</a> (Manage billing and invoices), or it will keep billing. You can also download your data there before you delete.</p>
+<p>This deletes your sign-in, your member number, your membership record, your messages to us, the copy of the records saved on this device and the facts you added that are still waiting for review. Accepted facts stay in the data set without your name. Cancel any paid membership first under <a href="account.html">My account</a> (Manage billing and invoices), or it will keep billing. You can also download your data there before you delete.</p>
 <p id="who" class="tally">Checking sign-in…</p>
 <button id="del" class="gbtn" type="button" hidden>Delete my account</button>
 <p id="msg" class="tally" role="status"></p>
-<p class="tally">If you can't sign in, write to Market Mojo LLC through www.mktmojox.com and we will delete the account within 30 days.</p>
+<p class="tally">If you can't sign in, write to Market Mojo LLC at <a href="mailto:marketmojowi@gmail.com">marketmojowi@gmail.com</a> and we will delete the account within 30 days.</p>
 </div></main>
 <script type="module">
 import { auth, db } from "./firebase-init.js";
@@ -23,6 +23,8 @@ onAuthStateChanged(auth, u => {
       const mine = await getDocs(query(collection(db, "facts"), where("by", "==", u.uid)));
       for (const d of mine.docs) { if (d.data().status === "pending") await deleteDoc(d.ref); else await updateDoc(d.ref, { by_name: "former member" }); }
       try { await deleteDoc(doc(db, "members", u.uid)); } catch (_) {}
+      try { const msgs = await getDocs(query(collection(db, "messages"), where("by", "==", u.uid))); for (const d of msgs.docs) await deleteDoc(d.ref); } catch (_) {}
+      try { const req = indexedDB.deleteDatabase("civic-vault"); } catch (_) {}
       await deleteUser(u); $("msg").textContent = "Your account is deleted."; $("del").hidden = true;
     } catch (e) { $("msg").textContent = e.code === "auth/requires-recent-login" ? "Please sign out, sign in again, then delete." : e.message; }
   };

@@ -25,7 +25,14 @@ $("g-pw").onsubmit = e => {
   signInWithEmailAndPassword(auth, $("g-pw-addr").value.trim(), $("g-pw-pass").value)
     .catch(() => msg("That email and password do not match an account. Try Google or an email link, or set a password on the My account page."));
 };
-const out = () => signOut(auth); $("g-out").onclick = out; $("signout").onclick = out;
+// Offline copy (the Android app should work with no signal): after each download the data set is kept on this device in
+// IndexedDB for the signed-in member only. It is used when the network or the membership check cannot be reached, replaced
+// on the next download, and deleted at sign-out or when the account is no longer a member.
+const idb = () => new Promise((res, rej) => { const q = indexedDB.open("civic-vault", 1); q.onupgradeneeded = () => q.result.createObjectStore("data"); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+async function keep(uid, text) { try { const d = await idb(); d.transaction("data", "readwrite").objectStore("data").put({ uid, text, at: Date.now() }, "set"); } catch (_) {} }
+async function kept(uid) { try { const d = await idb(); return await new Promise(res => { const q = d.transaction("data").objectStore("data").get("set"); q.onsuccess = () => res(q.result && q.result.uid === uid ? q.result : null); q.onerror = () => res(null); }); } catch (_) { return null; } }
+async function forget() { try { const d = await idb(); d.transaction("data", "readwrite").objectStore("data").delete("set"); } catch (_) {} }
+const out = () => forget().then(() => signOut(auth)); $("g-out").onclick = out; $("signout").onclick = out;
 
 let PRICE = null;
 $("g-buy").onclick = async () => {
@@ -41,8 +48,10 @@ let started = false;
 onAuthStateChanged(auth, async user => {
   $("gate-out").hidden = !!user; $("gate-sub").hidden = true;
   if (!user) { $("gate").hidden = false; $("app").hidden = true; return; }
-  const r = await role(user);
-  if (!r.member) {
+  let r;
+  try { r = await role(user); }
+  catch (_) { const c = await kept(user.uid); if (c) { startWith(c, true); return; } msg("No connection. Connect once to sign in and save the records on this device."); return; }
+  if (!r.member) { forget();
     $("g-who").textContent = user.email || user.displayName; $("gate-sub").hidden = false;
     if (ANDROID_APP) { $("g-buy").hidden = true; $("g-note").textContent = "This account does not have a membership."; }
     else { PRICE = await memberPrice(); if (PRICE && priceText(PRICE)) $("g-buy").textContent = `Become a member · ${priceText(PRICE)}`; }
@@ -50,11 +59,17 @@ onAuthStateChanged(auth, async user => {
   }
   try { window.LB_MEMBER_NO = await memberNumber(user); } catch (_) {}
   msg("Loading the records…");
-  const blob = await getBlob(ref(storage, "data/data.json"));
-  const DATA = JSON.parse(await blob.text());
-  $("gate").hidden = true; $("app").hidden = false; msg("");
-  if (!started) { started = true; window.startApp(DATA); }
+  try { const text = await (await getBlob(ref(storage, "data/data.json"))).text(); keep(user.uid, text); startWith({ text }, false); }
+  catch (_) { const c = await kept(user.uid); if (c) startWith(c, true); else msg("The records could not be loaded. Check your connection and try again."); }
 });
+function startWith(c, offline) {
+  const DATA = JSON.parse(c.text);
+  $("gate").hidden = true; $("app").hidden = false; msg("");
+  if (offline) { const n = document.createElement("p"); n.className = "offline-note"; n.setAttribute("role", "status");
+    n.textContent = `Offline: showing the copy saved on this device${c.at ? " on " + new Date(c.at).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }) : ""}. Contributions and account changes need a connection.`;
+    document.getElementById("app").prepend(n); }
+  if (!started) { started = true; window.startApp(DATA); }
+}
 
 // "Suggest a correction" in the Atlas job site: goes to the corrections bin as a pending fact for the editor.
 window.LB_SUGGEST = async (s) => {

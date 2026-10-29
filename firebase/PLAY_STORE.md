@@ -41,23 +41,25 @@ An **organization** account (Market Mojo LLC) is the right one for a paid app. T
 - **Target audience:** 18 and over.
 - **Content rating questionnaire:** Reference/education app; no violence, sexual content, gambling, user-to-user chat or location sharing. Users can submit text (facts) that is reviewed before others see it.
 - **Data safety:**
-  - Collected: Name, Email address (account management, app functionality); User-generated content: facts added to the bins (app functionality).
+  - Collected: Name, Email address (account management, app functionality); User IDs: member number (app functionality); User-generated content: facts added to the bins (app functionality); Messages: contact form, optional (developer communications).
   - Not collected: location, contacts, photos, financial info (payments happen on the website through Stripe), device IDs, analytics.
   - Shared with third parties: No. Encrypted in transit: Yes. Users can request deletion: Yes (in-app link and web page).
 - **App access:** "All features need a membership. Test account: <email> / sign in with the email link sent to <email>", or give a Google test account. Make it an editor with admin/set_editor.py so reviewers see everything.
 - **Government / news / health declarations:** Not applicable.
 
 ## Store listing text
-**App name (30):** Civic Vault: 1700s–1812
+**App name (30):** Civic Vault: Potomac Territory
 
 **Short description (80):** Lodges and builders of George-Town and Washington to 1812, every record cited.
 
 **Full description:**
-Civic Vault, 1700s–1812, is the research data set behind the book series by Thomas M. Saharsky on the Masonic lodges of George-Town and the City of Washington, 1789–1811.
+Civic Vault: Potomac Territory, 1700–1811, is the research data set behind the book series by Thomas M. Saharsky on the Masonic lodges of George-Town and the City of Washington, 1789–1811.
 
 - Nearly 5,000 records: lodge rolls and returns, officers, timelines, payrolls, lot sales, parish records and newspaper citations
 - Seven lodges, the Royal Arch Chapter and Washington Parish
 - Search by man, lodge, year, trade and building
+- Sources tab: every original placed in its archive (record group, series, volume, box) with the holder's credit line
+- Works offline after the first sign-in
 - Every record cites its book and where the original is held: the Grand Lodge of Maryland returns, the National Archives, the Library of Congress, newspapers and parish archives
 - Fact bins: new facts are added with their sources and reviewed before they count
 
