@@ -13,9 +13,15 @@ The Android app is the member website wrapped as a Trusted Web Activity (TWA). S
 | Digital Asset Links (proves you own the site) | public/.well-known/assetlinks.json (paste the SHA-256 from Play) |
 | No outside payment inside the app | auth.js hides "Become a member" when opened from the app (?source=twa) |
 | Login for Google's reviewers | App access: give a test member account (see below) |
+| Target API level 36 (Android 16), required for new apps since Aug 31, 2026 | android/app/build.gradle (targetSdk 36) |
+| Organization developer account (Market Mojo LLC) with D-U-N-S number | Play Console, done by the owner |
+| Manage or cancel a membership | Account page (web); the Play app only signs in |
 
 ## Payments rule (important)
-Google Play does not allow an app to sell digital content through Stripe or to link to an outside checkout. So in the Android app, members only **sign in**; memberships are bought on the website. The app shows no price, no buy button and no link to buy.
+Outside the United States, Google Play requires its own billing for digital content sold inside an app, and an app may not point users to an outside checkout unless it joins Google's external-offers programs (which carry fees). In the United States the court order in Epic v. Google lets apps use other payment methods, but Google's programs and fees for that are still changing. The safe route everywhere: in the Android app, members only **sign in**; memberships are bought on the website. The app shows no price, no buy button and no link to buy. (Adding Google Play Billing later is possible through the Digital Goods API for Trusted Web Activities.)
+
+## Account type
+An **organization** account (Market Mojo LLC) is the right one for a paid app. The 12-tester, 14-day closed test applies only to personal accounts, not organization accounts. Google asks the organization for its D-U-N-S number, registration details and a verified contact.
 
 ## Steps
 1. Deploy the member site first (SETUP.md) so https://lodges.mktmojox.com works.
@@ -47,7 +53,7 @@ Google Play does not allow an app to sell digital content through Stripe or to l
 **Full description:**
 Lodges Before 1812 is the research data set behind the book series by Thomas M. Saharsky on the Masonic lodges of George-Town and the City of Washington, 1789-1811.
 
-- 4,764 records: lodge rolls and returns, officers, timelines, payrolls, lot sales, parish records and newspaper citations
+- Nearly 5,000 records: lodge rolls and returns, officers, timelines, payrolls, lot sales, parish records and newspaper citations
 - Seven lodges, the Royal Arch Chapter and Washington Parish
 - Search by man, lodge, year, trade and building
 - Every record cites its book and where the original is held: the Grand Lodge of Maryland returns, the National Archives, the Library of Congress, newspapers and parish archives

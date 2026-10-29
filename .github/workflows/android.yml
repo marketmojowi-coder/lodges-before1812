@@ -22,7 +22,7 @@ jobs:
         run: echo "ANDROID_HOME=$ANDROID_HOME" && ls "$ANDROID_HOME/platforms" | tail -3
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.7'
+          gradle-version: '8.11.1'
       - name: Upload key from secrets
         if: env.KS_B64 != ''
         run: |
