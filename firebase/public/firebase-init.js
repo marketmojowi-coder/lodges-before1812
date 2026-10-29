@@ -52,7 +52,11 @@ export function newPassword() {
 // the payment), an older subscriber (stripeRole), or an editor.
 export async function role(user) {
   const t = await user.getIdTokenResult(true);
-  return { member: t.claims.member === true || t.claims.stripeRole === "member" || t.claims.editor === true, editor: t.claims.editor === true, sub: t.claims.stripeRole === "member" && t.claims.member !== true };
+  let paid = false; // a payment confirmed by an editor (paid/{uid}); used on the free Spark plan
+  if (!(t.claims.member === true || t.claims.stripeRole === "member" || t.claims.editor === true)) {
+    try { paid = (await getDoc(doc(db, "paid", user.uid))).exists(); } catch (_) {}
+  }
+  return { member: paid || t.claims.member === true || t.claims.stripeRole === "member" || t.claims.editor === true, editor: t.claims.editor === true, sub: t.claims.stripeRole === "member" && t.claims.member !== true };
 }
 // The green "signed in" badge in the top bar of every member page.
 export function signedInBadge(user, opts = {}) {

@@ -3,7 +3,7 @@ import { auth, db, storage, role, memberPrice, priceText, memberNumber, signedIn
 import { zelleBox } from "./zelle.js";
 import { GoogleAuthProvider, signInWithPopup, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, sendEmailVerification, onAuthStateChanged, signOut,
   getMultiFactorResolver, TotpMultiFactorGenerator } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, addDoc, onSnapshot, getDocs, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { ref, getBlob } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 const $ = id => document.getElementById(id), msg = t => { $("g-msg").textContent = t };
 // Inside the Google Play app (Trusted Web Activity, started with ?source=twa) there is no purchase button and no link to buy:
@@ -130,8 +130,14 @@ async function route(user) {
   }
   try { window.LB_MEMBER_NO = await memberNumber(user); } catch (_) {}
   msg("Loading the records…");
-  try { const text = await (await getBlob(ref(storage, "data/data.json"))).text(); keep(user.uid, text); startWith({ text }, false); signedInBadge(user, { no: window.LB_MEMBER_NO, editor: r.editor }); }
+  try { const text = await loadData(); keep(user.uid, text); startWith({ text }, false); signedInBadge(user, { no: window.LB_MEMBER_NO, editor: r.editor }); }
   catch (_) { const c = await kept(user.uid); if (c) { startWith(c, true); signedInBadge(user, { offline: true, no: window.LB_MEMBER_NO }); } else msg("The records could not be loaded. Check your connection and try again."); }
+}
+// The data set: from the database in parts (free Spark plan), or from Cloud Storage (Blaze plan) if the parts are not there.
+async function loadData() {
+  try { const s = await getDocs(query(collection(db, "data"), orderBy("i")));
+    if (!s.empty) { const parts = s.docs.map(d => d.data()); if (parts.length === parts[0].n) return parts.map(p => p.t).join(""); } } catch (_) {}
+  return await (await getBlob(ref(storage, "data/data.json"))).text();
 }
 function startWith(c, offline) {
   const DATA = JSON.parse(c.text);

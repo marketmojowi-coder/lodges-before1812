@@ -2,7 +2,7 @@
 // buyer. The buyer sends the payment with a memo reference and files a claim; an editor confirms it, and the
 // membership opens (functions/index.js). The Google Play app never shows this (Play rules on outside payment).
 import { db } from "./firebase-init.js";
-import { doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs, updateDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs, updateDoc, writeBatch, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const money = c => (c / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
 const STATES = "AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY".split(" ");
@@ -66,6 +66,15 @@ export async function zelleReview(box) {
   box.innerHTML = `<p class="note">Match each reference and amount with the memo in your bank, GoDaddy or PayPal account, then confirm it.</p>` + rows.map(r => `<div class="fact"><p><b>${esc(r.ref)}</b> · ${esc(({ zelle: "Zelle", godaddy: "GoDaddy", paypal: "PayPal" })[r.method] || "Zelle")} · ${esc(money(r.total || 999))}${r.tax ? ` (tax ${esc(money(r.tax))}, ${esc(r.state)})` : ""} · ${esc(r.name)} · ${esc(r.email)}</p>
     <button class="btn main" type="button" data-ok="${esc(r.id)}">Confirm paid</button><button class="btn" type="button" data-no="${esc(r.id)}">Not found</button></div>`).join("");
   const set = (id, status) => updateDoc(doc(db, "zelle_claims", id), { status, checked: serverTimestamp() }).then(() => zelleReview(box)).catch(e => alert(e.message));
-  box.querySelectorAll("[data-ok]").forEach(b => b.onclick = () => set(b.dataset.ok, "paid"));
+  // Confirm paid: in one step, mark the claim, let the member in (paid/{uid}) and write the sale to the ledger. Works on
+  // the free Spark plan; on Blaze, functions/index.js also sets the member claim and writes the same ledger row.
+  const confirm = id => { const r = rows.find(x => x.id === id), m = ({ zelle: "Zelle", godaddy: "GoDaddy checkout", paypal: "PayPal" })[r.method] || "Zelle";
+    const b = writeBatch(db);
+    b.update(doc(db, "zelle_claims", id), { status: "paid", checked: serverTimestamp() });
+    b.set(doc(db, "paid", id), { at: serverTimestamp(), method: m, ref: r.ref || "", total: r.total || 999 });
+    b.set(doc(db, "sales", "zelle_" + id), { sku: "CA-MEMBER-1", product: "Civic Atlas membership (one-time)", method: m, uid: id, email: r.email || "", name: r.name || "",
+      state: r.state || "", price: r.price || 999, tax: r.tax || 0, total: r.total || 999, currency: "usd", ref: r.ref || "", recorded: serverTimestamp() }, { merge: true });
+    return b.commit().then(() => zelleReview(box)).catch(e => alert(e.message)); };
+  box.querySelectorAll("[data-ok]").forEach(b => b.onclick = () => confirm(b.dataset.ok));
   box.querySelectorAll("[data-no]").forEach(b => b.onclick = () => set(b.dataset.no, "not_found"));
 }
