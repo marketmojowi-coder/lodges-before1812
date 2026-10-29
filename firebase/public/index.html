@@ -50,6 +50,7 @@
 
 <nav class="tabs" aria-label="Views"><div class="wrap">
   <button type="button" class="tab on" data-v="index">Index</button>
+  <button type="button" class="tab" data-v="atlas">Atlas</button>
   <button type="button" class="tab" data-v="build">Census tables</button>
   <button type="button" class="tab" data-v="compare">Compare lodges</button>
   <button type="button" class="tab" data-v="search">All records</button>
@@ -60,9 +61,15 @@
   <div class="ixbtns" id="ix-btns">
     <button type="button" data-ix="men">Men A–Z</button><button type="button" data-ix="trades">Trades and callings</button>
     <button type="button" data-ix="lodges">Lodges</button><button type="button" data-ix="years">Years</button>
-    <button type="button" data-ix="buildings">Buildings</button><button type="button" data-ix="docs">Original documents</button>
+    <button type="button" data-ix="atlas">Atlas of buildings</button><button type="button" data-ix="docs">Original documents</button>
   </div>
   <div id="ix-panel"></div>
+</div></section>
+<section id="v-atlas" class="view" hidden><div class="wrap">
+  <h2 class="sec">Atlas of the buildings</h2>
+  <p class="stats">The public works and places the lodge men built, supplied or served, from the book data sets. Tap a building for its men, records and pictures.</p>
+  <div class="atlas"><figure class="map" id="at-map"></figure><div id="at-info"></div></div>
+  <div id="at-list"></div>
 </div></section>
 <section id="v-man" class="view" hidden><div class="wrap" id="man-out"></div></section>
 <section id="v-build" class="view" hidden><div class="wrap">
