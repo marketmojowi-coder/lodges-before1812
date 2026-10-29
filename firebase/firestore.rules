@@ -4,7 +4,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{db}/documents {
     function signedIn() { return request.auth != null; }
-    function editor() { return signedIn() && request.auth.token.editor == true; }
+    // The owner (Market Mojo LLC) by confirmed email: runs the app from My account with no scripts or keys.
+    function boss() { return signedIn() && request.auth.token.email == "marketmojowi@gmail.com" && request.auth.token.email_verified == true; }
+    function editor() { return signedIn() && (request.auth.token.editor == true || boss()); }
     // paid(): a payment an editor confirmed (works on the free Spark plan, no Cloud Functions needed).
     function paid() { return signedIn() && exists(/databases/$(db)/documents/paid/$(request.auth.uid)); }
     function member() { return signedIn() && (request.auth.token.member == true || request.auth.token.stripeRole == "member" || editor() || paid()); }
@@ -89,7 +91,7 @@ service cloud.firestore {
     // claim with the reference; only an editor marks it paid, and functions/index.js then switches the membership on.
     match /config/zelle {
       allow read: if signedIn();
-      allow write: if false;
+      allow write: if boss();
     }
     match /zelle_claims/{uid} {
       allow read: if owner(uid) || editor();
@@ -117,7 +119,7 @@ service cloud.firestore {
     // The data set, in parts of under 1 MB (admin/upload_data.py). Members read it; nobody writes it from the app.
     match /data/{part} {
       allow read: if member();
-      allow write: if false;
+      allow write: if boss();
     }
     // Sales ledger: one row per membership sold, written by an editor when confirming a payment or by functions/index.js.
     match /sales/{id} {

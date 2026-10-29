@@ -298,3 +298,6 @@ footer .flinks{display:flex;flex-wrap:wrap;align-items:center;gap:0 14px;margin:
 .zl-card form{border:0;background:none;padding:0;border-radius:0;max-width:none;box-shadow:none}
 .zl-card button.linkbtn{background:none;color:#d1b477;min-height:32px;font-weight:400;text-decoration:underline;padding:0}
 .panel .zl-card button.linkbtn{color:var(--gold-2,#7d6738)}
+.owform{display:grid;gap:8px;max-width:520px;border:0;background:none;padding:0}.owform label{display:grid;gap:4px;font:600 .9rem var(--sans)}
+.owform input{min-height:42px;border:1px solid var(--line);border-radius:4px;padding:0 10px;font:1rem var(--sans);background:var(--card);color:var(--fg)}
+.panel.owner{border-color:var(--gold)}.panel.owner h3{font:600 1rem var(--sans);margin:14px 0 6px}
