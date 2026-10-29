@@ -1,4 +1,4 @@
-// Lodges Before 1812: search and browse. startApp(DATA) is called by auth.js after a paid member signs in.
+// Lodges Before 1812: index, profiles, census tables. startApp(DATA) is called by auth.js after a paid member signs in.
 window.startApp=function(DATA){
 const $=id=>document.getElementById(id);
 const norm=s=>(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
@@ -97,7 +97,7 @@ function orig(r){const p=DATA.repos[r.o];if(!p)return"";
   if(r.o==="BOOK")return `<div class="orig"><b>Original:</b> <span class="acc">${esc(p.access)}</span></div>`;
   return `<div class="orig"><b>Original:</b> ${esc(r.od&&r.od!==r.c?r.od:p.cite||r.od)}${r.oh?`. <b>Held at:</b> ${esc(r.oh)}`:""}. <span class="acc">${esc(p.access)}</span></div>`}
 function citeText(r){const p=DATA.repos[r.o];let t=r.c.replace(/\.$/,"");if(r.d!=null)return t+". Original: "+DATA.docs[r.d].x.replace(/\.$/,"")+(r.dl?", "+r.dl:"")+".";if(r.o!=="BOOK"&&r.od&&!r.c.includes(r.od))t+=`. Original: ${r.od}${r.oh?", "+r.oh:""}`;return t+"."}
-function pick(i){man=i;$("q").value="";run();window.scrollTo({top:0})}
+function pick(i){profile(i)}
 function count(a){const c={};a.forEach(v=>c[v]=(c[v]||0)+1);return Object.entries(c).sort((x,y)=>y[1]-x[1])}
 function years(list){const c={};list.forEach(r=>r.y.forEach(y=>{if(y>=1785&&y<=1815)c[y]=(c[y]||0)+1}));const ks=Object.keys(c).map(Number);if(!ks.length)return"";
   const a=Math.min(...ks),b=Math.max(...ks),mx=Math.max(...Object.values(c));let h=`<div class="years" aria-label="Records by year">`;
@@ -130,9 +130,176 @@ function side(T,q){
   const ud=$("undoc");if(ud)ud.onclick=()=>{docSel=null;run()};
   s.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{$(b.dataset.f).value=b.dataset.v;run()});
 }
-$("f").onsubmit=e=>{e.preventDefault();man=null;run()};
+$("f").onsubmit=e=>{e.preventDefault();man=null;show("search");run()};
 ["fo","fl","fs","ft","fb"].forEach(id=>$(id).onchange=run);["y1","y2"].forEach(id=>$(id).oninput=run);
 $("clr").onclick=()=>{docSel=null;["q","fo","fl","fs","ft","fb","y1","y2"].forEach(id=>$(id).value="");man=null;run()};
-let qi;$("q").oninput=()=>{clearTimeout(qi);qi=setTimeout(()=>{man=null;run()},200)};
+let qi;$("q").oninput=()=>{clearTimeout(qi);qi=setTimeout(()=>{man=null;if($("q").value.trim())show("search");run()},250)};
 run();
+
+/* ---------- Views ---------- */
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>show(b.dataset.v));
+function show(v){document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===v));
+  ["index","man","search","build","compare"].forEach(k=>$("v-"+k).hidden=v!==k);$("filt").hidden=v!=="search";
+  if(v==="build")tb();if(v==="compare")cp();window.scrollTo({top:0});}
+/* ---------- Table builder (men named in the returns and rolls) ---------- */
+const C=DATA.census, LN=C.lodges, OC=C.occn, OFF=new Set(C.officer), MUL=new Set(C.multi_men);
+const occOf=i=>C.mocc[i]||[];
+const DIMS={year:{n:"Year",v:o=>[o[2]]},period:{n:"Period (5 years)",v:o=>{const a=o[2]-(o[2]-1785)%5;return[`${a}–${a+4}`]}},
+  lodge:{n:"Lodge",v:o=>[LN[o[1]]]},place:{n:"Place",v:o=>[C.place_of[o[1]]]},
+  calling:{n:"Calling",v:o=>{const c=occOf(o[0]);return c.length?c.map(k=>OC[k]):["No calling recorded"]}},
+  officer:{n:"Held a lodge office",v:o=>[OFF.has(o[0])?"Officer":"Not recorded as officer"]},
+  multi:{n:"Lodges joined",v:o=>[MUL.has(o[0])?"More than one lodge":"One lodge"]}};
+["tb-r","tb-c"].forEach((id,k)=>{const sel=$(id);if(k)sel.add(new Option("None",""));Object.entries(DIMS).forEach(([key,d])=>sel.add(new Option(d.n,key)))});
+$("tb-r").value="year";$("tb-c").value="lodge";
+LN.forEach((l,i)=>$("tb-l").add(new Option(l,i)));OC.forEach((o,i)=>$("tb-o").add(new Option(o,i)));
+try{const h=new URLSearchParams(location.hash.slice(1));if(h.get("t")){[["m","tb-m"],["r","tb-r"],["c","tb-c"],["l","tb-l"],["o","tb-o"],["y1","tb-y1"],["y2","tb-y2"]].forEach(([k,id])=>{if(h.has(k))$(id).value=h.get(k)});setTimeout(()=>show("build"))}}catch(_){}
+["tb-m","tb-r","tb-c","tb-l","tb-o"].forEach(id=>$(id).onchange=tb);["tb-y1","tb-y2"].forEach(id=>$(id).oninput=tb);
+let TB=null;
+function tb(){
+  const m=$("tb-m").value,r=$("tb-r").value,c=$("tb-c").value,l=$("tb-l").value,oc=$("tb-o").value,y1=+$("tb-y1").value||0,y2=+$("tb-y2").value||9999;
+  const cells=new Map(),rowT=new Map(),colT=new Map(),all=new Set();let allMY=0;
+  const add=(map,k,i,key)=>{if(!map.has(k))map.set(k,m==="men"?new Set():{n:0});const x=map.get(k);if(m==="men")x.add(i);else x.n++};
+  for(const o of C.obs){
+    if(o[2]<y1||o[2]>y2)continue;if(l!==""&&o[1]!==+l)continue;
+    if(oc!==""){const cs=occOf(o[0]);if(oc==="-1"?cs.length:!cs.includes(+oc))continue}
+    const rv=DIMS[r].v(o),cv=c?DIMS[c].v(o):["Total"];
+    for(const a of rv){add(rowT,a,o[0]);for(const b of cv){add(cells,a+"\u0001"+b,o[0])}}
+    for(const b of cv)add(colT,b,o[0]);all.add(o[0]);allMY++;
+  }
+  const val=x=>x?(m==="men"?x.size:x.n):0;
+  const sortK=(a,b)=>(typeof a==="number"||/^\d/.test(a))&&(typeof b==="number"||/^\d/.test(b))?String(a).localeCompare(String(b),undefined,{numeric:true}):(LN.indexOf(a)>=0&&LN.indexOf(b)>=0?LN.indexOf(a)-LN.indexOf(b):String(a).localeCompare(String(b)));
+  const rows=[...rowT.keys()].sort(sortK),cols=[...colT.keys()].sort(sortK);
+  TB={rows,cols,cells,val,rowT,colT,r,c,m,total:m==="men"?all.size:allMY};
+  let h=`<table class="stt"><thead><tr><th>${esc(DIMS[r].n)}</th>${c?cols.map(k=>`<th>${esc(k)}</th>`).join(""):""}<th>${c?"All":m==="men"?"Men":"Man-years"}</th></tr></thead><tbody>`;
+  for(const a of rows)h+=`<tr><td>${esc(a)}</td>${c?cols.map(b=>`<td>${val(cells.get(a+"\u0001"+b))||""}</td>`).join(""):""}<td><b>${val(rowT.get(a))}</b></td></tr>`;
+  h+=`</tbody><tfoot><tr><td>All</td>${c?cols.map(b=>`<td>${val(colT.get(b))}</td>`).join(""):""}<td>${TB.total}</td></tr></tfoot></table>`;
+  $("tb-table").innerHTML=rows.length?h:`<p class="empty">Nothing matches these filters.</p>`;
+  $("tb-note").textContent=m==="men"?"Each man is counted once in a row or column even if he appears in several years or lodges, so rows can add up to more than the total.":"A man counts once for each year and lodge in which a return or roll names him.";
+  chart(rows.map(a=>[a,val(rowT.get(a))]),DIMS[r].n,m==="men"?"men":"man-years");
+}
+function chart(pts,dim,unit){
+  const el=$("tb-chart");el.innerHTML="";if(!pts.length)return;
+  const W=Math.max(320,el.clientWidth||600),H=200,P={l:34,r:6,t:8,b:pts.length>12?44:28},iw=W-P.l-P.r,ih=H-P.t-P.b;
+  const mx=Math.max(...pts.map(p=>p[1]))||1,step=Math.pow(10,Math.floor(Math.log10(mx))),nice=Math.ceil(mx/step)*step;
+  const bw=iw/pts.length,gap=Math.min(2,bw*.2);
+  const NS="http://www.w3.org/2000/svg",svg=document.createElementNS(NS,"svg");svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("role","img");svg.setAttribute("aria-label",`${unit} by ${dim}`);
+  const mk=(t,a)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);svg.appendChild(e);return e};
+  for(let k=0;k<=4;k++){const v=nice*k/4,y=P.t+ih-ih*v/nice;mk("line",{x1:P.l,x2:W-P.r,y1:y,y2:y,class:"gl"});const t=mk("text",{x:P.l-4,y:y+3,"text-anchor":"end"});t.textContent=Math.round(v)}
+  const tip=document.createElement("div");tip.className="tip";tip.hidden=true;
+  pts.forEach(([k,v],i)=>{const x=P.l+i*bw+gap/2,h=ih*v/nice,y=P.t+ih-h,w=Math.max(1,bw-gap),r=Math.min(4,w/2,h);
+    const path=h>0?`M${x},${P.t+ih}V${y+r}Q${x},${y} ${x+r},${y}H${x+w-r}Q${x+w},${y} ${x+w},${y+r}V${P.t+ih}Z`:"";
+    const b=mk("path",{d:path,class:"bar",tabindex:0});
+    const hit=mk("rect",{class:"hit",x:P.l+i*bw,y:P.t,width:bw,height:ih,fill:"transparent"});
+    const showTip=()=>{tip.hidden=false;tip.innerHTML="";const s=document.createElement("b");s.textContent=v+" "+unit;tip.append(s,document.createTextNode(String(k)));
+      const bx=el.getBoundingClientRect(),sx=bx.width/W;tip.style.left=Math.min(bx.width-120,Math.max(0,(x+w/2)*sx-40))+"px";tip.style.top=Math.max(0,y*sx-46)+"px"};
+    [b,hit].forEach(e=>{e.addEventListener("pointermove",showTip);e.addEventListener("focus",showTip);e.addEventListener("pointerleave",()=>tip.hidden=true);e.addEventListener("blur",()=>tip.hidden=true)});
+    const every=Math.ceil(pts.length/(W/38));
+    if(i%every===0){const t=mk("text",{x:x+w/2,y:H-P.b+14,"text-anchor":pts.length>12?"end":"middle",transform:pts.length>12?`rotate(-40 ${x+w/2} ${H-P.b+14})`:""});t.textContent=String(k).length>14?String(k).slice(0,13)+"…":k}
+  });
+  el.appendChild(svg);el.appendChild(tip);
+}
+$("tb-csv").onclick=()=>{if(!TB)return;const q=v=>`"${String(v).replace(/"/g,'""')}"`;
+  const lines=[[DIMS[TB.r].n,...(TB.c?TB.cols:[]),"All"].map(q).join(",")];
+  for(const a of TB.rows)lines.push([a,...(TB.c?TB.cols.map(b=>TB.val(TB.cells.get(a+"\u0001"+b))):[]),TB.val(TB.rowT.get(a))].map(q).join(","));
+  lines.push(["All",...(TB.c?TB.cols.map(b=>TB.val(TB.colT.get(b))):[]),TB.total].map(q).join(","));
+  lines.push("");lines.push(q("Lodges Before 1812. "+(TB.m==="men"?"Men":"Man-years")+" named in the surviving returns and rolls. Sources: Grand Lodge of Maryland returns (Stephen J. Ponzillo Jr. Memorial Library and Museum) and the series lodge rolls (Thomas M. Saharsky, 2026)."));
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/csv"}));a.download="lodges_before_1812_table.csv";a.click();};
+$("tb-link").onclick=()=>{const p=new URLSearchParams({t:1,m:$("tb-m").value,r:$("tb-r").value,c:$("tb-c").value,l:$("tb-l").value,o:$("tb-o").value,y1:$("tb-y1").value,y2:$("tb-y2").value});
+  const u=location.href.split("#")[0]+"#"+p;try{history.replaceState(null,"","#"+p)}catch(_){}
+  (navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>$("tb-link").textContent="Link copied",()=>prompt("Copy this link:",u))};
+/* ---------- Compare lodges (QuickFacts style) ---------- */
+let CP=[3,4,5];
+function cp(){
+  $("cp-pick").innerHTML=LN.map((l,i)=>`<button type="button" class="chip${CP.includes(i)?" on":""}" data-i="${i}">${esc(l)}</button>`).join("");
+  $("cp-pick").querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{const i=+b.dataset.i;CP=CP.includes(i)?CP.filter(x=>x!==i):(CP.length<4?[...CP,i]:CP);cp()});
+  const facts=CP.map(i=>{const ob=C.obs.filter(o=>o[1]===i),men=new Set(ob.map(o=>o[0])),ys={};ob.forEach(o=>{(ys[o[2]]=ys[o[2]]||new Set()).add(o[0])});
+    const yk=Object.keys(ys).map(Number).sort((a,b)=>a-b),peak=yk.reduce((a,y)=>ys[y].size>(ys[a]?.size||0)?y:a,yk[0]);
+    const cc={};men.forEach(m=>occOf(m).forEach(k=>cc[k]=(cc[k]||0)+1));const top=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];
+    const known=[...men].filter(m=>occOf(m).length).length,L=DATA.lodges.find(x=>x.n===LN[i])||{};
+    return {"Place":C.place_of[i],"Men named in returns and rolls":men.size,"Years with a surviving return or roll":yk.length,"First and last such year":yk.length?yk[0]+"–"+yk.at(-1):"–",
+      "Largest year":yk.length?`${peak} (${ys[peak].size} men)`:"–","Average men per return year":yk.length?(ob.length/yk.length).toFixed(1):"–",
+      "Men with a recorded calling":men.size?`${known} (${Math.round(100*known/men.size)}%)`:"–","Most common calling":top?`${OC[top[0]]} (${top[1]})`:"–",
+      "Men who held an office":[...men].filter(m=>OFF.has(m)).length,"Men also in another lodge":[...men].filter(m=>MUL.has(m)).length,
+      "Original documents cited":L.d||"–","Records in the data set":(L.r||0).toLocaleString()}});
+  const keys=facts.length?Object.keys(facts[0]):[];
+  $("cp-table").innerHTML=facts.length?`<table class="stt"><thead><tr><th></th>${CP.map(i=>`<th>${esc(LN[i])}</th>`).join("")}</tr></thead><tbody>${keys.map(k=>`<tr><td>${esc(k)}</td>${facts.map(f=>`<td>${esc(f[k])}</td>`).join("")}</tr>`).join("")}</tbody></table>`:`<p class="empty">Tick a lodge.</p>`;
+}
+
+/* ---------- Index: buttons into the main categories ---------- */
+const PRIM=r=>r.o!=="BOOK";
+const MP=M.map(()=>({p:[],x:[]}));R.forEach((r,k)=>r.m.forEach(i=>(PRIM(r)?MP[i].p:MP[i].x).push(k)));
+const ND=M.map((m,i)=>new Set(MP[i].p.map(k=>R[k].d??("o"+R[k].o))).size);
+const callings=i=>occOf(i).map(k=>OC[k]);
+const tradeLine=i=>{const m=M[i],c=callings(i);return m.tr||m.tg||c.join("; ")};
+function nameBtns(list){return `<div class="names">${list.map(i=>{const m=M[i];const t=tradeLine(i);return `<button type="button" data-m="${i}">${esc(m.n)}<small>${esc([t,m.l.join(", ")].filter(Boolean).join(" · "))}${ND[i]?` · ${ND[i]} original document${ND[i]>1?"s":""}`:""}</small></button>`}).join("")}</div>`}
+function wire(el){el.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>profile(+b.dataset.m));
+  el.querySelectorAll("[data-yr]").forEach(b=>b.onclick=()=>{goSearch({y1:b.dataset.yr,y2:b.dataset.yr})});
+  el.querySelectorAll("[data-bd]").forEach(b=>b.onclick=()=>goSearch({fb:b.dataset.bd}));
+  el.querySelectorAll("[data-dc]").forEach(b=>b.onclick=()=>{goSearch({});docSel=+b.dataset.dc;run()});
+  el.querySelectorAll("[data-ix]").forEach(b=>b.onclick=()=>ix(b.dataset.ix,b.dataset.arg));}
+function goSearch(f){docSel=null;man=null;["q","fo","fl","fs","ft","fb","y1","y2"].forEach(id=>$(id).value=f[id]||"");show("search");run()}
+function highlights(){
+  const top=M.map((m,i)=>i).sort((a,b)=>ND[b]-ND[a]||MP[b].p.length-MP[a].p.length)[0];
+  const big=C.years.reduce((a,y)=>y.t>a.t?y:a,C.years[0]);
+  const three=M.map((m,i)=>i).filter(i=>M[i].l.length>=3);
+  const yrs=C.years.map(y=>y.y);
+  $("ix-hi").innerHTML=`<h2 class="sec">At a glance</h2><div class="hi">
+  <div><b>${M.length}</b>men on the lodge rolls, ${C.occ_known} with a recorded trade or calling</div>
+  <div><b>${DATA.docs.length}</b>original documents cited, in ${Object.values(DATA.repos).filter(v=>v.nd).length} archives</div>
+  <div><b>${big.t} men</b>on the returns in ${big.y}, the fullest year (${yrs[0]}–${yrs.at(-1)})</div>
+  <div><b>${esc(C.occ[0][0])}</b>the most common calling: ${C.occ[0][1]} men, then ${esc(C.occ[1][0].toLowerCase())} (${C.occ[1][1]}) and ${esc(C.occ[2][0].toLowerCase())} (${C.occ[2][1]})</div>
+  <div><b>${C.multi}</b>men belonged to more than one lodge${three.length?`; ${three.length} to three: ${three.map(i=>`<button type="button" data-m="${i}">${esc(M[i].n)}</button>`).join(", ")}`:""}</div>
+  <div><b>${esc(M[top].n)}</b>appears in the most originals: ${ND[top]} documents · <button type="button" data-m="${top}">profile</button></div>
+  </div>`;wire($("ix-hi"))}
+let IX="men";
+function ix(k,arg){IX=k;document.querySelectorAll("#ix-btns [data-ix]").forEach(b=>b.classList.toggle("on",b.dataset.ix===k));
+  const P=$("ix-panel");let h="";
+  if(k==="men"){const L=arg||"A",ls=[...new Set(M.map(m=>m.n.trim().split(/\s+/).filter(w=>!/^(jr|sr|junior|senior)\.?,?$/i.test(w)).at(-1)?.[0]?.toUpperCase()).filter(Boolean))].sort();
+    const sn=m=>m.n.replace(/,?\s*(Jr|Sr|Junior|Senior)\.?$/i,"").trim().split(/\s+/).at(-1);
+    const list=M.map((m,i)=>i).filter(i=>sn(M[i])[0]?.toUpperCase()===L).sort((a,b)=>sn(M[a]).localeCompare(sn(M[b]))||M[a].n.localeCompare(M[b].n));
+    h=`<div class="letters">${ls.map(l=>`<button type="button" data-ix="men" data-arg="${l}" class="${l===L?"on":""}">${l}</button>`).join("")}</div><p class="stats">${list.length} men, by surname</p>${nameBtns(list)}`}
+  if(k==="trades"){if(arg!==undefined){const c=+arg,list=M.map((m,i)=>i).filter(i=>occOf(i).includes(c)).sort((a,b)=>ND[b]-ND[a]);
+      h=`<button class="linkbtn back" type="button" data-ix="trades">‹ All trades</button><h3 class="h3s">${esc(OC[c])}: ${list.length} men</h3>${nameBtns(list)}`}
+    else h=`<p class="stats">Trades and callings as the records give them, grouped. A man with two callings is under both.</p><div class="ixbtns">${C.occ.map(([n,v])=>`<button type="button" data-ix="trades" data-arg="${OC.indexOf(n)}">${esc(n)}<br><small>${v} men</small></button>`).join("")}</div>`}
+  if(k==="lodges"){if(arg!==undefined){const l=DATA.lodges.find(x=>x.n===arg)||{},ci=LN.indexOf(arg);
+      const list=M.map((m,i)=>i).filter(i=>M[i].l.includes(arg)).sort((a,b)=>M[a].n.localeCompare(M[b].n));
+      const ys=ci>=0?C.years.filter(y=>y.c[ci]).map(y=>`${y.y}: ${y.c[ci]}`).join(" · "):"";
+      h=`<button class="linkbtn back" type="button" data-ix="lodges">‹ All lodges</button><h3 class="h3s">${esc(arg)}</h3>
+      <div class="facts"><div><div class="k">Men</div>${list.length}</div><div><div class="k">Original documents</div>${l.d||"–"}</div><div><div class="k">Years</div>${l.y0?l.y0+"–"+l.y1:"–"}</div><div><div class="k">Met at</div>${esc(C.place_of[ci]||"–")}</div></div>
+      ${ys?`<p class="stats">Men on the returns by year: ${ys}</p>`:""}${nameBtns(list)}`}
+    else h=`<div class="ixbtns">${DATA.lodges.map(l=>`<button type="button" data-ix="lodges" data-arg="${esc(l.n)}">${esc(l.n)}<br><small>${l.men} men${l.y0?` · ${l.y0}–${l.y1}`:""}</small></button>`).join("")}</div>`}
+  if(k==="years")h=`<p class="stats">Men named on the surviving returns and rolls each year. Tap a year for its records.</p><div class="ixbtns">${C.years.map(y=>`<button type="button" data-yr="${y.y}">${y.y}<br><small>${y.t} men</small></button>`).join("")}</div>`;
+  if(k==="buildings"){const c={};R.forEach(r=>r.b.forEach(b=>c[b]=(c[b]||0)+1));h=`<div class="ixbtns">${Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([b,n])=>`<button type="button" data-bd="${esc(b)}">${esc(b)}<br><small>${n} records</small></button>`).join("")}</div>`}
+  if(k==="docs"){h=Object.entries(DATA.repos).filter(([o,v])=>v.nd).map(([o,v])=>`<h3 class="h3s">${esc(v.name)}</h3><p class="stats">${esc(v.holder||"")} ${esc(v.access||"")}</p><div class="rows">${DATA.docs.map((d,i)=>[d,i]).filter(([d])=>d.o===o).map(([d,i])=>`<button type="button" data-dc="${i}"><span>${esc(d.x.replace(/^.*?, (?=[A-Z][a-z]+ of|Proceedings|Return|Roster)/,""))}</span><span>${d.n}</span></button>`).join("")}</div>`).join("")}
+  P.innerHTML=h;wire(P)}
+/* ---------- A man's profile: primary sources first, cross-references apart ---------- */
+function brief(r){return r.f.filter(([k])=>k!=="Source").slice(0,4).map(([k,v])=>`<b>${esc(k)}:</b> ${esc(v)}`).join(" · ")}
+function profile(i){const m=M[i],P=MP[i];
+  const groups=new Map();P.p.forEach(k=>{const r=R[k],key=r.d??("o"+r.o+"|"+(r.od||r.c));if(!groups.has(key))groups.set(key,[]);groups.get(key).push(r)});
+  const gs=[...groups.values()].sort((a,b)=>(a[0].y[0]||9999)-(b[0].y[0]||9999));
+  const cal=callings(i);
+  let h=`<button class="linkbtn back" type="button" id="pback">‹ Back to the index</button><div class="prof">
+  <h2>${esc(m.n)}</h2><div class="trade">${esc(m.tr||m.tg||cal.join("; ")||"Trade not recorded")}</div>
+  <div class="facts"><div><div class="k">Lodges</div>${esc(m.l.join("; "))}</div>
+  ${m.yr?`<div><div class="k">Years on the rolls</div>${esc(m.yr)}</div>`:""}
+  ${cal.length?`<div><div class="k">Calling (grouped)</div>${esc(cal.join("; "))}</div>`:""}
+  ${m.o?`<div><div class="k">Offices</div>${esc(m.o)}</div>`:""}
+  ${m.sp.length?`<div><div class="k">Also written</div>${esc(m.sp.join("; "))}</div>`:""}</div>
+  ${m.fx?`<div class="k" style="font-family:var(--sans);font-size:.7rem;text-transform:uppercase;color:var(--muted)">Settled facts</div><ul>${m.fx.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>`:""}
+  <h2 class="sec" style="font-size:1.35rem">Primary sources (${gs.length} document${gs.length===1?"":"s"})</h2>`;
+  if(!gs.length)h+=`<p class="stats">No original document in the data set names him directly. He is known from the lodge rolls compiled in the series (below).</p>`;
+  for(const g of gs){const r=g[0],p=DATA.repos[r.o]||{};const ox=r.d!=null?DATA.docs[r.d].x:(r.od||p.cite||r.c);
+    const locs=[...new Set(g.map(x=>x.dl).filter(Boolean))];
+    h+=`<div class="doc"><div class="ox">${esc(ox.replace(/\.$/,""))}${locs.length?", "+esc(locs.join("; ")):""}.</div>
+    <div class="acc">${r.oh?`Held at ${esc(r.oh)}. `:""}${esc(p.access||"")} Cited in: ${esc([...new Set(g.map(x=>x.c))].join("; "))}.</div>
+    <ul>${g.map(x=>`<li>${esc(x.t)}: ${brief(x)}</li>`).join("")}</ul>
+    <button class="copy" type="button" data-cc="${R.indexOf(r)}">Copy citation</button></div>`}
+  const X=P.x.map(k=>R[k]);
+  h+=`<details ${gs.length?"":"open"}><summary><b>Cross-references in the series books and rolls (${X.length})</b>: compiled from the documents above and from the lodge rolls; not separate originals.</summary>
+  <ul class="xref">${X.map(r=>`<li>${esc(r.s.replace(/ \(book data set\)/,""))} › ${esc(r.t)}${r.y.length?" ("+r.y[0]+(r.y.at(-1)!==r.y[0]?"–"+r.y.at(-1):"")+")":""}: ${brief(r)}<br><span class="acc">${esc(r.c)}</span></li>`).join("")}</ul></details></div>`;
+  $("man-out").innerHTML=h;show("man");$("pback").onclick=()=>show("index");
+  $("man-out").querySelectorAll("[data-cc]").forEach(b=>b.onclick=()=>{const t=citeText(R[+b.dataset.cc]);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{b.textContent="Copied"},()=>{prompt("Copy this citation:",t)})});
+}
+document.querySelectorAll("#ix-btns [data-ix]").forEach(b=>b.onclick=()=>ix(b.dataset.ix));
+highlights();ix("men");
 };
