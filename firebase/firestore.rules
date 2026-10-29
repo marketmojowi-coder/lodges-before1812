@@ -1,0 +1,40 @@
+rules_version = '2';
+// Members: active Stripe subscription (claim stripeRole == "member", set by the Stripe extension) or editors (claim editor == true).
+service cloud.firestore {
+  match /databases/{db}/documents {
+    function signedIn() { return request.auth != null; }
+    function editor() { return signedIn() && request.auth.token.editor == true; }
+    function member() { return signedIn() && (request.auth.token.stripeRole == "member" || editor()); }
+
+    // Bins: anyone who is a member can see them; only editors create or change them.
+    match /bins/{bin} {
+      allow read: if member();
+      allow write: if editor();
+    }
+    // Facts: members add pending facts with a source; they read accepted facts and their own; editors review.
+    match /facts/{id} {
+      allow read: if editor() || (member() && (resource.data.status == "accepted" || resource.data.by == request.auth.uid));
+      allow create: if member()
+        && request.resource.data.status == "pending"
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.agent == false
+        && request.resource.data.citation is string && request.resource.data.citation.size() > 5
+        && request.resource.data.held_at is string && request.resource.data.held_at.size() > 3
+        && request.resource.data.claim is string && request.resource.data.claim.size() > 3;
+      allow update: if editor();
+      allow delete: if editor();
+    }
+    // Stripe extension data: a user sees only their own customer record and starts their own checkout.
+    match /customers/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      match /checkout_sessions/{id} { allow read, write: if signedIn() && request.auth.uid == uid; }
+      match /subscriptions/{id} { allow read: if signedIn() && request.auth.uid == uid; }
+      match /payments/{id} { allow read: if signedIn() && request.auth.uid == uid; }
+    }
+    match /products/{id} {
+      allow read: if true;
+      match /prices/{p} { allow read: if true; }
+      match /tax_rates/{t} { allow read: if true; }
+    }
+  }
+}
