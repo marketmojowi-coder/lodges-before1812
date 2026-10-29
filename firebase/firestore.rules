@@ -21,8 +21,9 @@ service cloud.firestore {
         && request.resource.data.citation is string && request.resource.data.citation.size() > 5
         && request.resource.data.held_at is string && request.resource.data.held_at.size() > 3
         && request.resource.data.claim is string && request.resource.data.claim.size() > 3;
-      allow update: if editor();
-      allow delete: if editor();
+      allow update: if editor()
+        || (signedIn() && resource.data.by == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["by_name"]));
+      allow delete: if editor() || (signedIn() && resource.data.by == request.auth.uid && resource.data.status == "pending");
     }
     // Stripe extension data: a user sees only their own customer record and starts their own checkout.
     match /customers/{uid} {
