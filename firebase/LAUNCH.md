@@ -1,4 +1,4 @@
-# Launch Civic Vault: payments, GoDaddy domain, Google Play
+# Launch Civic Atlas: payments, GoDaddy domain, Google Play
 
 Written October 29, 2026. Do these steps after the account test in [DEPLOY_AND_TEST.md](DEPLOY_AND_TEST.md) passes.
 
@@ -6,14 +6,19 @@ Written October 29, 2026. Do these steps after the account test in [DEPLOY_AND_T
 
 - Members pay on the website, **lodges.mktmojox.com**, through Stripe Checkout. The money goes to Market Mojo LLC's
   bank account through Stripe.
-- Stripe takes about 2.9% + 30¢ per payment. Card details never touch our site.
+- The membership is a **one-time payment**, not a subscription.
+- Stripe takes about 2.9% + 30¢ per payment. Card details never touch our site, and members never see your bank
+  details: their statement shows only **MARKET MOJO**. Stripe pays out to the bank account you choose in Stripe
+  (it can be the same account your Zelle uses).
+- Signed-in members see a green **Signed in** badge in the top bar of the app, the fact bins and My account.
 - The Android app only signs members in. It shows no price, no buy button and no link to buy.
   - This is the "sign in to content bought elsewhere" model, which Google Play allows.
   - It avoids Google's 15% fee and its billing rules.
 - To go live:
   1. In Stripe, finish the business profile (EIN, bank account, statement name **MARKET MOJO**).
   2. Turn on live mode.
-  3. Create the membership product with metadata `firebaseRole` = `member`.
+  3. Create the membership product with a **one-time price** and metadata `firebaseRole` = `member`. Members pay once
+     and keep access; the `grantMembership` function switches them on as soon as Stripe confirms the payment.
   4. Put a live restricted key into the Firebase Stripe extension.
 
 ## 2. The GoDaddy domain (mktmojox.com)
@@ -28,7 +33,7 @@ at it.
    - Type **A**, Name `lodges`, Value (each IP address from Firebase).
    - Leave the existing records for `@` and `www` alone, so www.mktmojox.com keeps working.
 3. Wait for Firebase to say **Connected** (minutes to a few hours). The certificate is issued automatically.
-4. In GoDaddy's website editor, add a menu link **Civic Vault** → `https://lodges.mktmojox.com`.
+4. In GoDaddy's website editor, add a menu link **Civic Atlas** → `https://lodges.mktmojox.com`.
 5. Optional, for email from your own domain: turn on GoDaddy email (or Google Workspace) for an address such as
    `info@mktmojox.com`. Then switch the contact address in `grand-lodge-app/legal/build_legal.py` (EMAIL) and rebuild.
 
@@ -55,7 +60,7 @@ at it.
 ## 4. Order of work on launch day
 
 1. Stripe live (section 1) and the domain connected (section 2).
-2. `firebase deploy --only hosting,firestore,storage` and upload the latest `app_data.json`.
+2. `firebase deploy --only hosting,firestore,storage,functions` and upload the latest `app_data.json`.
 3. Play Console:
    1. Create app.
    2. Internal testing > upload `app-release.aab`.

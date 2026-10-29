@@ -1,7 +1,8 @@
 // Sign-in gate: Google or email link; members get the data set from Cloud Storage and the search app starts.
-import { auth, db, storage, role, memberPrice, priceText, memberNumber } from "./firebase-init.js";
-import { GoogleAuthProvider, signInWithPopup, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, onAuthStateChanged, signOut }
-  from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { auth, db, storage, role, memberPrice, priceText, memberNumber, signedInBadge } from "./firebase-init.js";
+import { zelleBox } from "./zelle.js";
+import { GoogleAuthProvider, signInWithPopup, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, onAuthStateChanged, signOut,
+  getMultiFactorResolver, TotpMultiFactorGenerator } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { ref, getBlob } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 const $ = id => document.getElementById(id), msg = t => { $("g-msg").textContent = t };
@@ -9,11 +10,36 @@ const $ = id => document.getElementById(id), msg = t => { $("g-msg").textContent
 // Google Play rules allow members to sign in to content bought elsewhere, but not to steer users to outside payment.
 const ANDROID_APP = (() => { try { if (new URLSearchParams(location.search).get("source") === "twa") sessionStorage.setItem("twa", "1"); return sessionStorage.getItem("twa") === "1" || document.referrer.startsWith("android-app://"); } catch (_) { return false; } })();
 
+// Opening screen: the Market Mojo film (intro.mp4, if present) or the Civic Atlas emblem, once per visit; Skip ends it.
+(() => {
+  const box = $("intro"); let seen = false; try { seen = sessionStorage.getItem("intro") === "1"; sessionStorage.setItem("intro", "1"); } catch (_) {}
+  if (!box || seen || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const end = () => { box.classList.add("out"); setTimeout(() => box.remove(), 500); };
+  box.hidden = false; $("intro-skip").onclick = end;
+  const v = $("intro-v"); let t = setTimeout(end, 3200);
+  v.onloadeddata = () => { clearTimeout(t); box.classList.add("film"); v.play().catch(() => {}); t = setTimeout(end, 15000); };
+  v.onended = end; v.onerror = () => {}; v.src = "intro.mp4";
+})();
+
+// Two-step sign-in: when the account has an authenticator app, Firebase asks for its six-digit code after the first step.
+function twoStep(err) {
+  if (err.code !== "auth/multi-factor-auth-required") { msg(err.message); return; }
+  const res = getMultiFactorResolver(auth, err), hint = res.hints.find(h => h.factorId === TotpMultiFactorGenerator.FACTOR_ID);
+  if (!hint) { msg("This account uses a second step this app does not support. Write to the contact address."); return; }
+  $("gate-out").hidden = true; $("g-tfa").hidden = false; $("g-tfa-code").focus(); msg("");
+  $("g-tfa").onsubmit = e => {
+    e.preventDefault(); const code = $("g-tfa-code").value.replace(/\D/g, "");
+    res.resolveSignIn(TotpMultiFactorGenerator.assertionForSignIn(hint.uid, code))
+      .then(() => { $("g-tfa").hidden = true; $("g-tfa-code").value = ""; })
+      .catch(x => msg(x.code === "auth/invalid-verification-code" ? "That code did not match. Wait for the next code and try again." : x.message));
+  };
+}
+
 if (isSignInWithEmailLink(auth, location.href)) {
   let email = localStorage.getItem("signin-email") || prompt("Confirm your email address");
-  signInWithEmailLink(auth, email, location.href).then(() => history.replaceState(null, "", location.pathname)).catch(e => msg(e.message));
+  signInWithEmailLink(auth, email, location.href).then(() => history.replaceState(null, "", location.pathname)).catch(twoStep);
 }
-$("g-google").onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => msg(e.message));
+$("g-google").onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(twoStep);
 $("g-email").onsubmit = e => {
   e.preventDefault(); const email = $("g-addr").value.trim();
   sendSignInLinkToEmail(auth, email, { url: location.origin + location.pathname, handleCodeInApp: true })
@@ -23,44 +49,55 @@ $("g-email").onsubmit = e => {
 $("g-pw").onsubmit = e => {
   e.preventDefault();
   signInWithEmailAndPassword(auth, $("g-pw-addr").value.trim(), $("g-pw-pass").value)
-    .catch(() => msg("That email and password do not match an account. Try Google or an email link, or set a password on the My account page."));
+    .catch(e => e.code === "auth/multi-factor-auth-required" ? twoStep(e) : msg("That email and password do not match an account. Try Google or an email link, or set a password on the My account page."));
 };
 // Offline copy (the Android app should work with no signal): after each download the data set is kept on this device in
 // IndexedDB for the signed-in member only. It is used when the network or the membership check cannot be reached, replaced
 // on the next download, and deleted at sign-out or when the account is no longer a member.
-const idb = () => new Promise((res, rej) => { const q = indexedDB.open("civic-vault", 1); q.onupgradeneeded = () => q.result.createObjectStore("data"); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
+const idb = () => new Promise((res, rej) => { const q = indexedDB.open("civic-atlas", 1); q.onupgradeneeded = () => q.result.createObjectStore("data"); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); });
 async function keep(uid, text) { try { const d = await idb(); d.transaction("data", "readwrite").objectStore("data").put({ uid, text, at: Date.now() }, "set"); } catch (_) {} }
 async function kept(uid) { try { const d = await idb(); return await new Promise(res => { const q = d.transaction("data").objectStore("data").get("set"); q.onsuccess = () => res(q.result && q.result.uid === uid ? q.result : null); q.onerror = () => res(null); }); } catch (_) { return null; } }
 async function forget() { try { const d = await idb(); d.transaction("data", "readwrite").objectStore("data").delete("set"); } catch (_) {} }
 const out = () => forget().then(() => signOut(auth)); $("g-out").onclick = out; $("signout").onclick = out;
 
+// Install: on Chrome, Edge and Android the app installs to the device like a downloaded program, opens in its own window
+// and works offline after the first sign-in. Safari users add it to the Home Screen.
+let INSTALL = null;
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); INSTALL = e; if (!ANDROID_APP) $("g-install").hidden = false; });
+$("g-install").onclick = async () => { if (!INSTALL) return; INSTALL.prompt(); await INSTALL.userChoice; INSTALL = null; $("g-install").hidden = true; };
+if (/iPad|iPhone|iPod/.test(navigator.userAgent) && !navigator.standalone && !ANDROID_APP) $("g-ios").hidden = false;
+
 let PRICE = null;
+// Membership card on the sign-in screen: the price comes from Stripe. The Android app shows no price (Google Play rules).
+if (ANDROID_APP) $("g-member").hidden = true;
+else memberPrice().then(p => { PRICE = p; if (p && priceText(p)) $("g-price").textContent = priceText(p); }).catch(() => {});
 $("g-buy").onclick = async () => {
   PRICE = PRICE || await memberPrice();
   if (!PRICE) { msg("Memberships are not on sale yet. Please try again soon."); return; }
   msg("Opening checkout…");
   const s = await addDoc(collection(db, "customers", auth.currentUser.uid, "checkout_sessions"),
-    { price: PRICE.id, success_url: location.href, cancel_url: location.href });
+    { price: PRICE.id, mode: "payment", automatic_tax: true, success_url: location.href, cancel_url: location.href });
   onSnapshot(s, snap => { const { url, error } = snap.data() || {}; if (error) msg(error.message); if (url) location.assign(url); });
 };
 
 let started = false;
 onAuthStateChanged(auth, async user => {
-  $("gate-out").hidden = !!user; $("gate-sub").hidden = true;
+  $("gate-out").hidden = !!user; $("gate-sub").hidden = true; $("g-member").hidden = !!user || ANDROID_APP;
   if (!user) { $("gate").hidden = false; $("app").hidden = true; return; }
   let r;
   try { r = await role(user); }
-  catch (_) { const c = await kept(user.uid); if (c) { startWith(c, true); return; } msg("No connection. Connect once to sign in and save the records on this device."); return; }
+  catch (_) { const c = await kept(user.uid); if (c) { startWith(c, true); signedInBadge(user, { offline: true }); return; } msg("No connection. Connect once to sign in and save the records on this device."); return; }
   if (!r.member) { forget();
     $("g-who").textContent = user.email || user.displayName; $("gate-sub").hidden = false;
     if (ANDROID_APP) { $("g-buy").hidden = true; $("g-note").textContent = "This account does not have a membership."; }
-    else { PRICE = await memberPrice(); if (PRICE && priceText(PRICE)) $("g-buy").textContent = `Become a member · ${priceText(PRICE)}`; }
+    else { PRICE = await memberPrice(); if (PRICE && priceText(PRICE)) $("g-buy").textContent = `Pay by card · ${priceText(PRICE)}`; else $("g-buy").hidden = true;
+      zelleBox($("g-zelle"), user, msg); }
     return;
   }
   try { window.LB_MEMBER_NO = await memberNumber(user); } catch (_) {}
   msg("Loading the records…");
-  try { const text = await (await getBlob(ref(storage, "data/data.json"))).text(); keep(user.uid, text); startWith({ text }, false); }
-  catch (_) { const c = await kept(user.uid); if (c) startWith(c, true); else msg("The records could not be loaded. Check your connection and try again."); }
+  try { const text = await (await getBlob(ref(storage, "data/data.json"))).text(); keep(user.uid, text); startWith({ text }, false); signedInBadge(user, { no: window.LB_MEMBER_NO, editor: r.editor }); }
+  catch (_) { const c = await kept(user.uid); if (c) { startWith(c, true); signedInBadge(user, { offline: true, no: window.LB_MEMBER_NO }); } else msg("The records could not be loaded. Check your connection and try again."); }
 });
 function startWith(c, offline) {
   const DATA = JSON.parse(c.text);

@@ -1,0 +1,34 @@
+name: Code checks
+
+# Adapted from the archival pipeline audit: every push checks that the member app's code, rules and admin scripts
+# are well formed before they can be deployed. The data set itself is never in this repository, so it is not checked here.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: JavaScript parses
+        run: |
+          node --check firebase/functions/index.js
+          for f in firebase/public/*.js; do node --input-type=module --check < "$f" || node --check "$f"; done
+      - name: JSON files are valid
+        run: |
+          for f in firebase.json firebase/public/manifest.webmanifest firebase/public/.well-known/assetlinks.json firebase/functions/package.json; do python -m json.tool "$f" > /dev/null; done
+      - name: Admin scripts compile
+        run: python -m py_compile firebase/admin/*.py
+      - name: No secrets or keys committed
+        run: |
+          ! git ls-files | grep -E '\.(jks|keystore|p12|pem)$|service-account.*\.json$'

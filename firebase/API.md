@@ -1,4 +1,4 @@
-# Civic Vault back-end API reference
+# Civic Atlas back-end API reference
 
 Checked October 29, 2026. Owner: Market Mojo LLC.
 
@@ -15,7 +15,7 @@ Every access point the app uses is listed below with who may call it and what it
 that NIST SP 800-228, *Guidelines for API Protection for Cloud-Native Systems*, asks for. Each control is noted beside
 the access point it protects. The wider security checklist is in [SECURITY.md](SECURITY.md).
 
-Civic Vault has no custom server. Its back end is Google Firebase (Authentication, Cloud Firestore, Cloud Storage and
+Civic Atlas has no custom server. Its back end is Google Firebase (Authentication, Cloud Firestore, Cloud Storage and
 Hosting) plus the Stripe extension. So the API is:
 
 - the Firebase client SDK calls the pages make, and
@@ -30,7 +30,9 @@ The rules are the authorization layer. Nothing reaches the data without passing 
   (at least 15 characters).
 - **Token.** Every Firestore, Storage and Functions call carries a short-lived Firebase ID token (a signed JWT). The
   rules read two custom claims from it:
-  - `stripeRole == "member"`, set by the Stripe extension while a subscription is active;
+  - `member == true`, set once by the `grantMembership` function (`functions/index.js`) when Stripe reports the
+    one-time membership payment as succeeded, or by hand with `admin/set_member.py` (payment taken another way, or
+    `--remove` after a refund);
   - `editor == true`, set only by `admin/set_editor.py`.
 - **Transport.** All calls use HTTPS. The site sends HSTS, a Content-Security-Policy and the other headers set in
   `firebase.json`, and the Android app allows no cleartext traffic.
@@ -51,7 +53,7 @@ The rules are the authorization layer. Nothing reaches the data without passing 
 | `sendSignInLinkToEmail`, `signInWithEmailLink` | index.html | Email-link sign-in |
 | `signInWithEmailAndPassword` | index.html | Password sign-in |
 | `updatePassword`, `linkWithCredential(EmailAuthProvider)` | account.html | Set or change a password. Needs a recent sign-in. |
-| `getIdTokenResult(true)` | all | Fresh token with the `stripeRole` and `editor` claims |
+| `getIdTokenResult(true)` | all | Fresh token with the `member` and `editor` claims |
 | `deleteUser` | delete-account.html | Close the account |
 | `signOut` | all | Sign out. Also deletes the offline copy kept on the device. |
 
@@ -62,7 +64,7 @@ are written as plain text and shown escaped, so there is no injection path.
 
 | Collection | Read | Create | Update / delete | Fields accepted |
 |---|---|---|---|---|
-| `members/{uid}` | owner, editors | owner, if a member; once only | update: never; delete: owner, editors | `no` (format `CV-XXXXX-XXXXX-XXXXX-XXXXX`, Crockford base32, 100 random bits), `created` |
+| `members/{uid}` | owner, editors | owner, if a member; once only | update: never; delete: owner, editors | `no` (format `CA-XXXXX-XXXXX-XXXXX-XXXXX`, Crockford base32, 100 random bits), `created` |
 | `facts/{id}` | editors; members see accepted facts and their own | members | editors; the author may change only `by_name`, or delete while pending | `bin, man, lodge, year, claim, citation, held_at, source, volume, page, status ("pending"), by (own uid), by_name, agent (false), created`. Size limits: claim 3,000; citation 1,500; held_at 400. |
 | `bins/{bin}`, `sources/{id}` | members | editors | editors | Editor-managed lists |
 | `messages/{id}` | editors; the sender | anyone signed in | delete: sender, editors; update: editors | `topic` (3–60), `message` (10–4,000), `by` (own uid), `email` (own token email), `created`, `expires` (under 400 days). Deleted by a Firestore TTL policy on `expires`. |
@@ -86,7 +88,8 @@ The full source is in `storage.rules`. After download, the app keeps the data se
 | Function | Type | Who | Purpose |
 |---|---|---|---|
 | `ext-firestore-stripe-payments-createPortalLink` (us-central1) | callable | signed-in owner | Returns a link to the Stripe customer portal (cancel, change card, receipts) |
-| Stripe webhook handler | HTTPS, signed by Stripe | Stripe only | Keeps `customers`, `subscriptions`, `payments` and the `stripeRole` claim in step with Stripe |
+| Stripe webhook handler | HTTPS, signed by Stripe | Stripe only | Keeps `customers` and `payments` in step with Stripe |
+| `grantMembership` (Firestore trigger) | runs on `customers/{uid}/payments/{id}` | server only | Sets the `member` claim when the membership payment has succeeded |
 
 The extension keeps the Stripe restricted key in its own secret configuration (Google Secret Manager). No Stripe key is
 in this repository or in the pages. Card details go only to Stripe Checkout.

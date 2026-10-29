@@ -12,7 +12,7 @@ DATA.lodges.forEach(l=>{const o=document.createElement("option");o.value=o.textC
 opts($("fs"),R.map(r=>r.s));const RPS=DATA.repos;Object.entries(RPS).forEach(([k,v])=>{if(!v.n)return;const o=document.createElement("option");o.value=k;o.textContent=`${v.name} (${v.n})`;$("fo").appendChild(o)});opts($("ft"),R.flatMap(r=>r.tr));opts($("fb"),R.flatMap(r=>r.b));
 const LEGAL=document.querySelector('script[src="auth.js"],script[src="./auth.js"]')?"":"https://marketmojowi-coder.github.io/lodges-before1812/";
 const MMLOGO="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAPgElEQVR42t2ba3Bc1X3Af+fcu3df0q5Wr9XTWBg7tjPExMHYxjaCQCCUmCQwC5lp0nwozSRtCHTamaSdJMKTfEhm0kfygTJpJ21I87KZhDYFwiPYIikw2DGyA/JDfmgtyZIsrbSrlfZx7z3n9MOuzKMksYwwsv8z59vunXt+5/8+/yv4I2JA0N1tid5eH2D0ySejid4Xbwrk81vw/Zuk7zdqpTukMcIAgndWDAYhJAh8nNAQodAJFQ79yuro3C2+8Bcv4vuV33X32KJ3h//HnvcH33dnKmXdtWuXAsje/6XLw+XSZ61y+WOW0ivRGpQPWlfWuyFSgrQgYINlKSI1L1Eb+z6f+/LDYpkoGpD09CB27NALBrC7u9u+obfX//l999XdOOc9EHG9eywho7guKN8gpa7+X1yAg/8DCmoMBoMxFnYAHAftBAZkoukb4ptf/R6ASaUsUT3IcwJgurtt0dvr96c+1b086DwUtu3VlEpgjF/RPyRLUozGYJDSIhSCcOQXrF59n/jCZ07+PpMQv2/zBz52933viUb/IQgWvu8jhPUunvRCRWO0xgnahMPjJDvuFl/7Yq/p6bHFjjdCEG+1+f233fE3708kvoVSWmuNrJz6xSfG+AhsojGP1s67xNe/+OibIcjX27zo7fUfvfGWL6yrq/sWSvlaa3HRbh5ACBuDJp+zGR9+xHzjO7eKHTt8k0pZbwCwM5WyPtjb6/dcvemmrYnGf5bga60tKYTgYhchpBbCkJ+xOHH8h8V/+ffl7NqlTU+PnAcgU2vXmvZYrP72xub/bAiHhfY9eUlsfv6UhZBgFHP5hNN/6CcYI+ZzHDEf7v5145bv3LNqzb14ng/YXIqitU9trU1bx+fE1/7+IdPTYwsDYkNzc9cPr7720KpEva18X1iX0On//0TSQKJ+ils+egUfvyEnBZhPtF9276r6Rgel9CW8+fmop3HdBvY9/ykBRgKxDfUNnzBCoIyxuNRFCEGpaJjK/LkxxpJ3dHZ1r4nFW4Tyjby0T/+1yOf7UCpcybe/u15ubGi4uSkUBmP0ue5eA8oYtDEXqxZotJGMnr5FNjrOjVgWWutzSniM1kgpsYIhpF0JFsoYlDGYiwcAKB89O7vZbgtHGs49szTMOQ7fPnqYLq25rr2DjmgNlh0Ao0EpjNZnNUMKsVSLB4lSSN9fZdcGAs1UXviPvqsBaoAPrHkvn9z9S8SrfbwvFmdzfRPbmpK8v76B5mgUy7LPAtFKMd8oEUsJiBBQKArx0s23mQ1NSbTvI8/BB2qtkcEQr7a38fXxIQ4f7mf09CizuRz1WnNltJZrG5u4rinJukQDsXC40rTQCpRCVZsnSwJIJDIj9t58m7l6AQAQAqUUlrSYXr+eJ5clGRkZZmx4mGNDQxxLDzJyehQvn6dFSK6qjdPd1MyWpiRr6uoIBUNVG9Sg3whEXsggpDXUJ1g4gCoErTXS8ymuW8fBbZuY1B7e9DS5fJ6JiQmGhoc5lk5z7FSa8bFxRKFAu2WzIZ7guqYkGxubWB2LI4PByjNVVUPO+g94R/VDa3Rd3JwfgHmfIASiWMIs7+LU9g8z0dKIm83ilkoUy2UKc3PkslnGx8dJDw0xMDjIiaEhJs+cIVAqsSIYYnOikeuak2xoaOSymlilv2cA5Z91qO+IuWiNqYvztgAAGCkRpRJEa5i99cNMbdtISfm4uRxl16VULlMulykWi8zNzpKdnmZsbIzBoSGODg4yODRELpMh6nmsCkfYUt/Edc0Vh9oSrQHLrqir76GNWTwz0RoTXwQA891Z4/sI10Otu4rZO26nfHknfmEOb66A+zoQpVKJUrlMqVhkNp9nKpNhZHSUE+k0A+k0p0aGmZvOUq8N62pjXNfYzLbmFjY3NoFlo31vcSAsKoD5sALguhCtRd3QTfFDN+A21eN7Lr7rokpl3HIJr1SiXCxRfh2UYrFIfmaGyclJhkdGGEgPcvTkICOnT+PmclxTG+fb6zdwVUPz4kBYdABVnzAwmyemNc3SQrZ1QPc2WL0SaqKoWC3lgE1JCkrGUPK9CoRiEffsKlEuFJidmWEqk2F4eJiX+/rYs28v8WKZ3htuYUU8jnm771sFsGiND20MwrI4FK3hK/teoLY4R1ufTfsv/5vLauMka2tZ1pykNZkk0ZyksbkJpyUJsRi6LkYxEqFQFyEf1+S1YqZQINDUiN3YQKi5CTsS5r+efIqvHvgtP+q+cdHS7kUDIIXA+B4fDUXovPuT/DQkyUyeYWhqigNT0+SnpygPvIp1YC/Bsku9NrQFHJLBEF2xOO2JepINDbQ0NNLY2kqgtha/NkrWtpiMNXDFhk2QnWHPwYO8MDbKpmTLomjtopoAQqCVQgqJ3rqVU7fcQAmNm88zWyySy+fJTE8zMTXF+OQkYxMTTE5OMp2ZpDidxZ2ZwS6WiPk+CQQdTpDltTE643W0x+I01MYQjsMyrYkKgdHq/HOFxTaBarWElBYag3zmaTpPnyZz1x2Uli2jvlQEbUAIjDForfE9D9d1KRQKzMzOMp3NMjk9zXhmkrEzE4yMjbF/bJTM+Dhzp45jFQrUKsVNyVYeuPL9JIIhjNZvKz9YXA14c35QLEK8jrmP3Mbc1mtQwQAUihilMaJSXb4ZoKku5fsUCwWy2Syjo2Okh4Y4duI4+/bvZ+/BA9zZmGTXtg/C+QKoaoD1mRWrHmiL1lRILiIAYQw4DpRLOC8fIHxiCLu+AdnZhqytwbZsLNuq9BQsC2NJtJRoKVBSom0LgiHsaAQnVksoHqOmoZ66xkbm5ubY/eorrIhEeV9zsmp2YsHaSij0Dre/ta5kcmEbebifyMAAobWr8Tdvwlu9Eh0Ogu8jtEFoDb6PUQo8D+H5CN/HlEp4cwWKuTxzsy7XRhPcvHEb/YkkK0zlf2IpRIE/SBrQjoPxPay+Puz9L6Pq6lDhUCVN9jwKrkvZc3FdF9fzKHguc65L0fMoKVVZWlMyGhdwheBZKVkbClMXCmOUOi8NfscBmCqEQjDIN8+M8sJwGqEUvlJnVV1JC21byEAA6TjYjoPlOFjRKJbjEHAcpLQwRuO6HsVyieGREU70/449Z0Z57PqbCZxnsfSOAxDVDLHG97l/5Rqu2rKV0a4OQjVRIkISCgQIBYM4wSBOIIBjBwgEbGzLwpYSKSUIgWcM+XKJXDbH1Pg4owPHGG5pxxobR/k+Qcc5r7B4Qa7ARNUfNExluLNYgFCU7LUrmbuiCxVyEL5CKFXxzMZUus5S4onq7W2pTCg7Q93QKMEjR2g5Ncym/Cz/NpFh/1SGL/+uj39cfw3mPLKCC3oHaGwbUy4h975EXV8fNV1dFK56H8UVy3ETdaiQgwFMsUgomyM5MUVxYAAxMsqZk4M8eOwwrxRmKc/M8M2t1zN45RpO7i/y9KFDbG5oJLViFcotYy3AF1xQAMJUJ7wiEYzW2McGiB09SiwaRScSqNoatBBY+TyF4WEeHjzOj8+M8un6Jjr/5FYu//itBI4e5dWfPcplLS3cvnUjrbEYP8lm6ek/yE2t7dQ5DqbaRDm39vC7IfOhKxiESBh8Dzk2SuDwEYJHjmDSaX4SdTh25+24Xcu5unMZqz92O9u3bCEaDNGpNMlIlEA4TNeKK7j6yis56pZ5cWIcYdsLurB5d6c/jKnkCkJAIICJhMCyOJZsYvXn/5KOlhZSnmHdiiuYCDrMTk1z9Phx1gdCBCMRamIx4vEYXZdfTrwmStRauEIvnfEXYxDa4Lseme4tnJ6bRT/9LJ9NNJFpbUGEw4xPTJA7eZKPNCXxpSAajRIOBilqzZpIDR9oaFxwn2DJADBCgOeT6Wglb1l0/fx/uE9bRKNRplqasTA8u/clbikrltU3UNQGKSuF1cn0IH/V2kE0HEEvMDNcMpMgwhiQkoTrc9MTvyJQKELARmtNvjXJbw8dom7vy3y2fRnGaLTRKM+n/+RJmkfGSK16L9r3FhQBTHU+YAnd2Amc6WkC5TLaCYDnMdPYwKlMhsueeIa/dSKEg0GErlzGZnNZnvvNb7g7GsOulsYL6+VKYVcvdZfOHaZVmdGQWoOUhF2PDz3zHNG5QmUMVmukAC0luw8cYNv0DNu7VqI9dyGnb5BS6HIpY8/4nliyA6BSEszlCCLQtlUxEwFYNidmcqweGOWezi6ElAsf2JYSqXTOniiVphEkWKoiJQaQ1dguDGBbrMpkuUZbEJDn1xUyoG3blSOlwmi1xbpk5xvEW4TMOtc72147D/3VWBKjTb88nMs9r3zPyMr4+0UjRvweOOeWcwiEwA/Yv5bPT0384sRsXiClvJhmft6W1xJC+kr5s+HQU7I/m32h98x4FssSBi7SqacFicK2jSfFvme3bTwigYmnx0Ye9l0XS0p96RMwYFkia/RDd911l5LGGLFzKP2dp04PFwkE0MZcsgy0MRrLlvlSMb0v6uwyGGGxZ4/dm05nPKObtrd2bHakVKYyoHHJiRBCYQesY557/7Yf/Me+67v32FZvOm12plLWjhee/3VbMHTnhpa2Zq08falNjWpjlHCC9mBh9rn3PPKj+00qZXU9/riSgNm1axdSiNkH+g/c89TQIFYorH196bgDbYyWgYA1VpzLPFbM/ZkB8cDatQbAAugH89NUyvr+wYPpQzMzM5sT9be2xuPK9zxxsWuCxihp2zLjlt1nslPb73nyiQPvTaWszz/4oD4LAGBXf7/p6e62f3z40PMHp6fEBxKJD7bVJbRWynAR+gRTKbF9EXDskWJBP37mdOrTe555cnd3t/2Rxx8/+w3hG8bje9Np3dPdbf/gUP+zfdOT4+1OaPuq+gYpwFdaCyGWvjoYwBijpZQKx7EHctkzPx0dufPe53/9+PzXMW8oPt/8gN50Wu9Mpax/2rdv7yPD6d/EpbV+bTzREgqGhDDaV/NjtUto7LW6aQxoKaUSgYDlKSWfGx/95d+92vfx7/a/8tu32vxbApg3h1QqZR185ZXjT4yOPHwsn9NhxNrlNTU1gWBICCmNAI3WKF4r0i700pWOjhGWpYVlSREICK213JeZGNw1NPilP/3f3r8+kctld6ZS1uvV/pxT6hRYPxNCVU+9LbVs+b0fSrbeeXVD48rVsTjhgPPadNiFjhnitcrQ9TxOzObV0dl8375s5uGvHez7HjBrjBEPCCF2VD5xOO+aQuxMpeQnHnlEVYul2vpgcNP29s7rV9fEtnREop1R224LW1bIlhemw6aMoeSrkmf0qSm3fOToXP6Fx8ZO7z48NfUiVDq9X+nutne8hcq/Wf4PfW0HlVOFONsAAAAASUVORK5CYII=";
-$("foot").innerHTML=`<div class="pub"><button type="button" class="pubi" id="pub-about" aria-label="About" title="About"><img src="${MMLOGO}" width="32" height="32" alt=""></button><a class="pubi" href="mailto:marketmojowi@gmail.com" aria-label="Email" title="Email"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></a><a class="pubi" href="https://www.mktmojox.com/" target="_blank" rel="noopener" aria-label="Website" title="Website"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a></div><nav class="flinks" aria-label="Legal and sources"><span class="fco">© 2026 Market Mojo LLC and Thomas M. Saharsky</span><button type="button" class="linkbtn" data-ab="sources">Sources</button><a class="linkbtn" href="${LEGAL}disclaimer.html">Disclaimer</a><a class="linkbtn" href="${LEGAL}terms.html">Terms</a><a class="linkbtn" href="${LEGAL}privacy.html">Privacy</a><a class="linkbtn" href="${LEGAL}copyright.html">Copyright</a><a class="linkbtn" href="${LEGAL}contact.html">Contact</a></nav>`;
+$("foot").innerHTML=`<div class="pub"><button type="button" class="pubi" id="pub-about" aria-label="About" title="About"><img src="${MMLOGO}" width="32" height="32" alt=""></button><a class="pubi" href="mailto:marketmojowi@gmail.com" aria-label="Email" title="Email"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></a><a class="pubi" href="https://www.mktmojox.com/" target="_blank" rel="noopener" aria-label="Website" title="Website"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg></a></div><nav class="flinks" aria-label="Legal and sources"><span class="fco">© 2026 Market Mojo LLC and Thomas M. Saharsky</span><button type="button" class="linkbtn" data-ab="sources">Sources</button><button type="button" data-ab="method">Method</button><a class="linkbtn" href="${LEGAL}disclaimer.html">Disclaimer</a><a class="linkbtn" href="${LEGAL}terms.html">Terms</a><a class="linkbtn" href="${LEGAL}privacy.html">Privacy</a><a class="linkbtn" href="${LEGAL}copyright.html">Copyright</a><a class="linkbtn" href="${LEGAL}contact.html">Contact</a></nav>`;
 $("pub-about").onclick=()=>show("about");
 {const H=location.hash.slice(1);if(["about","sources","atlas"].includes(H))setTimeout(()=>show(H),0)}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-ab]");if(!b)return;if(b.dataset.ab==="sources"){show("sources");return}show("about");setTimeout(()=>{const el=$("ab-"+b.dataset.ab);if(el)el.scrollIntoView({block:"start"})},30)});
@@ -39,6 +39,74 @@ function run(){
   last=res.map(x=>x[1]);shown=25;render(T);side(T,q);
 }
 function hi(s,T){let h=esc(s);for(const t of T){if(t.length<2)continue;const src=norm(h);let out="",i=0,j;while((j=src.indexOf(t,i))>=0){out+=h.slice(i,j)+"<mark>"+h.slice(j,j+t.length)+"</mark>";i=j+t.length}h=out+h.slice(i)}return h}
+/* ---------- The economy of the buildings, the callings by grade and the 1803 count (Census tables) ---------- */
+const usd$=n=>"$"+Number(n).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
+const pence$=p=>{if(p==null)return"–";const s=Math.floor(p/12),d=p%12;return s+"s"+(d?" "+d+"d":"")};
+const bar=(v,max,u="")=>`<span class="barc"><i style="width:${Math.max(2,Math.round(110*v/max))}px"></i><span class="num">${v}${u}</span></span>`;
+const poundsS=x=>{const l=Math.floor(x),sh=Math.round((x-l)*20);return "£"+l.toLocaleString()+(sh?` ${sh}s`:"")};
+const GRADE_NAME={1:"Administrative",2:"Professional",3:"Skilled",4:"Unskilled",0:"Town crafts, trade and services"};
+function ladderRows(list){return `<div class="tscroll"><table class="stt ladder"><thead><tr><th>Calling</th><th>Level</th><th>As the records write it</th><th>Job description</th><th>Specification and pay</th><th>Today (federal wage series; SOC)</th></tr></thead><tbody>
+  ${list.map(c=>`<tr><td>${esc(c.calling)}${c.basis?`<br><small class="stats">From the author's outline</small>`:""}</td><td>${esc(c.level)}</td><td>${esc(c.written||"–")}</td><td>${esc(c.desc)}</td><td>${esc(c.spec)}</td><td>${esc(c.fws||"–")}${c.soc?`<br><small class="stats">${esc(c.soc)}</small>`:""}</td></tr>`).join("")}</tbody></table></div>`}
+const LCROSS=["Master workman, superintendent","Overseer, foreman","Apprentice","Laborer, hand, digger"],LBUILD=["Stone & Quarrying","Carpentry & Timber","Brick & Plaster","Metal & Smithing","Painting & Glazing"];
+function ladderHTML(group){const L=(C.ladder||{}).ladder||[];const list=L.filter(c=>c.group===group||(LBUILD.includes(group)&&LCROSS.includes(c.calling))).sort((a,b)=>a.grade-b.grade);
+  if(!list.length)return"";return `<h3 class="h3s">The calling, highest first</h3><p class="stats">From the master who directed the work to the hand who carried for it. Grades follow the author's outline of the workforce: administrative, professional, skilled, unskilled.</p>${ladderRows(list)}`}
+function econ(){const E=C.economy,LD=C.ladder;if(!E||!LD)return"";
+  const rows=E.rows,men=new Set(rows.filter(r=>!r[7]).map(r=>r[3])),lodge=new Set(rows.filter(r=>r[8]>=0).map(r=>r[8])),hired=rows.filter(r=>r[7]).length;
+  const bill=E.payrolls.reduce((a,p)=>a+p.usd,0)+E.piece.reduce((a,p)=>a+p.usd,0);
+  const tmax=Math.max(...E.treasury.rows.map(r=>r[2]));
+  let h=`<section class="eco">
+  <h2 class="sec">The economy of the buildings</h2>
+  <p class="stats">What the public buildings cost in wages and materials, from the payrolls, estimates, pay vouchers and lot sales printed in the series books. Each figure is cited to its table. ${esc(E.money)}</p>
+  <div class="statgrid"><div><b>${rows.length}</b><span>Payroll Lines</span></div><div><b>${men.size}</b><span>Free Workmen</span></div><div><b>${lodge.size}</b><span>Lodge Men</span></div><div><b>${hired}</b><span>Enslaved Men Hired</span></div><div><b>${usd$(bill)}</b><span>Wages Paid</span></div><div><b>${usd$(E.treasury.total)}</b><span>Treasury Estimate</span></div></div>
+  <h3 class="h3s">By building</h3><p class="stats">The months whose payrolls the books print. They are samples of the work, not its whole cost.</p>
+  <div class="tscroll"><table class="stt"><thead><tr><th>Building</th><th>Months</th><th>Trades</th><th>Lines</th><th>Lodge men</th><th>Enslaved men hired</th><th>Wages (Maryland £)</th><th>Dollars</th></tr></thead><tbody>
+  ${E.buildings.map(b=>`<tr><td class="l"><b>${esc(b.b)}</b></td><td class="l">${esc(b.months)}</td><td class="l">${esc(b.trades)}</td><td>${b.lines||"–"}</td><td>${b.lodge||"–"}</td><td>${b.sl||"–"}</td><td class="num">${esc(b.lsd)}</td><td class="num">${usd$(b.usd)}</td></tr>`).join("")}</tbody></table></div>
+  <h3 class="h3s">Daily pay by trade</h3><p class="stats">Free workmen's rates a day, as written on the payrolls of 1795 and 1796. Enslaved men's hire was paid to the men who received it for them and is shown apart.</p>
+  <div class="tscroll"><table class="stt"><thead><tr><th>Trade</th><th>Lines</th><th>Lowest</th><th>Median</th><th>Highest</th><th>In dollars a day</th><th>Lodge men (median rate)</th><th>Enslaved men hired (rate)</th></tr></thead><tbody>
+  ${E.trades.map(t=>`<tr><td class="l"><b>${esc(t.t)}</b></td><td>${t.lines}</td><td class="num">${esc(t.r0)}</td><td class="num">${esc(t.med)}</td><td class="num">${esc(t.r1)}</td><td class="num">${usd$(t.u0)}–${usd$(t.u1)}</td><td>${t.lodge?`${t.lodge} (${esc(t.lmed)})`:"–"}</td><td>${t.hired?`${t.hired} (${esc(t.hr)})`:"–"}</td></tr>`).join("")}</tbody></table></div>
+  <h3 class="h3s">The payrolls</h3><p class="stats">Each sheet is a receipt the men signed or marked for a month's wages. "Check" compares the lines as printed with the sheet's own total.</p>
+  <div class="tscroll"><table class="stt"><thead><tr><th>Building</th><th>Month</th><th>Trades</th><th>Men</th><th>Days</th><th>Rates a day</th><th>Lines add to</th><th>Sheet total</th><th>Check</th><th>Source</th></tr></thead><tbody>
+  ${E.payrolls.map(p=>`<tr><td class="l">${esc(p.b)}</td><td class="l">${esc(p.m)}</td><td class="l">${esc(p.trade)}</td><td>${p.men}</td><td class="num">${p.days||"–"}</td><td class="num">${esc(p.r0)}–${esc(p.r1)}</td><td class="num">${esc(p.lsd)}<br>${usd$(p.usd)}</td><td class="num">${p.sheet!=null?usd$(p.sheet):"–"}</td><td>${p.agree?'<span class="ok">Agrees</span>':`<span class="flag">Differs by ${usd$(Math.abs(p.sheet-p.usd))}</span>`}</td><td class="l"><small>${ct(p.cite)}</small></td></tr>`).join("")}</tbody></table></div>
+  <button class="copy" type="button" id="eco-csv">Download every payroll line (CSV)</button>
+  <h3 class="h3s">Piecework and day labor</h3><div class="tscroll"><table class="stt"><thead><tr><th>Building</th><th>Month</th><th>Work</th><th>Quantity</th><th>Rate</th><th>Paid</th><th>By</th><th>Source</th></tr></thead><tbody>
+  ${E.piece.map(p=>`<tr><td class="l">${esc(p.b)}</td><td class="l">${esc(p.m)}</td><td class="l">${esc(p.w)}</td><td>${esc(p.q)}</td><td class="num">${esc(p.rate)}</td><td class="num">${esc(p.lsd)}<br>${usd$(p.usd)}</td><td class="l"><small>${esc(p.by)}</small></td><td class="l"><small>${ct(p.cite)}</small></td></tr>`).join("")}</tbody></table></div>
+  <h3 class="h3s">The Treasury Office: the estimate by work</h3><p class="stats">The estimate for the Treasury Office, about 1798–1800, totals ${usd$(E.treasury.total)}. Share of the whole:</p>
+  <div class="tscroll"><table class="stt"><thead><tr><th>Work</th><th>Pounds</th><th>Dollars</th><th>Share</th></tr></thead><tbody>
+  ${E.treasury.rows.map(r=>`<tr><td class="l">${esc(r[0])}</td><td class="num">${esc(r[1])}</td><td class="num">${usd$(r[2])}</td><td>${bar(r[3],Math.max(...E.treasury.rows.map(x=>x[3])),"%")}</td></tr>`).join("")}
+  <tr><td class="l"><b>Total</b></td><td></td><td class="num"><b>${usd$(E.treasury.total)}</b></td><td>100%</td></tr></tbody></table></div><p class="stats">${ct(E.treasury.cite)}</p>
+  <h3 class="h3s">The Navy Yard: masters' pay, July 1811</h3><div class="tscroll"><table class="stt"><thead><tr><th>Payee</th><th>Post as written</th><th>A year</th><th>Charged for the month</th><th>Paid</th><th>Lodge member</th></tr></thead><tbody>
+  ${E.navy.rows.map(r=>`<tr><td class="l">${esc(r[0])}</td><td class="l">${esc(r[1])}</td><td class="num">${esc(r[2])}</td><td class="num">${esc(r[3])}</td><td class="num">${esc(r[4])}</td><td class="l">${esc(r[5])}</td></tr>`).join("")}</tbody></table></div><p class="stats">${esc(E.navy.certified)}. ${ct(E.navy.cite)}</p>
+  <h3 class="h3s">Building agreements at the Navy Yard, 1801</h3><div class="tscroll"><table class="stt"><thead><tr><th>Date</th><th>Contractor</th><th>Work</th><th>Price or rates</th><th>Plan</th></tr></thead><tbody>
+  ${E.contracts.map(c=>`<tr><td class="l">${esc(c.date)}</td><td class="l">${esc(c.who)}<br><small class="stats">with ${esc(c.with)}</small></td><td class="l">${esc(c.work)}</td><td class="num">${esc(c.price)}</td><td class="l">${esc(c.plan)}</td></tr>`).join("")}</tbody></table></div><p class="stats">${ct(E.contracts[0].cite)}</p>
+  <h3 class="h3s">The price of land: lots sold at the public sales</h3><div class="tscroll"><table class="stt"><thead><tr><th>Year</th><th>Lots sold</th><th>Lowest</th><th>Median</th><th>Highest</th><th>All lots</th><th>In dollars</th><th>Bought by brethren</th></tr></thead><tbody>
+  ${E.lots.map(l=>`<tr><td>${l.y}</td><td>${l.n}</td><td class="num">${poundsS(l.min)}</td><td class="num">${poundsS(l.med)}</td><td class="num">${poundsS(l.max)}</td><td class="num">${poundsS(l.total)}</td><td class="num">${usd$(l.usd)}</td><td>${l.brethren||"–"}</td></tr>`).join("")}</tbody></table></div><p class="stats">Prices in pounds Maryland currency as the books print them; a purchase of several lots is one line. ${E.lots.map(l=>ct(l.cite)).join("; ")}.</p>
+  <h2 class="sec">Callings by grade: the height of the calling</h2>
+  <p class="stats">Every calling of the works, ranked by the author's outline of the workforce: the administrative and professional men who directed and measured the work, over the skilled and unskilled men who did it. Each has a job description and a specification: tools and materials, the standard of the work and the pay the records show.</p>
+  ${LD.grades.map(([g,n,d])=>`<p class="grade">${g}. ${esc(n)}<small>${esc(d)}</small></p>${ladderRows(LD.ladder.filter(c=>c.grade===g))}`).join("")}
+  <p class="stats">Grades: ${esc(LD.outline)}. Today's titles are the nearest equivalents in the Federal Wage System and the Standard Occupational Classification (U.S. Bureau of Labor Statistics), not one-to-one.</p>
+  <h2 class="sec">Callings of the inhabitants of Washington City, 1803</h2>
+  <p class="stats">${LD.city1803.total} people counted in ${LD.city1803.rows.length} callings, set out by the same grades.</p>
+  <div class="statgrid">${LD.city1803.by_grade.map(([g,n])=>`<div><b>${n}</b><span>${esc(GRADE_NAME[g])}</span></div>`).join("")}</div>
+  <div class="tscroll"><table class="stt"><thead><tr><th>Calling</th><th>Number</th><th>Grade</th></tr></thead><tbody>
+  ${[...LD.city1803.rows].sort((a,b)=>((a[2]||9)-(b[2]||9))||b[1]-a[1]).map(r=>`<tr><td class="l">${esc(r[0])}</td><td>${bar(r[1],82)}</td><td class="l">${esc(GRADE_NAME[r[2]])}</td></tr>`).join("")}</tbody></table></div>
+  <p class="stats">${ct(LD.city1803.cite)}. The original count of 1803 has not yet been seen; the numbers are as Proctor compiled them.</p>
+  </section>`;
+  return h}
+function ecoWire(){const b=$("eco-csv");if(!b)return;b.onclick=()=>{const q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const L=[["Building","Month","Trade","Name as written","Days","Rate a day","Paid (pence)","Paid (dollars)","Wages received by","Lodge man"].map(q).join(",")];
+  C.economy.rows.forEach(r=>L.push([r[0],r[1],r[2],r[3],r[4]??"",pence$(r[5]),r[6]??"",r[6]!=null?(r[6]/90).toFixed(2):"",r[7],r[8]>=0?M[r[8]].n:""].map(q).join(",")));
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([L.join("\n")],{type:"text/csv"}));a.download="civic_atlas_payrolls_1795_1796.csv";a.click()}}
+/* ---------- Method: counting from fragments ---------- */
+const METHOD_BRIEF=`<b>About these numbers.</b> The counts rest on fragments. A man is counted once a year in each lodge from the returns and rolls that survive; a blank year means no return survives, not an empty lodge. A document is an original the books cite for the lodge; compiled tables count as records only. Money is in Maryland currency at 7s 6d to the dollar. <button type="button" class="linkbtn" data-ab="method">Read the method</button>`;
+function methodHTML(){return `<section class="method" id="method"><h2 class="sec">Method: working from fragments</h2>
+  <p>No lodge of the Potomac country kept a complete record that survives. What remains is a body of fragments: the annual returns each lodge sent to its Grand Lodge, the printed proceedings of the Grand Lodges of Maryland and Virginia, the payrolls, letters and estimates of the commissioners who built the Federal City, newspaper notices, parish and court records, and the histories written about the place and its Freemasonry. Civic Atlas reads these fragments side by side, as the series books do, so that each confirms or corrects the others. A figure here is only as complete as the papers that survive, and it is cited to them.</p>
+  <h3>How men are counted</h3><p>A man is counted from the returns and rolls that name him. He counts once a year in each lodge where his name appears, and once only in a total of distinct men. A blank year in a table means that no return survives for that year. It does not mean the lodge had no members or did not meet. The lodge rolls are the authority for the spelling of names. Other spellings are kept as variants and changed only on the evidence of a primary record.</p>
+  <h3>How documents are counted</h3><p>A document is one original that the books cite for a lodge: a return, a communication of a Grand Lodge, a payroll, a voucher, a newspaper issue or a manuscript. A record is one row of a book's table. Tables the books compiled from several originals (registers, timelines and year lists) count as records, not documents, so that no original is counted twice.</p>
+  <h3>Primary and secondary</h3><p>A primary record (the document itself, or a faithful transcription of it) overrides a later history where the two differ. Where the original has not been seen, the app says whose copy was read: a published transcription, a historian's compilation or the author's research notes. Research notes are marked as such and never count as originals.</p>
+  <h3>Money and measure</h3><p>Sums are given as written. Maryland currency is converted at 7s 6d to the dollar (90 pence to $1), the rate the payroll receipts and the Treasury estimate use themselves. Payroll months are samples of the work, not its whole cost. Where the lines of a sheet do not add to its stated total, both figures are shown.</p>
+  <h3>What is left out</h3><p>The minute books and ledger of Federal Lodge No. 15 and the Royal Arch minutes are the property of the lodges and are not reproduced. They are cited only as "lodge records". The full voucher series of the Commissioners for the District of Columbia is a separate Market Mojo program. The app uses only the vouchers and payrolls the books print.</p>
+  <h3>Limits</h3><p>Names are linked by spelling, first name and lodge, and the rules are strict enough that some true links are missed rather than false ones made. Callings come from the rolls, the payrolls and the author's notes, and a man with two callings counts in both. Grades of the workforce follow the author's outline and are an interpretation of the record, not a category the records themselves use. Corrections with a citation are welcome through "Suggest a correction" or the Contact page.</p></section>`}
+document.querySelectorAll("[data-mb]").forEach(x=>x.innerHTML=METHOD_BRIEF);
 function census(){const C=DATA.census;if(!C)return"";const short=l=>l.replace("Potomac ","Pot. ").replace("Columbia ","Col. ").replace("Federal ","Fed. ").replace("Alexandria ","Alex. ");
   const pct=n=>Math.round(100*n/C.occ_known)+"%";
   return `<h2 class="sec" style="margin-top:14px">Census of the lodges</h2>
@@ -54,16 +122,16 @@ function census(){const C=DATA.census;if(!C)return"";const short=l=>l.replace("P
 function home(){
   const ROTP=Object.values(DATA.repos),ND=DATA.docs.length,NC=DATA.repos.BOOK?DATA.repos.BOOK.n:0,ys=R.flatMap(r=>r.y).filter(y=>y>=1750&&y<=1830);
   let h=`<h2 class="sec">Statistics</h2><div class="statgrid">
-    <div><b>${R.length.toLocaleString()}</b><span>records</span></div>
-    <div><b>${M.length.toLocaleString()}</b><span>men on the series rolls</span></div>
-    <div><b>${DATA.meta.linked.toLocaleString()}</b><span>records naming a man</span></div>
-    <div><b>${ND}</b><span>original documents cited</span></div>
-    <div><b>${(R.length-NC).toLocaleString()}</b><span>records traced to a document</span></div>
-    <div><b>${Math.min(...ys)}–${Math.max(...ys)}</b><span>years</span></div></div>
+    <div><b>${R.length.toLocaleString()}</b><span>Records</span></div>
+    <div><b>${M.length.toLocaleString()}</b><span>Men</span></div>
+    <div><b>${DATA.meta.linked.toLocaleString()}</b><span>Linked Records</span></div>
+    <div><b>${ND}</b><span>Original Documents</span></div>
+    <div><b>${Math.round(100*R.filter(r=>r.c).length/R.length)}%</b><span>Records Cited</span></div>
+    <div><b>${Math.min(...ys)}–${Math.max(...ys)}</b><span>Years</span></div></div>
   <table class="stt"><thead><tr><th>Lodge</th><th>Men</th><th>Records</th><th>Documents</th><th>Years</th></tr></thead><tbody>
   ${DATA.lodges.map(l=>`<tr><td>${esc(l.n)}</td><td>${l.men}</td><td>${l.r.toLocaleString()}</td><td>${l.d||"–"}</td><td>${l.y0?l.y0+"–"+l.y1:"–"}</td></tr>`).join("")}</tbody></table>
   ${census()}
-  <p class="stats">A record is one row of a book's table or roll. A document is one original: a return, a communication of the Grand Lodge, a payroll, a newspaper issue or a manuscript. Records compiled in the books from several documents (registers, timelines, year lists) are counted as records only.</p>
+  <div class="method-brief">${METHOD_BRIEF}</div>
   <h2 class="sec">The lodges</h2><div class="lodges">`;
   for(const l of DATA.lodges)h+=`<button class="lodge" type="button" data-l="${esc(l.n)}"><b>${esc(l.n)}</b><span>${l.men} men · ${l.r.toLocaleString()} records${l.y0?` · ${l.y0}–${l.y1}`:""}</span></button>`;
   h+=`</div><h2 class="sec">Where the originals are</h2><div class="rows" style="margin-bottom:18px">${Object.entries(DATA.repos).filter(([k,v])=>v.n).map(([k,v])=>`<button type="button" data-o="${k}"><span><b>${esc(v.name)}</b>${v.holder?`<br><small>${esc(v.holder)}</small>`:""}</span><span>${v.nd?`${v.nd} documents<br>`:""}${v.n.toLocaleString()} records</span></button>`).join("")}</div>
@@ -87,7 +155,7 @@ function render(T){
     ${r.m.length?`<div class="chipline">${r.m.slice(0,8).map(i=>`<button class="chip${i===man?" on":""}" type="button" data-m="${i}">${esc(M[i].n)}</button>`).join("")}</div>`:""}
     <div class="cite">${ct(bookRefs([r.c])||r.c)}</div>${orig(r)}
     <button class="copy" type="button" data-c="${R.indexOf(r)}">Copy citation</button>
-    <details><summary>All fields</summary><dl>${r.f.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl></details></article>`;
+    <details><summary>All fields</summary><dl>${r.f.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${ct(v)}</dd>`).join("")}</dl></details></article>`;
   }
   if(last.length>shown)h+=`<button class="more" id="more" type="button">More records (${(last.length-shown).toLocaleString()} left)</button>`;
   o.innerHTML=h;
@@ -107,7 +175,7 @@ function fullCite(r){const F=Object.fromEntries(r.f);const date=F["Issue date"]|
   const book=r.o==="AUTHOR_WB"?r.c.replace(/\.$/,""):(bookRefs([r.c])||r.c).replace(/\.$/,"");
   const today=new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
   return [`“${r.o==="NEWS"?r.f[0][1]:r.t}”${date?", "+date:""}`,men?`names ${men}`:"",ox?`original: ${ox}`:"",held?held.charAt(0).toLowerCase()+held.slice(1):"",book&&book!==ox?`printed in ${book}`:"",
-    `Civic Vault: Potomac Territory, 1700–1811 (Market Mojo LLC, 2026), record ${r.k.toLowerCase()}, accessed ${today}`].filter(Boolean).join("; ")+"."}
+    `Civic Atlas: Potomac Territory, 1700–1811 (Market Mojo LLC, 2026), record ${r.k.toLowerCase()}, accessed ${today}`].filter(Boolean).join("; ")+"."}
 function citeText(r){const p=DATA.repos[r.o];let t=r.c.replace(/\.$/,"");if(r.d!=null)return t+". Original: "+DATA.docs[r.d].x.replace(/\.$/,"")+(r.dl?", "+r.dl:"")+".";if(r.o!=="BOOK"&&r.od&&!r.c.includes(r.od))t+=`. Original: ${r.od}${r.oh?", "+r.oh:""}`;return t+"."}
 function pick(i){profile(i)}
 function count(a){const c={};a.forEach(v=>c[v]=(c[v]||0)+1);return Object.entries(c).sort((x,y)=>y[1]-x[1])}
@@ -153,9 +221,18 @@ document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>show(b.dataset.v));
 /* ---------- About and sources: what the data is, how it was checked, the legal terms ---------- */
 function about(){const D=DATA;const prim=R.filter(PRIM).length;
   $("about-out").innerHTML=`<h2 class="sec">About</h2>
-  <p class="lead"><i>Civic Vault: Potomac Territory, 1700–1811</i> brings together the records of the Masonic lodges of George-Town and the City of Washington, 1789–1811: the men, their trades, the buildings they raised and the city they served. It is the research data set behind the book series by Thomas M. Saharsky, published by Market Mojo LLC. Search by man, lodge, year, trade or building; every record names its source and where the original is held.</p>
+  <p class="lead"><i>Civic Atlas: Potomac Territory, 1700–1811</i> is a research database of the men who built the Federal City, and of the lodges, parish and crafts that held them together. It joins what survives of the Masonic lodges of George-Town, Alexandria and the City of Washington, from their first warrants in the 1780s to the founding of a Grand Lodge for the District of Columbia in 1811, with the payrolls, estimates and pay vouchers of the public works, the newspapers of the day and the records of Christ Church, Washington Parish.</p>
+  <p>Men, lodges, trades, buildings and years are linked across every source. A stone cutter on the President's House payroll of 1795 can be followed to the lodge roll that names him, the office he held, the building he raised and the parish where he was buried. Every record carries a full citation and names the archive or library that holds the original, down to the record group, series, box and page wherever the books give them. Originals are kept apart from compilations and research notes, and every count says how it was made.</p>
+  <p>It is the research data set behind the book series by Thomas M. Saharsky, author and archivist, published by Market Mojo LLC.</p>
+  <h3 class="h3s">For research and teaching</h3>
+  <ul class="method">
+   <li><b>Trace a life across the record.</b> One profile gathers a man's lodge offices, trade, pay, buildings, parish and press notices, each with its source.</li>
+   <li><b>Count with the evidence shown.</b> Census tables by lodge, year, office and calling; the economy of the buildings from the payrolls; every table downloads as CSV.</li>
+   <li><b>See the work on the ground.</b> The Atlas places the public buildings and halls with their crews and records.</li>
+   <li><b>Cite in one tap.</b> Full and short citations in one house style, with the holding archive and its credit line.</li>
+  </ul>
   <p class="stats">${D.meta.count.toLocaleString()} records, ${D.meta.linked.toLocaleString()} linked to a named man; ${M.length} men; ${D.docs.length} original documents in ${D.register.filter(r=>r.id!=="UNPLACED").length} archives and libraries. Data set of ${esc(D.meta.built)}.</p>
-  <div class="statgrid"><div><b>${D.meta.count.toLocaleString()}</b><span>records</span></div><div><b>${M.length}</b><span>men</span></div><div><b>${D.docs.length}</b><span>original documents</span></div><div><b>${prim.toLocaleString()}</b><span>records from originals</span></div></div>
+  <div class="statgrid"><div><b>${D.meta.count.toLocaleString()}</b><span>Records</span></div><div><b>${M.length}</b><span>Men</span></div><div><b>${D.docs.length}</b><span>Original Documents</span></div><div><b>${prim.toLocaleString()}</b><span>Primary Records</span></div></div>
   <p><button type="button" class="copy" data-ab="sources">Sources: the archives, their record groups and series, credit lines and terms of use</button></p>
   <h3 class="h3s">How to use it</h3>
   <ol class="method">
@@ -167,18 +244,19 @@ function about(){const D=DATA;const prim=R.filter(PRIM).length;
    <li><b>Corrections.</b> Use Suggest a correction on any record; members can add facts with their source in the fact bins.</li>
   </ol>
   <h3 class="h3s" id="ab-credits">Credits</h3>
-  <p><b>Author and archivist:</b> Thomas M. Saharsky. <b>Series editors:</b> Josh Withrow and Brent Morris. <b>With thanks to:</b> John Payne and Linda Mellgren; the U.S. Senate Historical Office; Jordan Zappala; Sandy Hussey, for Christ Church Washington Parish archives; the Stephen J. Ponzillo Jr. Memorial Library and Museum of the Grand Lodge of Maryland; the National Archives; and the Library of Congress, whose Chronicling America newspapers and pictures are linked throughout. <b>Published by</b> Market Mojo LLC.</p>
+  <p><b>Author and archivist:</b> Thomas M. Saharsky. <b>With thanks to:</b> John Payne and Linda Mellgren; the U.S. Senate Historical Office; Jordan Zappala; Sandy Hussey, for Christ Church Washington Parish archives; the Stephen J. Ponzillo Jr. Memorial Library and Museum of the Grand Lodge of Maryland; the National Archives; and the Library of Congress, whose Chronicling America newspapers and pictures are linked throughout. <b>Published by</b> Market Mojo LLC.</p>
 
   
   <h3 class="h3s" id="ab-disclaimer">Disclaimer</h3>
-  <p>A work of historical research, for information and study. Historical records are incomplete and sometimes contradictory, so readings, dates, identifications of men and map positions can be wrong. Nothing here is legal, genealogical, title or property advice, or proof of descent, membership or lineage. <i>Civic Vault</i> is independent: it is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge, chapter or Masonic body, nor by any archive, library or government agency named in it. <a href="${LEGAL}disclaimer.html">Full disclaimer</a></p>
+  <p>A work of historical research, for information and study. Historical records are incomplete and sometimes contradictory, so readings, dates, identifications of men and map positions can be wrong. Nothing here is legal, genealogical, title or property advice, or proof of descent, membership or lineage. <i>Civic Atlas</i> is independent: it is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge, chapter or Masonic body, nor by any archive, library or government agency named in it. <a href="${LEGAL}disclaimer.html">Full disclaimer</a></p>
   <h3 class="h3s" id="ab-terms">Terms of use</h3>
   <p>A membership gives one person a personal right to search, read and cite the records for research. Quote individual records with their citations; do not copy, scrape, resell or redistribute the data set, or use it to train or build another database or service, without written permission. <a href="${LEGAL}terms.html">Full terms of use</a> · <a href="${LEGAL}copyright.html">Copyright notice</a></p>
   <h3 class="h3s" id="ab-privacy">Privacy</h3>
   <p>We keep only what runs your membership: your name, email address, member number, membership status and the facts you add. Card details go to Stripe and never reach us. No advertising, no tracking, no sale of data. You can see, download, correct or delete your information at any time, wherever you live. <a href="${LEGAL}privacy.html">Full privacy policy</a></p>
   <h3 class="h3s" id="ab-contact">Contact and corrections</h3>
   <p>To report an error, use <b>Suggest a correction</b> on the record or the Atlas and name your source; every correction is checked against the original before it changes the data. For membership, permissions, privacy requests or anything else, write to Market Mojo LLC at <a href="mailto:marketmojowi@gmail.com">marketmojowi@gmail.com</a> or see <a href="https://www.mktmojox.com/" target="_blank" rel="noopener">www.mktmojox.com</a>. <a href="${LEGAL}contact.html">Contact page</a></p>
-  <p class="stats">Data set of ${esc(D.meta.built)}. App version 1.1.</p>`;
+  <div id="ab-method">${methodHTML()}</div>
+  <p class="stats">Data set of ${esc(D.meta.built)}. App version 1.2.</p>`;
   wire($("about-out"))}
 /* ---------- Sources: every original placed in its archive's own order, with the holder's credit line and terms ---------- */
 function sources(){const D=DATA,RP=Object.entries(D.repos);const prim=R.filter(PRIM).length,notes=R.filter(r=>r.o==="AUTHOR_WB").length,book=R.filter(r=>r.o==="BOOK").length;
@@ -192,9 +270,15 @@ function sources(){const D=DATA,RP=Object.entries(D.repos);const prim=R.filter(P
         <ul class="ri">${st.items.map(i=>`<li><button type="button" class="linkbtn" data-dc="${i}">${esc(short(D.docs[i].x))}</button> <small>${D.docs[i].n} record${D.docs[i].n===1?"":"s"}</small></li>`).join("")}</ul></div>`).join("")}</div>`).join("")}
   </details>`).join("");
   $("src-out").innerHTML=`<h2 class="sec">Sources</h2>
-  <p class="lead">Every record in <i>Civic Vault</i> names its source and, for an original, where the original is held. Below, each of the ${D.docs.length} original documents is placed in its archive's own order: the repository, the record group or collection, the series and entry, the volume, box or file, and the document itself, with the credit line each holder asks for and the terms on which its records are used. Open a document to see every record taken from it.</p>
-  <div class="statgrid"><div><b>${D.register.filter(r=>r.id!=="UNPLACED").length}</b><span>archives and libraries</span></div><div><b>${D.docs.length}</b><span>original documents</span></div><div><b>${prim.toLocaleString()}</b><span>records from originals</span></div><div><b>${book.toLocaleString()}</b><span>compiled in the books</span></div></div>
+  <p class="lead">Every record in <i>Civic Atlas</i> comes from the series books and names its source as the books cite it, and, for an original, where the original is held. Below, the sources are given first as each book states them, then each of the ${D.docs.length} original documents is placed in its archive's own order: the repository, the record group or collection, the series and entry, the volume, box or file, and the document itself, with the credit line each holder asks for and the terms on which its records are used. Open a document to see every record taken from it.</p>
+  <div class="statgrid"><div><b>${D.register.filter(r=>r.id!=="UNPLACED").length}</b><span>Archives</span></div><div><b>${D.docs.length}</b><span>Original Documents</span></div><div><b>${prim.toLocaleString()}</b><span>Primary Records</span></div><div><b>${book.toLocaleString()}</b><span>Book Tables</span></div></div>
+  <h3 class="h3s">The sources as the books state them</h3>
+  <p class="stats">Each book of the series opens with its own account of the records it was built from. These are those accounts, book by book, with the page. <b>Original</b>: the document itself, read or photographed by the author. <b>Printed record</b>: a record of the time read in a printed edition. <b>History</b>: a later history or study, used for context and checked against the records.</p>
+  <div class="register">${(D.book_sources||[]).map((b,bi)=>`<details class="repo"${bi===0?" open":""}><summary><span class="rn"><i>${esc(b.book)}</i></span><span class="rk">${esc(b.where)}</span><span class="rc">${b.items.filter(x=>x[0]==="Original").length} original series · ${b.items.length} groups</span></summary>
+    <p class="stats" style="margin:8px 0">${esc(b.lead)}</p>
+    <div class="tscroll"><table class="stt ladder"><thead><tr><th>Kind</th><th>Records</th><th>Held at or read in</th></tr></thead><tbody>${b.items.map(([k,t,h])=>`<tr><td>${k==="Original"?"● ":""}${esc(k)}</td><td>${ct(t)}</td><td>${ct(h||"–")}</td></tr>`).join("")}</tbody></table></div></details>`).join("")}</div>
   <h3 class="h3s">The archive register</h3>
+  <p class="stats">The original documents behind the records, placed in each holder's own order.</p>
   <div class="register">${reg}</div>
   <h3 class="h3s" id="src-method">Sources and method</h3>
   <ol class="method">
@@ -213,17 +297,14 @@ function sources(){const D=DATA,RP=Object.entries(D.repos);const prim=R.filter(P
   
   <h3 class="h3s" id="src-kinds">Kinds of records and what each label means</h3>
   <dl class="defs">${D.defined.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
-  <h3 class="h3s">Background reading for the Potomac Territory</h3>
-  <p class="stats">Works consulted for context. They are not counted as records.</p>
-  <ul class="method">${(D.reference||[]).map(x=>`<li>${esc(x.cite)}. <small>${esc(x.about)} Held by: ${esc(x.holder)}. ${esc(x.use)}</small></li>`).join("")}</ul>
-  <h3 class="h3s">How to cite Civic Vault</h3>
-  <p>Cite the original first, from the record's <b>Cite this record</b> box, then the app: <i>Civic Vault: Potomac Territory, 1700–1811</i> (Market Mojo LLC, 2026), the kind of record, and the date you read it. Quote the original's holder exactly as its credit line above gives it.</p>
+  <h3 class="h3s">How to cite Civic Atlas</h3>
+  <p>Cite the original first, from the record's <b>Cite this record</b> box, then the app: <i>Civic Atlas: Potomac Territory, 1700–1811</i> (Market Mojo LLC, 2026), the kind of record, and the date you read it. Quote the original's holder exactly as its credit line above gives it.</p>
   <h3 class="h3s">The book series</h3>
-  <p>Thomas M. Saharsky, <i>Origins of the Royal Arch</i>; <i>Potomac Lodge</i>; <i>Federal Lodge No. 15, 1793–1811</i>; <i>Naval Lodge No. 41</i>; <i>Columbia Lodge No. 35</i>; <i>Washington Parish</i>; and <i>Proto Lodges of the Potomac Area, 1787–1811</i> (Market Mojo LLC, through Lulu, 2026). Series editors: Josh Withrow and Brent Morris. Each book's notes give the full citation for every line drawn from it.</p>`;
+  <p>Thomas M. Saharsky, <i>Origins of the Royal Arch</i>; <i>Potomac Lodge</i>; <i>Federal Lodge No. 15, 1793–1811</i>; <i>Naval Lodge No. 41</i>; <i>Columbia Lodge No. 35</i>; <i>Washington Parish</i>; and <i>Proto Lodges of the Potomac Area, 1787–1811</i> (Market Mojo LLC, through Lulu, 2026). Each book's notes give the full citation for every line drawn from it.</p>`;
   wire($("src-out"))}
 function show(v){document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===v));
   ["index","man","search","build","compare","atlas","sources","about"].forEach(k=>$("v-"+k).hidden=v!==k);$("filt").hidden=v!=="search";
-  if(v==="build")tb();if(v==="compare")cp();if(v==="atlas")atlas();if(v==="about")about();if(v==="sources")sources();window.scrollTo({top:0});}
+  if(v==="build"){tb();moreTables();const eo=$("eco-out");if(eo&&!eo.innerHTML){eo.innerHTML=econ();ecoWire();wire(eo)}}if(v==="compare")cp();if(v==="atlas"){atlas();const sd=$("at-std");if(sd&&!sd.innerHTML){sd.innerHTML=standardsHTML();wire(sd)}}if(v==="about")about();if(v==="sources")sources();window.scrollTo({top:0});}
 /* ---------- Table builder (men named in the returns and rolls) ---------- */
 const C=DATA.census, LN=C.lodges, OC=C.occn, OFF=new Set(C.officer), MUL=new Set(C.multi_men);
 const occOf=i=>C.mocc[i]||[];
@@ -260,6 +341,25 @@ function tb(){
   $("tb-note").textContent=m==="men"?"Each man is counted once in a row or column even if he appears in several years or lodges, so rows can add up to more than the total.":"A man counts once for each year and lodge in which a return or roll names him.";
   chart(rows.map(a=>[a,val(rowT.get(a))]),DIMS[r].n,m==="men"?"men":"man-years");
 }
+
+/* ready-made census tables under the builder: same counting rules, no filters */
+const PRESETS=[["calling","lodge","Callings by lodge","Men of each calling in each lodge, from the returns and rolls of 1789–1811."],
+  ["calling","place","Callings by place","Where the men of each calling met: Georgetown (the Potomac lodges and Columbia No. 19), the City of Washington, or Alexandria, Virginia."],
+  ["period","officer","Officers and members by period","Men on the returns in each five-year period, and how many of them held a lodge office."],
+  ["lodge","multi","Men in one lodge or several","How many of each lodge's men also stand on the rolls of another lodge."]];
+function xtab(r,c){const cells=new Map(),rowT=new Map(),colT=new Map(),all=new Set();
+  const add=(map,k,i)=>{if(!map.has(k))map.set(k,new Set());map.get(k).add(i)};
+  for(const o of C.obs){const rv=DIMS[r].v(o),cv=DIMS[c].v(o);for(const a of rv){add(rowT,a,o[0]);for(const b of cv)add(cells,a+"\u0001"+b,o[0])}for(const b of cv)add(colT,b,o[0]);all.add(o[0])}
+  const ORD=[...LN,...((C.ladder||{}).group_grades||[]).flatMap(g=>g[2]),...OC,"Georgetown","City of Washington","Alexandria, Virginia","Officer","Not recorded as officer","One lodge","More than one lodge","No calling recorded"];
+  const so=(a,b)=>(/^\d/.test(a)&&/^\d/.test(b))?String(a).localeCompare(String(b),undefined,{numeric:true}):(ORD.indexOf(a)>=0&&ORD.indexOf(b)>=0?ORD.indexOf(a)-ORD.indexOf(b):String(a).localeCompare(String(b)));
+  const rows=[...rowT.keys()].sort(so),cols=[...colT.keys()].sort(so),v=x=>x?x.size:0;
+  return `<table class="stt"><thead><tr><th>${esc(DIMS[r].n)}</th>${cols.map(k=>`<th>${esc(c==="lodge"?String(k).replace("Potomac ","Pot. ").replace("Columbia ","Col. ").replace("Federal ","Fed. ").replace("Alexandria ","Alex. "):k)}</th>`).join("")}<th>All</th></tr></thead><tbody>
+  ${rows.map(a=>`<tr><td>${esc(a)}</td>${cols.map(b=>`<td>${v(cells.get(a+"\u0001"+b))||""}</td>`).join("")}<td><b>${v(rowT.get(a))}</b></td></tr>`).join("")}</tbody>
+  <tfoot><tr><td>All men</td>${cols.map(b=>`<td>${v(colT.get(b))}</td>`).join("")}<td>${all.size}</td></tr></tfoot></table>`}
+function moreTables(){const el=$("tb-more");if(!el||el.innerHTML)return;
+  el.innerHTML=`<h2 class="sec" style="margin-top:22px">More census tables</h2><p class="stats">Ready-made counts of distinct men, by the same rules as the table above. Open any of them in the builder to filter it or download it.</p>`+
+   PRESETS.map(([r,c,t,d],k)=>`<h3 class="h3s">${esc(t)}</h3><p class="stats">${esc(d)}</p><div class="tscroll">${xtab(r,c)}</div><button type="button" class="copy" data-pre="${k}">Open in the builder</button>`).join("");
+  el.querySelectorAll("[data-pre]").forEach(b=>b.onclick=()=>{const [r,c]=PRESETS[+b.dataset.pre];$("tb-m").value="men";$("tb-r").value=r;$("tb-c").value=c;$("tb-l").value="";$("tb-o").value="";tb();$("v-build").scrollIntoView({block:"start"})})}
 function chart(pts,dim,unit){
   const el=$("tb-chart");el.innerHTML="";if(!pts.length)return;
   const W=Math.max(320,el.clientWidth||600),H=200,P={l:34,r:6,t:8,b:pts.length>12?44:28},iw=W-P.l-P.r,ih=H-P.t-P.b;
@@ -285,7 +385,7 @@ $("tb-csv").onclick=()=>{if(!TB)return;const q=v=>`"${String(v).replace(/"/g,'""
   const lines=[[DIMS[TB.r].n,...(TB.c?TB.cols:[]),"All"].map(q).join(",")];
   for(const a of TB.rows)lines.push([a,...(TB.c?TB.cols.map(b=>TB.val(TB.cells.get(a+"\u0001"+b))):[]),TB.val(TB.rowT.get(a))].map(q).join(","));
   lines.push(["All",...(TB.c?TB.cols.map(b=>TB.val(TB.colT.get(b))):[]),TB.total].map(q).join(","));
-  lines.push("");lines.push(q("Civic Vault. "+(TB.m==="men"?"Men":"Man-years")+" named in the surviving returns and rolls. Sources: Grand Lodge of Maryland returns (Stephen J. Ponzillo Jr. Memorial Library and Museum) and the series lodge rolls (Thomas M. Saharsky, 2026)."));
+  lines.push("");lines.push(q("Civic Atlas. "+(TB.m==="men"?"Men":"Man-years")+" named in the surviving returns and rolls. Sources: Grand Lodge of Maryland returns (Stephen J. Ponzillo Jr. Memorial Library and Museum) and the series lodge rolls (Thomas M. Saharsky, 2026)."));
   const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/csv"}));a.download="lodges_before_1812_table.csv";a.click();};
 $("tb-link").onclick=()=>{const p=new URLSearchParams({t:1,m:$("tb-m").value,r:$("tb-r").value,c:$("tb-c").value,l:$("tb-l").value,o:$("tb-o").value,y1:$("tb-y1").value,y2:$("tb-y2").value});
   const u=location.href.split("#")[0]+"#"+p;try{history.replaceState(null,"","#"+p)}catch(_){}
@@ -299,13 +399,61 @@ function cp(){
     const yk=Object.keys(ys).map(Number).sort((a,b)=>a-b),peak=yk.reduce((a,y)=>ys[y].size>(ys[a]?.size||0)?y:a,yk[0]);
     const cc={};men.forEach(m=>occOf(m).forEach(k=>cc[k]=(cc[k]||0)+1));const top=Object.entries(cc).sort((a,b)=>b[1]-a[1])[0];
     const known=[...men].filter(m=>occOf(m).length).length,L=DATA.lodges.find(x=>x.n===LN[i])||{};
-    return {"Place":C.place_of[i],"Men named in returns and rolls":men.size,"Years with a surviving return or roll":yk.length,"First and last such year":yk.length?yk[0]+"–"+yk.at(-1):"–",
+    return {"Met In":C.place_of[i],"Men named in returns and rolls":men.size,"Years with a surviving return or roll":yk.length,"First and last such year":yk.length?yk[0]+"–"+yk.at(-1):"–",
       "Largest year":yk.length?`${peak} (${ys[peak].size} men)`:"–","Average men per return year":yk.length?(ob.length/yk.length).toFixed(1):"–",
       "Men with a recorded calling":men.size?`${known} (${Math.round(100*known/men.size)}%)`:"–","Most common calling":top?`${OC[top[0]]} (${top[1]})`:"–",
       "Men who held an office":[...men].filter(m=>OFF.has(m)).length,"Men also in another lodge":[...men].filter(m=>MUL.has(m)).length,
       "Original documents cited":L.d||"–","Records in the data set":(L.r||0).toLocaleString()}});
   const keys=facts.length?Object.keys(facts[0]):[];
   $("cp-table").innerHTML=facts.length?`<table class="stt"><thead><tr><th></th>${CP.map(i=>`<th>${esc(LN[i])}</th>`).join("")}</tr></thead><tbody>${keys.map(k=>`<tr><td>${esc(k)}</td>${facts.map(f=>`<td>${esc(f[k])}</td>`).join("")}</tr>`).join("")}</tbody></table>`:`<p class="empty">Tick a lodge.</p>`;
+}
+
+/* ---------- Atlas: data standards. What each record carries, the integrity statistics, and what the data set delivers. ---------- */
+function standardsHTML(){
+  const N=R.length,pc=n=>N?(Math.round(1000*n/N)/10)+"%":"–",has=(r,rx)=>r.f.some(([h,v])=>v&&rx.test(h));
+  const MONEY=/price|paid|rate|wage|dues|amount|sum/i,OFFICE=/^(office|offices|office or grade|grade|elected|chaplain|vestryman|rector)$/i,SITE=/^(place|where|lot|square|public building work)$/i;
+  const F=[["Person","A man named in the record, linked to his card on the series rolls",R.filter(r=>r.m.length).length],
+    ["Trade or calling","The trade as the record writes it, placed in a calling and grade",R.filter(r=>r.tr.length).length],
+    ["Office or post","Lodge office or degree, vestry or parish post, post on the works",R.filter(r=>has(r,OFFICE)).length],
+    ["Date","The year, and the full date where the record gives it",R.filter(r=>r.y.length).length],
+    ["Site","Public building, city lot and square, or meeting place",R.filter(r=>r.b.length||has(r,SITE)).length],
+    ["Money","Wage, daily rate, price, dues or sum paid, in the record's own currency",R.filter(r=>has(r,MONEY)).length],
+    ["Source","A full note naming the source and where the original is held",R.filter(r=>r.c).length]];
+  // record groups and the men they share
+  const G=Object.entries(DATA.repos).filter(([,v])=>v.n),gm={};
+  R.forEach(r=>r.m.forEach(i=>{(gm[r.o]=gm[r.o]||new Set()).add(i)}));
+  const yr={};R.forEach(r=>r.y.forEach(y=>{if(y>=1750&&y<=1830){const a=yr[r.o]=yr[r.o]||[y,y];a[0]=Math.min(a[0],y);a[1]=Math.max(a[1],y)}}));
+  const PRIMG=G.map(([k])=>k).filter(k=>k!=="BOOK"&&k!=="AUTHOR_WB");
+  const per=M.map((m,i)=>PRIMG.filter(k=>gm[k]&&gm[k].has(i)).length);
+  const dist=[1,2,3,4].map(n=>[n===4?"Four or more":["One","Two","Three"][n-1],per.filter(c=>n===4?c>=4:c===n).length]);
+  const pairs=[];for(let a=0;a<PRIMG.length;a++)for(let b=a+1;b<PRIMG.length;b++){const A=gm[PRIMG[a]],B=gm[PRIMG[b]];if(!A||!B)continue;const n=[...A].filter(i=>B.has(i)).length;if(n)pairs.push([PRIMG[a],PRIMG[b],n])}
+  pairs.sort((x,y)=>y[2]-x[2]);
+  const E=(C.economy||{}),pay=E.payrolls||[],sha=DATA.meta.sha256||"";
+  const gname=k=>(DATA.repos[k]||{}).name||k;
+  return `<h2 class="sec" id="standards">Data standards</h2>
+  <p class="lead">How each record is captured, measured and delivered: the practice of the national archives for payrolls, building accounts and trade records, applied to the lodges and the public works of the Federal City.</p>
+  <h3 class="h3s">What each record carries</h3>
+  <div class="tscroll"><table class="stt ladder"><thead><tr><th>Field</th><th>What it holds</th><th>Records</th></tr></thead><tbody>
+  ${F.map(([f,d,n])=>`<tr><td><b>${esc(f)}</b></td><td>${esc(d)}</td><td>${n.toLocaleString()}</td></tr>`).join("")}</tbody></table></div>
+  <h3 class="h3s">Integrity</h3>
+  <div class="statgrid"><div><b>${pc(F[6][2])}</b><span>Records Cited</span></div><div><b>${pc(F[0][2])}</b><span>Linked to a Man</span></div>
+   <div><b>${(DATA.meta.duplicates_removed||0).toLocaleString()}</b><span>Duplicates Removed</span></div><div><b>${M.filter(m=>m.sp&&m.sp.length).length}</b><span>Spellings Reconciled</span></div>
+   ${pay.length?`<div><b>${pay.length}</b><span>Payrolls Re-added</span></div>`:""}<div><b>${PRIMG.length}</b><span>Source Groups</span></div></div>
+  <p class="stats">Every payroll is re-added line by line in pounds, shillings and pence and set against the sheet's own total; where they differ, the payroll table says by how much. Spellings stay as each record writes them; the man's card gathers them under the form on the lodge rolls.</p>
+  <div class="cols2"><div><h3 class="h3s">Records by group</h3><div class="tscroll"><table class="stt"><thead><tr><th>Source group</th><th>Records</th><th>Men</th><th>Years named</th></tr></thead><tbody>
+  ${G.map(([k,v])=>`<tr><td>${esc(gname(k))}</td><td>${v.n.toLocaleString()}</td><td>${gm[k]?gm[k].size:"–"}</td><td>${yr[k]?yr[k][0]+(yr[k][1]>yr[k][0]?"–"+yr[k][1]:""):"–"}</td></tr>`).join("")}</tbody></table></div></div>
+  <div><h3 class="h3s">Men across the source groups</h3><table class="stt"><thead><tr><th>Found in</th><th>Men</th></tr></thead><tbody>
+  ${dist.map(([t,n])=>`<tr><td>${t} group${t==="One"?"":"s"}</td><td>${n}</td></tr>`).join("")}</tbody></table>
+  <p class="stats">Counted over the archives and newspapers, without the books' own tables.</p>
+  ${pairs.length?`<table class="stt"><thead><tr><th>Sources that name the same men</th><th>Men</th></tr></thead><tbody>${pairs.slice(0,8).map(([a,b,n])=>`<tr><td>${esc(gname(a))} · ${esc(gname(b))}</td><td>${n}</td></tr>`).join("")}</tbody></table>`:""}</div></div>
+  <h3 class="h3s">Deliverables</h3>
+  <div class="tscroll"><table class="stt ladder"><thead><tr><th>Deliverable</th><th>Form</th></tr></thead><tbody>
+   <tr><td><b>Structured tables</b></td><td>Every census table and payroll downloads as CSV, with the same rows the screen shows; members receive the full data set as JSON.</td></tr>
+   <tr><td><b>Citation for every record</b></td><td>A full note naming the source and the holder of the original, ready to copy from <i>Cite this record</i>.</td></tr>
+   <tr><td><b>Cross-references</b></td><td>Each man's card joins his records across the lodge returns, the commissioners' records, the parish, the newspapers and the books.</td></tr>
+   <tr><td><b>Corrections log</b></td><td>Members suggest a correction with its source; the editor accepts or declines it, and each decision is dated.</td></tr>
+   <tr><td><b>Data set fingerprint</b></td><td>${sha?`SHA-256 <code class="fp" title="${esc(sha)}">${esc(sha.slice(0,16))}…</code> of the ${N.toLocaleString()} records, built ${esc(DATA.meta.built)}. A copy whose fingerprint matches is this release unchanged.`:"Printed with each build."}</td></tr>
+  </tbody></table></div>`;
 }
 
 /* ---------- Index: buttons into the main categories ---------- */
@@ -337,9 +485,9 @@ function highlights(){
     [C.multi,"Men in two or more lodges",three.length?`${three.length} in three: ${few(three,2)}`:"","Lodges"],
     [ND[top],"Originals naming one man",`the best documented: ${few([top],1)}`,"Records"]];
   $("ix-hi").innerHTML=`<h2 class="sec">At a glance</h2><div class="tiles">
-  ${tile(M.length,"Men on the lodge rolls",`${C.occ_known} with a recorded calling`)}
-  ${tile(DATA.docs.length,"Original documents",`held in ${Object.values(DATA.repos).filter(v=>v.nd).length} archives`)}
-  ${tile(big.t,`Men on the returns in ${big.y}`,`the fullest year, ${C.years[0].y}–${C.years.at(-1).y}`)}
+  ${tile(M.length,"Lodge Men",`${C.occ_known} with a recorded calling`)}
+  ${tile(DATA.docs.length,"Original Documents",`held in ${Object.values(DATA.repos).filter(v=>v.nd).length} archives`)}
+  ${tile(big.t,`Men in ${big.y}`,`on the returns, the fullest year, ${C.years[0].y}–${C.years.at(-1).y}`)}
   <div class="tile rot" id="rot1"></div><div class="tile rot" id="rot2"></div><div class="tile rot" id="rot3"></div></div>
   <div class="rotctl"><button type="button" class="c" id="rprev" aria-label="Previous figures">‹</button><button type="button" class="c" id="rpause"></button><button type="button" class="c" id="rnext" aria-label="Next figures">›</button><span>Culture and community figures, ${RI/3+1|0} of ${Math.ceil(POOL.length/3)}</span></div>`;
   wire($("ix-hi"));
@@ -361,12 +509,16 @@ function ix(k,arg){if(k==="atlas"){show("atlas");return}IX=k;document.querySelec
     h=`<div class="letters">${ls.map(l=>`<button type="button" data-ix="men" data-arg="${l}" class="${l===L?"on":""}">${l}</button>`).join("")}</div><p class="stats">${list.length} men, by surname</p>${nameBtns(list)}`}
   if(k==="trades"){if(arg!==undefined){P.innerHTML="";tradeTable(arg);return}
     const rc={};R.forEach(r=>r.tr.forEach(t=>rc[t]=(rc[t]||0)+1));
-    h=`<p class="stats">Trades and callings as the records give them, grouped. Each opens a table of the men, in order of first appearance, with every record behind it.</p><div class="ixbtns">${OC.map(n=>[n,(C.occ.find(x=>x[0]===n)||[0,0])[1],rc[n]||0]).sort((a,b)=>b[2]-a[2]).map(([n,v,r])=>`<button type="button" data-ix="trades" data-arg="${esc(n)}">${esc(n)}<br><small>${v?`${v} men by calling · `:""}${r} records</small></button>`).join("")}</div>`}
+    const tbtn=n=>{const v=(C.occ.find(x=>x[0]===n)||[0,0])[1],r=rc[n]||0;return `<button type="button" data-ix="trades" data-arg="${esc(n)}">${esc(n)}<br><small>${v?`${v} men by calling · `:""}${r} records</small></button>`};
+    const GG=(C.ladder||{}).group_grades||[["Trades","",OC]],seen=new Set(GG.flatMap(g=>g[2]));
+    h=`<p class="stats">Trades and callings as the records give them, grouped by the height of the calling: those who directed the works, the skilled trades, the hands, and the town around them. Each opens a table of the men, in order of first appearance, with every record behind it and a description of the work.</p>
+    ${GG.map(([g,d,gs])=>`<p class="ixgrade">${esc(g)} <small>${esc(d)}</small></p><div class="ixbtns">${gs.filter(n=>OC.includes(n)).map(tbtn).join("")}</div>`).join("")}
+    ${OC.filter(n=>!seen.has(n)).length?`<div class="ixbtns">${OC.filter(n=>!seen.has(n)).map(tbtn).join("")}</div>`:""}`}
   if(k==="lodges"){if(arg!==undefined){const l=DATA.lodges.find(x=>x.n===arg)||{},ci=LN.indexOf(arg);
       const list=M.map((m,i)=>i).filter(i=>M[i].l.includes(arg)).sort((a,b)=>M[a].n.localeCompare(M[b].n));
       const ys=ci>=0?C.years.filter(y=>y.c[ci]).map(y=>`${y.y}: ${y.c[ci]}`).join(" · "):"";
       h=`<button class="linkbtn back" type="button" data-ix="lodges">‹ All lodges</button><h3 class="h3s">${esc(arg)}</h3>
-      <div class="facts"><div><div class="k">Men</div>${list.length}</div><div><div class="k">Original documents</div>${l.d||"–"}</div><div><div class="k">Years</div>${l.y0?l.y0+"–"+l.y1:"–"}</div><div><div class="k">Met at</div>${esc(C.place_of[ci]||"–")}</div></div>
+      <div class="facts"><div><div class="k">Men</div>${list.length}</div><div><div class="k">Original Documents</div>${l.d||"–"}</div><div><div class="k">Years</div>${l.y0?l.y0+"–"+l.y1:"–"}</div><div><div class="k">Met In</div>${esc(C.place_of[ci]||"–")}</div></div>
       ${ys?`<p class="stats">Men on the returns by year: ${ys}</p>`:""}${nameBtns(list)}`}
     else h=`<div class="ixbtns">${DATA.lodges.map(l=>`<button type="button" data-ix="lodges" data-arg="${esc(l.n)}">${esc(l.n)}<br><small>${l.men} men${l.y0?` · ${l.y0}–${l.y1}`:""}</small></button>`).join("")}</div>`}
   if(k==="culture"){const c=CU[+arg||0];
@@ -440,7 +592,8 @@ function tradeTable(t){
       {v:PRIM(r)?"Original":"Cross-reference"},{v:src.replace(/\.$/,"")}]});
   $("ix-panel").innerHTML=`<button class="linkbtn back" type="button" data-ix="trades">‹ All trades</button>
   <h3 class="h3s">${esc(t)}</h3>
-  <div class="statgrid"><div><b>${men.size}</b><span>men</span></div><div><b>${recs.length}</b><span>records</span></div><div><b>${docs.size}</b><span>original documents</span></div><div><b>${recs.length-recs.filter(([r])=>PRIM(r)).length}</b><span>cross-references</span></div></div>
+  <div class="statgrid"><div><b>${men.size}</b><span>Men</span></div><div><b>${recs.length}</b><span>Records</span></div><div><b>${docs.size}</b><span>Original Documents</span></div><div><b>${recs.length-recs.filter(([r])=>PRIM(r)).length}</b><span>Cross-References</span></div></div>
+  ${ladderHTML(t)}
   ${termsHTML(t)}
   <p class="stats">Men in this trade, by first appearance. A man is here if the rolls give him this calling or a record of this trade names him. Tap a column to sort; tap a name for his profile.</p>
   <div class="tscroll" id="tt-men"></div>
@@ -460,7 +613,9 @@ function tradeTable(t){
 /* Book references, reconciled: one entry per book, its tables listed once. */
 /* citations: titles of books, journals and newspapers in italics */
 const ITAL=new RegExp("(Proto Lodges of the Potomac Area, 1787–1811|Federal Lodge No\\. 15, 1793–1811|Origins of the Royal Arch|(?:Potomac Lodge|Naval Lodge No\\. 41|Columbia Lodge No\\. 35|Washington Parish)(?= \\(Lulu)|History of Freemasonry in Maryland|History of the Grand Lodge and of Freemasonry in the District of Columbia|(?:The )?Chronicles of Georgetown(?:, D\\.C\\., from 1751 to 1878)?|Navy-Yard, Washington(?:: History from Organization, 1799, to Present Date)?|History of the Washington Navy Yard Civilian Workforce, 1799–1962|Records of the Columbia Historical Society|Mechanick Exercises|One Hundred and Fifty Years, 1789–1939|National Intelligencer(?: and Washington Advertiser)?|Sunday Star|Evening Star|Times, and Patowmack Packet|Centinel of Liberty|Columbian Mirror(?: and Alexandria Gazette)?|Gazette of the United States|Impartial Observer|Washington Gazette|Washington Federalist|Universal Gazette|City Gazette)","g");
-const ct=s=>esc(s).replace(ITAL,"<i>$1</i>");
+// Web addresses in a citation show as a short link named for the site, not as the raw address.
+const URLNAME=h=>/chroniclingamerica|loc\.gov/.test(h)?"Chronicling America":/umich\.edu/.test(h)?"ARTFL Encyclopédie":/archive\.org/.test(h)?"Internet Archive":/hathitrust/.test(h)?"HathiTrust":h.replace(/^www\./,"");
+const ct=s=>esc(s).replace(ITAL,"<i>$1</i>").replace(/(?:&lt;)?(https?:\/\/[^\s&<]+?)(?:&gt;)?(?=[.,;)]?(?:\s|$))/g,(m,u)=>{const href=u.replace(/[\u2013\u2014]/g,"-");let h="";try{h=new URL(href).hostname}catch(_){return m}return `<a class="srclink" href="${href}" target="_blank" rel="noopener">${URLNAME(h)} ↗</a>`});
 function bookRefs(cs){const by=new Map();
   for(const c of cs)for(const seg of String(c).split(/;\s*/)){const m=seg.match(/^(Thomas M\. Saharsky, .*?\((?:Lulu, )?\d{4}\))(.*)$/);if(!m)continue;
     const loc=m[2].replace(/\(A\.L\. \d+\)/g,"").replace(/^[,\s]+|[,\s.]+$/g,"").replace(/\s+,/g,",").replace(/\s{2,}/g," ");
@@ -493,7 +648,7 @@ function reader(k){const r=R[k],kd=kindOf(r),y=yof2(r);let dlg=$("reader");if(!d
   dlg.innerHTML=`<div class="paper" role="document"><div class="kind">${svgI(ICK[kd],KNAME[kd])} ${KNAME[kd]} · ${svgI(ICP[phaseOf(r,r.f.map(x=>x[1]).join(" "))],"phase")} ${phaseOf(r,r.f.map(x=>x[1]).join(" "))}</div>
   <h3>${esc(r.o==="NEWS"?r.f[0][1]:r.t)}</h3><div class="date">${esc(date||y||"Undated")}${r.m.length?" · "+r.m.map(i=>esc(M[i].n)).join(", "):""}</div>
   ${said?`<blockquote>${esc(said[1])}</blockquote>`:""}
-  <dl>${r.f.filter(([f])=>!/^(source|the book says|book note)$/i.test(f)).map(([f,v])=>`<dt>${esc(f)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>
+  <dl>${r.f.filter(([f])=>!/^(source|the book says|book note)$/i.test(f)).map(([f,v])=>`<dt>${esc(f)}</dt><dd>${ct(v)}</dd>`).join("")}</dl>
   ${ox?`<div class="cit"><b>Original</b>${ct(ox)}.</div><div class="cit"><b>${holdLbl(r)}</b>${ct(heldAt(r).replace(/^(Held at|Read in) /,""))}</div>`:(r.o==="AUTHOR_WB"?`<div class="cit"><b>Research note</b>${ct(r.c)}. ${esc(DATA.repos.AUTHOR_WB.access)}</div>`:r.k==="Settled fact"?`<div class="cit"><b>Sources</b>${ct(r.c)}</div><div class="cit"><b>Status</b>Settled for the whole series: checked against these records and kept the same in every book.</div>`:`<div class="cit"><b>Original</b>Compiled in the series from several documents; see the book for its sources.</div>`)}
   ${r.o==="AUTHOR_WB"||r.k==="Settled fact"?"":`<div class="cit"><b>In the books</b>${ct(bookRefs([r.c])||r.c)}</div>`}
   <details class="cite-box"><summary>Cite this record</summary><p><b>Full citation</b> <span id="rd-full">${esc(fullCite(r))}</span></p><p><b>Short citation (Oxford)</b> <span>${esc(citeText(r))}</span></p></details>
@@ -529,7 +684,7 @@ function eventText(r,i){if(r.d!=null&&DATA.docs[r.d].x.includes(": ")){const x=D
     const lodge=(x.match(/[A-Z][a-z]+ Lodge No\. \d+/)||[""])[0];
     return [tail.replace(lodge+", ",""),lodge&&!tail.includes(lodge)?lodge:"",off&&off!=="–"?off:"",gr&&gr!=="–"?gr:""].filter(Boolean).join("; ")}const nm=norm(M[i].n),keys=[nm,...M[i].sp.map(norm)];
   const vals=r.f.filter(([k,v])=>k!=="Source"&&!/^(name|spellings|lodges|years on (the )?rolls)$/i.test(k)&&v&&v!=="–"&&!keys.includes(norm(v)))
-    .map(([k,v])=>/^(office|grade|date|document|year|no\.?)$/i.test(k)?`${k} ${v}`:v).slice(0,3).join("; ");
+    .map(([k,v])=>/^(office|grade|date|document|year|no\.?)$/i.test(k)?`${k} ${v}`:v).slice(0,3).join("; ").replace(/\s*<?https?:\/\/[^\s>]+>?\.?/g,"");
   const t=r.t.replace(/\s+\d{4}(\s+\d{4})?$/,"").replace(/^the /i,"");
   return (t+(vals?": "+vals:"")).slice(0,220)}
 function shortSrc(r){if(r.d!=null){const p=DATA.repos[r.o]||{};const x=DATA.docs[r.d].x.replace(/\.$/,"");const tail=x.includes(": ")?x.slice(x.lastIndexOf(": ")+2):x;return `Original: ${p.name||""}${tail?", "+tail:""}`}
@@ -713,7 +868,7 @@ function atlas(){const names=Object.keys(BLD).filter(b=>R.some(r=>r.b.includes(b
   $("at-map").querySelectorAll("[data-bd2]").forEach(g=>{const go=()=>{ATB=g.dataset.bd2;atlas()};g.onclick=go;g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go()}}});
   const st=bstats(ATB),B=BLD[ATB],men=[...st.men].sort((a,b)=>b[1]-a[1]);const tc={};men.forEach(([i])=>occOf(i).forEach(k=>tc[OC[k]]=(tc[OC[k]]||0)+1));
   $("at-info").innerHTML=`<div class="bcard"><div class="k" style="margin-top:0">No. ${names.indexOf(ATB)+1}</div><h3>${esc(ATB)}</h3><div>${esc(B.w)}</div>
-   <div class="statgrid" style="margin:10px 0 0">${men.length?`<div><b>${men.length}</b><span>lodge men named</span></div>`:""}<div><b>${st.recs.length}</b><span>records${st.y0?` · ${st.y0}–${st.y1}`:""}</span></div>${st.docs.size?`<div><b>${st.docs.size}</b><span>original documents</span></div>`:""}</div>
+   <div class="statgrid" style="margin:10px 0 0">${men.length?`<div><b>${men.length}</b><span>Lodge Men</span></div>`:""}<div><b>${st.recs.length}</b><span>Records${st.y0?` · ${st.y0}–${st.y1}`:""}</span></div>${st.docs.size?`<div><b>${st.docs.size}</b><span>Original Documents</span></div>`:""}</div>
    ${Object.keys(tc).length?`<div class="k">Their callings</div><div>${Object.entries(tc).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)} (${v})`).join(", ")}</div>`:""}
    <div class="k">The men</div><div>${men.length?men.slice(0,40).map(([i,n])=>`<button type="button" class="linkbtn" data-m="${i}">${esc(M[i].n)}</button>`).join(", "):"No lodge man is named in these records."}</div>
    <div><button type="button" class="copy" data-bd="${esc(ATB)}">All ${st.recs.length} records</button></div>

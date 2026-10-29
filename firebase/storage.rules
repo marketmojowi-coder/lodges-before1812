@@ -1,9 +1,9 @@
 rules_version = '2';
-// The data set (data/data.json) opens only to paying members and editors. Uploads only through the admin script.
+// The data set (data/data.json) opens only to members (one-time payment) and editors. Uploads only through the admin script.
 service firebase.storage {
   match /b/{bucket}/o {
     match /data/{file} {
-      allow read: if request.auth != null && (request.auth.token.stripeRole == "member" || request.auth.token.editor == true);
+      allow read: if request.auth != null && (request.auth.token.member == true || request.auth.token.stripeRole == "member" || request.auth.token.editor == true);
       allow write: if false;
     }
   }

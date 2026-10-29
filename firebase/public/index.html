@@ -3,7 +3,8 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta charset="utf-8">
-<title>Civic Vault · Potomac Territory, 1700–1811</title>
+<title>Civic Atlas · Potomac Territory, 1700–1811</title>
+<link rel="icon" type="image/svg+xml" href="icons/emblem.svg">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&display=swap">
@@ -13,10 +14,20 @@
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 </head>
 <body>
+<div id="intro" class="intro" hidden aria-hidden="true">
+  <video id="intro-v" muted playsinline preload="auto"></video>
+  <div class="intro-fallback"><img src="icons/emblem.svg" alt="" class="intro-em"><p class="intro-name">Civic <span>Atlas</span></p></div>
+  <img class="intro-mark" src="market-mojo-128.png" alt="">
+  <button id="intro-skip" class="intro-skip" type="button">Skip</button>
+</div>
 <div id="gate" class="gate">
   <div class="gate-card">
-    <div class="brandbox"><h1 class="brand">Civic <span>Vault</span></h1><p class="region">Potomac Territory <i>1700–1811</i></p></div>
-    <p class="sub2">The lodges of George-Town and the City of Washington before 1812: every man, lodge, year and trade in the book series by Thomas M. Saharsky, each record with its source and where the original is held.</p>
+    <div class="brandbox"><img class="emblem" src="icons/emblem.svg" alt="" width="96" height="96" style="width:96px"><h1 class="brand">Civic <span>Atlas</span></h1><p class="region">Potomac Territory <i>1700–1811</i></p></div>
+    <p class="sub2">The lodges of Georgetown, Alexandria and the City of Washington before 1812: every man, lodge, year and trade in the book series by Thomas M. Saharsky, each record with its source and where the original is held.</p>
+    <div id="g-member" class="gperks">
+      <p class="gprice"><b>Membership</b> <span id="g-price">paid once</span></p>
+      <ul><li>Every man, lodge, building and record, each cited</li><li>Census tables, the Atlas and downloads</li><li>Works offline after the first sign-in</li><li>Two-step sign-in; we keep only your email</li></ul>
+    </div>
     <div id="gate-out">
       <button id="g-google" class="gbtn" type="button">Sign in with Google</button>
       <form id="g-email" class="gform"><input id="g-addr" type="email" required placeholder="Or your email address" autocomplete="email"><button type="submit">Email me a sign-in link</button></form>
@@ -28,16 +39,21 @@
     <div id="gate-sub" hidden>
       <p>Signed in as <b id="g-who"></b>. <span id="g-note">Members get the full data set, the fact bins and downloads.</span></p>
       <button id="g-buy" class="gbtn" type="button">Become a member</button>
+      <div id="g-zelle"></div>
       <button id="g-out" class="linkbtn" type="button">Sign out</button>
     </div>
+    <form id="g-tfa" class="gform" hidden><label for="g-tfa-code" class="gmsg" style="text-align:left">Two-step sign-in: type the six-digit code from your authenticator app.</label>
+      <input id="g-tfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required placeholder="123456"><button type="submit">Confirm</button></form>
     <p id="g-msg" class="gmsg" role="status"></p>
+    <button id="g-install" class="linkbtn ginstall" type="button" hidden>Install Civic Atlas on this device</button>
+    <p id="g-ios" class="gmsg" hidden>To install on iPhone or iPad: tap Share, then <b>Add to Home Screen</b>.</p>
     <p class="gmsg gfoot">© 2026 Market Mojo LLC · <a href="sources.html">Sources</a> · <a href="disclaimer.html">Disclaimer</a> · <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="copyright.html">Copyright</a> · <a href="contact.html">Contact</a></p>
   </div>
 </div>
 <div id="app" hidden>
 <nav class="topnav"><div class="wrap"><a href="index.html">Search</a> · <a href="bins.html">Fact bins</a> · <a href="account.html">My account</a> · <a href="contact.html">Contact</a> · <button id="signout" class="linkbtn" type="button">Sign out</button></div></nav>
 <header><div class="wrap">
-  <div class="brandbox"><h1 class="brand">Civic <span>Vault</span></h1><p class="region">Potomac Territory <i>1700–1811</i></p></div>
+  <div class="brandbox"><svg class="emblem" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><circle cx="256" cy="256" r="250" fill="#14243a"/><defs><clipPath id="ca-in"><circle cx="256" cy="256" r="198"/></clipPath></defs><g clip-path="url(#ca-in)" stroke="#e3c98c" stroke-opacity=".2" stroke-width="1.6" fill="none"><line x1="40" y1="40" x2="40" y2="472"/><line x1="40" y1="40" x2="472" y2="40"/><line x1="74" y1="40" x2="74" y2="472"/><line x1="40" y1="74" x2="472" y2="74"/><line x1="108" y1="40" x2="108" y2="472"/><line x1="40" y1="108" x2="472" y2="108"/><line x1="142" y1="40" x2="142" y2="472"/><line x1="40" y1="142" x2="472" y2="142"/><line x1="176" y1="40" x2="176" y2="472"/><line x1="40" y1="176" x2="472" y2="176"/><line x1="210" y1="40" x2="210" y2="472"/><line x1="40" y1="210" x2="472" y2="210"/><line x1="244" y1="40" x2="244" y2="472"/><line x1="40" y1="244" x2="472" y2="244"/><line x1="278" y1="40" x2="278" y2="472"/><line x1="40" y1="278" x2="472" y2="278"/><line x1="312" y1="40" x2="312" y2="472"/><line x1="40" y1="312" x2="472" y2="312"/><line x1="346" y1="40" x2="346" y2="472"/><line x1="40" y1="346" x2="472" y2="346"/><line x1="380" y1="40" x2="380" y2="472"/><line x1="40" y1="380" x2="472" y2="380"/><line x1="414" y1="40" x2="414" y2="472"/><line x1="40" y1="414" x2="472" y2="414"/><line x1="448" y1="40" x2="448" y2="472"/><line x1="40" y1="448" x2="472" y2="448"/><line x1="378.1" y1="26.4" x2="133.9" y2="485.6" stroke-width="3.2" stroke-opacity=".42"/><line x1="485.6" y1="133.9" x2="26.4" y2="378.1" stroke-width="3.2" stroke-opacity=".42"/><line x1="485.6" y1="378.1" x2="26.4" y2="133.9" stroke-width="3.2" stroke-opacity=".42"/><line x1="378.1" y1="485.6" x2="133.9" y2="26.4" stroke-width="3.2" stroke-opacity=".42"/></g><circle cx="256" cy="256" r="234" fill="none" stroke="#b99858" stroke-width="9"/><circle cx="256" cy="256" r="210" fill="none" stroke="#b99858" stroke-width="2.6"/><circle cx="313.5" cy="41.6" r="3.2" fill="#e3c98c"/><circle cx="367.0" cy="63.7" r="3.2" fill="#e3c98c"/><circle cx="448.3" cy="145.0" r="3.2" fill="#e3c98c"/><circle cx="470.4" cy="198.5" r="3.2" fill="#e3c98c"/><circle cx="470.4" cy="313.5" r="3.2" fill="#e3c98c"/><circle cx="448.3" cy="367.0" r="3.2" fill="#e3c98c"/><circle cx="367.0" cy="448.3" r="3.2" fill="#e3c98c"/><circle cx="313.5" cy="470.4" r="3.2" fill="#e3c98c"/><circle cx="198.5" cy="470.4" r="3.2" fill="#e3c98c"/><circle cx="145.0" cy="448.3" r="3.2" fill="#e3c98c"/><circle cx="63.7" cy="367.0" r="3.2" fill="#e3c98c"/><circle cx="41.6" cy="313.5" r="3.2" fill="#e3c98c"/><circle cx="41.6" cy="198.5" r="3.2" fill="#e3c98c"/><circle cx="63.7" cy="145.0" r="3.2" fill="#e3c98c"/><circle cx="145.0" cy="63.7" r="3.2" fill="#e3c98c"/><circle cx="198.5" cy="41.6" r="3.2" fill="#e3c98c"/><polygon points="256.0,256.0 256.0,66.0 232.0,256.0" fill="#e3c98c"/><polygon points="256.0,256.0 256.0,66.0 280.0,256.0" fill="#9a7c43"/><polygon points="256.0,256.0 343.7,168.3 244.0,244.0" fill="#e3c98c"/><polygon points="256.0,256.0 343.7,168.3 268.0,268.0" fill="#9a7c43"/><polygon points="256.0,256.0 446.0,256.0 256.0,232.0" fill="#e3c98c"/><polygon points="256.0,256.0 446.0,256.0 256.0,280.0" fill="#9a7c43"/><polygon points="256.0,256.0 343.7,343.7 268.0,244.0" fill="#e3c98c"/><polygon points="256.0,256.0 343.7,343.7 244.0,268.0" fill="#9a7c43"/><polygon points="256.0,256.0 256.0,446.0 280.0,256.0" fill="#e3c98c"/><polygon points="256.0,256.0 256.0,446.0 232.0,256.0" fill="#9a7c43"/><polygon points="256.0,256.0 168.3,343.7 268.0,268.0" fill="#e3c98c"/><polygon points="256.0,256.0 168.3,343.7 244.0,244.0" fill="#9a7c43"/><polygon points="256.0,256.0 66.0,256.0 256.0,280.0" fill="#e3c98c"/><polygon points="256.0,256.0 66.0,256.0 256.0,232.0" fill="#9a7c43"/><polygon points="256.0,256.0 168.3,168.3 244.0,268.0" fill="#e3c98c"/><polygon points="256.0,256.0 168.3,168.3 268.0,244.0" fill="#9a7c43"/><circle cx="256" cy="256" r="66" fill="#14243a" stroke="#e3c98c" stroke-width="5"/><g fill="#e3c98c"><rect x="214" y="290" width="84" height="8" rx="1.5"/><rect x="224" y="283" width="64" height="7"/><rect x="230" y="262" width="52" height="21"/><rect x="236" y="266" width="3.4" height="17" fill="#14243a"/><rect x="243" y="266" width="3.4" height="17" fill="#14243a"/><rect x="250" y="266" width="3.4" height="17" fill="#14243a"/><rect x="257" y="266" width="3.4" height="17" fill="#14243a"/><rect x="264" y="266" width="3.4" height="17" fill="#14243a"/><rect x="271" y="266" width="3.4" height="17" fill="#14243a"/><rect x="226" y="257" width="60" height="6" rx="1"/><path d="M232 257 Q232 222 256 218 Q280 222 280 257 Z"/><rect x="251" y="203" width="10" height="16" rx="1"/><circle cx="256" cy="198" r="5"/></g></svg><h1 class="brand">Civic <span>Atlas</span></h1><p class="region">Potomac Territory <i>1700–1811</i></p></div>
   <form id="f" role="search"><input id="q" type="search" placeholder="A man, trade, building or year" aria-label="Search the lodge records" autocomplete="off"><button type="submit">Search</button></form>
 </div></header>
 
@@ -75,30 +91,35 @@
   <p class="stats">The public works and places the lodge men built, supplied or served, from the book data sets. Tap a building on the map or in the guide for its men, crews and records.</p>
   <div class="atlas"><div class="atl-left"><figure class="map" id="at-map"></figure><h3 class="h3s">Building guide</h3><p class="stats" style="margin:0 0 6px">Numbers match the map. Tap a tile to open the building.</p><div class="btiles" id="at-tiles"></div></div><div id="at-info"></div></div>
   <div id="at-list"></div>
+  <div id="at-std"></div>
 </div></section>
 <section id="v-man" class="view" hidden><div class="wrap" id="man-out"></div></section>
 <section id="v-build" class="view" hidden><div class="wrap">
   <h2 class="sec">Build a table</h2>
   <p class="stats">Count the men named in the surviving returns and rolls. Choose what to count, the rows and the columns, then filter. The table, chart and download always agree.</p>
   <div class="tb-controls">
-    <label>Count <select id="tb-m"><option value="men">Men (each man once)</option><option value="my">Man-years (a man counts in each year he appears)</option></select></label>
+    <label>Count <select id="tb-m" title="Men: each man once. Man-years: a man counts in each year he appears."><option value="men">Men</option><option value="my">Man-years</option></select></label>
+    <label>Calling or trade <select id="tb-o"><option value="">All callings</option><option value="-1">No calling recorded</option></select></label>
+    <label>Years <span class="yrs"><input id="tb-y1" class="yr" inputmode="numeric" value="1789" aria-label="From year"> to <input id="tb-y2" class="yr" inputmode="numeric" value="1811" aria-label="To year"></span></label>
+    <span class="tb-break"></span>
     <label>Rows <select id="tb-r"></select></label>
     <label>Columns <select id="tb-c"></select></label>
     <label>Lodge <select id="tb-l"><option value="">All lodges</option></select></label>
-    <label>Calling <select id="tb-o"><option value="">All callings</option><option value="-1">No calling recorded</option></select></label>
-    <label>Years <input id="tb-y1" class="yr" inputmode="numeric" value="1789"> to <input id="tb-y2" class="yr" inputmode="numeric" value="1811"></label>
   </div>
   <div class="tb-actions"><button type="button" class="copy" id="tb-csv">Download CSV</button><button type="button" class="copy" id="tb-link">Copy link to this table</button></div>
   <figure class="chart" id="tb-chart" aria-label="Chart of row totals"></figure>
   <div class="tscroll" id="tb-table"></div>
   <p class="stats" id="tb-note"></p>
+  <div id="tb-more"></div>
+  <div id="eco-out"></div>
+  <div class="method-brief" data-mb></div>
 </div></section>
 <section id="v-compare" class="view" hidden><div class="wrap">
   <h2 class="sec">Compare lodges</h2>
   <p class="stats">Tick up to four lodges to set them side by side.</p>
   <div id="cp-pick" class="chipline"></div>
   <div class="tscroll" id="cp-table"></div>
-  <p class="stats">Men are counted from the surviving returns and rolls; documents are the originals cited for the lodge. A blank year means no return survives.</p>
+  <div class="method-brief" data-mb></div>
 </div></section>
 <section id="v-sources" class="view" hidden><div class="wrap about" id="src-out"></div></section>
 <section id="v-about" class="view" hidden><div class="wrap about" id="about-out"></div></section>

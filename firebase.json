@@ -74,5 +74,15 @@
   },
   "storage": {
     "rules": "firebase/storage.rules"
-  }
+  },
+  "functions": [
+    {
+      "source": "firebase/functions",
+      "codebase": "civic-atlas",
+      "runtime": "nodejs20",
+      "ignore": [
+        "node_modules"
+      ]
+    }
+  ]
 }

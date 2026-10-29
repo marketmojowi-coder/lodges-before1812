@@ -1,4 +1,4 @@
-# Google Play: Civic Vault (Android app)
+# Google Play: Civic Atlas (Android app)
 
 The Android app is the member website wrapped as a Trusted Web Activity (TWA). Same sign-in, same data, no second code base.
 
@@ -27,7 +27,7 @@ An **organization** account (Market Mojo LLC) is the right one for a paid app. T
 1. Deploy the member site first (SETUP.md) so https://lodges.mktmojox.com works.
 2. Google Play Console (play.google.com/console): developer account for **Market Mojo LLC**, $25 one time. An organization account needs a D-U-N-S number for the LLC (free from Dun & Bradstreet; the SAM.gov UEI is a different number).
 3. The Android package is built for you by GitHub Actions from the `android/` folder (workflow "Android app bundle", on every push to `paid-firebase`, or Actions > Android app bundle > Run workflow). It produces `app-release.aab` (for Play) and `app-debug.apk` (to install on a phone for testing) under the run's Artifacts.
-   - Package ID `com.marketmojo.civicvault`; app name Civic Vault; launcher name Civic Vault; opens `https://lodges.mktmojox.com/?source=twa`; navy #14243A.
+   - Package ID `com.marketmojo.civicatlas`; app name Civic Atlas; launcher name Civic Atlas; opens `https://lodges.mktmojox.com/?source=twa`; navy #14243A.
    - **Upload key (one time, on your own computer):** `keytool -genkeypair -v -keystore lodges-upload.jks -alias lodges -keyalg RSA -keysize 2048 -validity 10000`. Keep the file and passwords safe and out of the repository.
    - Add four repository secrets (GitHub > Settings > Secrets and variables > Actions): `ANDROID_KEYSTORE_BASE64` (output of `base64 -w0 lodges-upload.jks`), `KEYSTORE_PASSWORD`, `KEY_ALIAS` (`lodges`), `KEY_PASSWORD`. The next run signs the bundle. Without them the bundle is unsigned and Play will not accept it.
    - Raise `versionCode` in `android/app/build.gradle` for each new upload.
@@ -48,12 +48,12 @@ An **organization** account (Market Mojo LLC) is the right one for a paid app. T
 - **Government / news / health declarations:** Not applicable.
 
 ## Store listing text
-**App name (30):** Civic Vault: Potomac Territory
+**App name (30):** Civic Atlas: Potomac Territory
 
 **Short description (80):** Lodges and builders of George-Town and Washington to 1812, every record cited.
 
 **Full description:**
-Civic Vault: Potomac Territory, 1700–1811, is the research data set behind the book series by Thomas M. Saharsky on the Masonic lodges of George-Town and the City of Washington, 1789–1811.
+Civic Atlas: Potomac Territory, 1700–1811, is the research data set behind the book series by Thomas M. Saharsky on the Masonic lodges of George-Town and the City of Washington, 1789–1811.
 
 - Nearly 5,000 records: lodge rolls and returns, officers, timelines, payrolls, lot sales, parish records and newspaper citations
 - Seven lodges, the Royal Arch Chapter and Washington Parish

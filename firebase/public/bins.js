@@ -1,5 +1,5 @@
 // Fact bins: members add facts (pending); editors accept or reject them. Counts are live.
-import { auth, db, role, memberNumber } from "./firebase-init.js";
+import { auth, db, role, memberNumber, signedInBadge } from "./firebase-init.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, query, where, onSnapshot, addDoc, updateDoc, doc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const $ = id => document.getElementById(id);
@@ -12,6 +12,7 @@ onAuthStateChanged(auth, async user => {
   if (!r.member) { location.href = "index.html"; return; }
   me = user; editor = r.editor;
   try { MEMBER_NO = await memberNumber(user); } catch (_) {}
+  signedInBadge(user, { no: MEMBER_NO, editor });
   $("who").textContent = `Signed in as ${user.email || user.displayName}${editor ? " (editor)" : ""}.`;
   onSnapshot(collection(db, "sources"), s => { sources = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
     $("a-src").innerHTML = `<option value="">Another source (type the citation below)</option>` + sources.map(x => `<option value="${x.id}">${esc(x.short)}: ${esc(x.about || "")}</option>`).join(""); });
