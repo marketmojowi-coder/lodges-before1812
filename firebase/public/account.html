@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>My account · Lodges Before 1812</title>
+<title>My account · Civic Vault</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&display=swap">
 <link rel="stylesheet" href="styles.css">
 <link rel="manifest" href="manifest.webmanifest">
@@ -48,6 +48,7 @@
     <section class="panel" aria-labelledby="h-prof">
       <h2 id="h-prof">Profile</h2>
       <dl class="kv" id="prof"></dl>
+      <div id="pw-box"></div>
       <button class="btn" type="button" id="export">Download my data</button>
       <button class="btn" type="button" id="out">Sign out</button>
       <a class="btn warn" href="delete-account.html">Delete my account</a>
@@ -62,10 +63,10 @@
     <p class="note">Every fact you add waits in its bin until an editor checks it against the source. Accepted facts appear in the data set with their citation; you can withdraw a fact while it is still pending.</p>
   </section>
 </div></main>
-<footer><div class="wrap"><p class="tally">© 2026 Market Mojo LLC. All rights reserved. Lodges Before 1812 is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge or Masonic body. <a href="terms.html">Terms</a> · <a href="terms.html#disclaimer">Disclaimer</a> · <a href="privacy.html">Privacy</a></p></div></footer>
+<footer><div class="wrap"><p class="tally">© 2026 Market Mojo LLC · <a href="terms.html">Terms</a> · <a href="terms.html#disclaimer">Disclaimer</a> · <a href="privacy.html">Privacy</a></p></div></footer>
 <script type="module">
-import { app, auth, db, role, MEMBER_PRICE } from "./firebase-init.js";
-import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { app, auth, db, role, memberPrice, priceText, memberNumber, newPassword } from "./firebase-init.js";
+import { onAuthStateChanged, signOut, updatePassword, linkWithCredential, EmailAuthProvider } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, query, where, getDocs, deleteDoc, doc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 const $ = id => document.getElementById(id);
@@ -74,7 +75,7 @@ const day = t => { if (!t) return "–"; const d = t.toDate ? t.toDate() : new D
 const kv = rows => rows.filter(r => r[1] !== undefined && r[1] !== "").map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("");
 // In the Google Play app (Trusted Web Activity) there is no buying and no link to outside billing.
 const ANDROID_APP = (() => { try { return sessionStorage.getItem("twa") === "1" || new URLSearchParams(location.search).get("source") === "twa" || document.referrer.startsWith("android-app://"); } catch (_) { return false; } })();
-let ME = null, SUB = null, FACTS = [], SHOW = "";
+let ME = null, SUB = null, FACTS = [], SHOW = "", NO = "";
 
 $("out").onclick = () => signOut(auth).then(() => location.assign("index.html"));
 
@@ -82,12 +83,34 @@ onAuthStateChanged(auth, async user => {
   if (!user) { $("who").innerHTML = 'You are signed out. <a href="index.html">Sign in</a> to see your account.'; $("acct").hidden = $("mine").hidden = true; return; }
   ME = user; $("who").textContent = ""; $("acct").hidden = $("mine").hidden = false;
   const r = await role(user);
-  $("prof").innerHTML = kv([["Name", esc(user.displayName || "–")], ["Email", esc(user.email || "–")],
+  NO = "";
+  if (r.member) { try { NO = await memberNumber(user); } catch (_) {} }
+  $("prof").innerHTML = kv([["Member number", NO ? `<b>${esc(NO)}</b><br><small>Your username with the editor. Only you and the editors can see it.</small>` : ""], ["Name", esc(user.displayName || "–")], ["Email", esc(user.email || "–")],
     ["Signed in with", esc(user.providerData.map(p => p.providerId === "google.com" ? "Google" : p.providerId === "password" || p.providerId === "emailLink" ? "Email link" : p.providerId).join(", ") || "Email link")],
     ["Account opened", esc(day(user.metadata.creationTime))], ["Access", r.editor ? '<span class="pill ok">Editor</span>' : r.member ? '<span class="pill ok">Member</span>' : '<span class="pill off">No membership</span>']]);
   await loadMembership(user, r);
+  passwordBox(user);
   await loadFacts(user);
 });
+
+// A password for email sign-in. Firebase Authentication keeps only a salted hash (scrypt): nobody, editors included,
+// can read it. The suggested password is made by the browser's cryptographic generator and shown once.
+function passwordBox(user) {
+  if (!user.email) return;
+  const has = user.providerData.some(p => p.providerId === "password");
+  $("pw-box").innerHTML = `<button class="btn" type="button" id="pw-set">${has ? "Change my password" : "Set a password"}</button><p class="note" id="pw-note"></p>`;
+  $("pw-set").onclick = async () => {
+    const pw = newPassword();
+    try {
+      if (has) await updatePassword(user, pw); else await linkWithCredential(user, EmailAuthProvider.credential(user.email, pw));
+      $("pw-note").innerHTML = `Your new password: <b style="font-family:monospace;letter-spacing:.04em">${esc(pw)}</b> <button class="btn" type="button" id="pw-copy">Copy</button><br>
+        Save it in your password manager now; it is not shown again and nobody else can see it. Sign in with your email (${esc(user.email)}) and this password.`;
+      $("pw-copy").onclick = () => navigator.clipboard?.writeText(pw).then(() => { $("pw-copy").textContent = "Copied"; });
+    } catch (e) {
+      $("pw-note").textContent = e.code === "auth/requires-recent-login" ? "For your safety, sign out and sign in again, then set the password within five minutes." : "The password could not be set: " + e.message;
+    }
+  };
+}
 
 async function loadMembership(user, r) {
   let subs = [];
@@ -117,11 +140,13 @@ async function loadMembership(user, r) {
       } catch (e) { $("mem-note").textContent = "The billing page could not be opened: " + e.message; }
     };
   } else if (!r.editor) {
-    acts.innerHTML = '<button class="btn main" type="button" id="buy">Become a member</button>';
-    $("mem-note").textContent = "Members get the full data set, the fact bins and downloads. Payments by Stripe.";
+    const PRICE = await memberPrice();
+    acts.innerHTML = `<button class="btn main" type="button" id="buy">Become a member${PRICE && priceText(PRICE) ? " · " + esc(priceText(PRICE)) : ""}</button>`;
+    $("mem-note").textContent = PRICE ? "Members get the full data set, the fact bins and downloads. Payments are taken by Stripe; card details never reach Civic Vault." : "Memberships are not on sale yet.";
+    $("buy").disabled = !PRICE;
     $("buy").onclick = async () => {
       $("mem-note").textContent = "Opening checkout…";
-      const s = await addDoc(collection(db, "customers", user.uid, "checkout_sessions"), { price: MEMBER_PRICE, success_url: location.href, cancel_url: location.href });
+      const s = await addDoc(collection(db, "customers", user.uid, "checkout_sessions"), { price: PRICE.id, success_url: location.href, cancel_url: location.href });
       onSnapshot(s, snap => { const { url, error } = snap.data() || {}; if (error) $("mem-note").textContent = error.message; if (url) location.assign(url); });
     };
   }
@@ -156,12 +181,12 @@ function drawFacts() {
 $("export").onclick = () => {
   const plain = v => v && v.toDate ? v.toDate().toISOString() : v;
   const clean = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, plain(v)]));
-  const out = { exported: new Date().toISOString(), publisher: "Market Mojo LLC", app: "Lodges Before 1812",
-    profile: { uid: ME.uid, name: ME.displayName || "", email: ME.email || "", created: ME.metadata.creationTime, last_sign_in: ME.metadata.lastSignInTime },
+  const out = { exported: new Date().toISOString(), publisher: "Market Mojo LLC", app: "Civic Vault",
+    profile: { uid: ME.uid, member_number: NO, name: ME.displayName || "", email: ME.email || "", created: ME.metadata.creationTime, last_sign_in: ME.metadata.lastSignInTime },
     membership: SUB ? { status: SUB.status, started: plain(SUB.created), current_period_end: plain(SUB.current_period_end), cancel_at_period_end: !!SUB.cancel_at_period_end } : null,
     facts: FACTS.map(clean) };
   const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
-  a.download = "lodges-before-1812-my-data.json"; document.body.appendChild(a); a.click(); a.remove();
+  a.download = "civic-vault-my-data.json"; document.body.appendChild(a); a.click(); a.remove();
 };
 </script>
 <script>if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});</script>

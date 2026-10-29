@@ -3,7 +3,7 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta charset="utf-8">
-<title>Lodges Before 1812</title>
+<title>Civic Vault</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&display=swap">
@@ -15,11 +15,15 @@
 <body>
 <div id="gate" class="gate">
   <div class="gate-card">
-    <h1 class="brand">Lodges <span>Before 1812</span></h1>
+    <h1 class="brand">Civic <span>Vault</span></h1>
     <p class="sub2">The lodges of George-Town and the City of Washington before 1812: every man, lodge, year and trade in the book series by Thomas M. Saharsky, each record with its source and where the original is held.</p>
     <div id="gate-out">
       <button id="g-google" class="gbtn" type="button">Sign in with Google</button>
       <form id="g-email" class="gform"><input id="g-addr" type="email" required placeholder="Or your email address" autocomplete="email"><button type="submit">Email me a sign-in link</button></form>
+      <details class="gpw"><summary>Sign in with a password</summary>
+        <form id="g-pw" class="gform"><input id="g-pw-addr" type="email" required placeholder="Email address" autocomplete="username"><input id="g-pw-pass" type="password" required minlength="15" placeholder="Password" autocomplete="current-password"><button type="submit">Sign in</button></form>
+        <p class="gmsg">Members can set a password on the My account page.</p>
+      </details>
     </div>
     <div id="gate-sub" hidden>
       <p>Signed in as <b id="g-who"></b>. <span id="g-note">Members get the full data set, the fact bins and downloads.</span></p>
@@ -27,14 +31,13 @@
       <button id="g-out" class="linkbtn" type="button">Sign out</button>
     </div>
     <p id="g-msg" class="gmsg" role="status"></p>
-    <p class="gmsg">Published by Market Mojo LLC. Payments by Stripe. <a href="terms.html" style="color:#d1b477">Terms</a> · <a href="terms.html#disclaimer" style="color:#d1b477">Disclaimer</a> · <a href="privacy.html" style="color:#d1b477">Privacy</a><br>© 2026 Market Mojo LLC. Not affiliated with or endorsed by any Grand Lodge or Masonic body.</p>
+    <p class="gmsg">© 2026 Market Mojo LLC · <a href="terms.html" style="color:#d1b477">Terms</a> · <a href="terms.html#disclaimer" style="color:#d1b477">Disclaimer</a> · <a href="privacy.html" style="color:#d1b477">Privacy</a></p>
   </div>
 </div>
 <div id="app" hidden>
 <nav class="topnav"><div class="wrap"><a href="index.html">Search</a> · <a href="bins.html">Fact bins</a> · <a href="terms.html">Terms</a> · <a href="account.html">My account</a> · <a href="privacy.html">Privacy</a> · <button id="signout" class="linkbtn" type="button">Sign out</button></div></nav>
 <header><div class="wrap">
-  <h1 class="brand">Lodges <span>Before 1812</span></h1>
-  <p class="sub">The lodges of George-Town and the City of Washington, 1789-1811, from the book series by Thomas M. Saharsky. Search by man, lodge, year, trade or building. Every record names its source.</p>
+  <h1 class="brand">Civic <span>Vault</span> <small class="era">1700s–1812</small></h1>
   <form id="f" role="search"><input id="q" type="search" placeholder="A man, trade, building or year" aria-label="Search the lodge records" autocomplete="off"><button type="submit">Search</button></form>
 </div></header>
 

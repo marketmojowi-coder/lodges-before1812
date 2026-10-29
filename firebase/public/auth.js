@@ -1,6 +1,6 @@
 // Sign-in gate: Google or email link; members get the data set from Cloud Storage and the search app starts.
-import { auth, db, storage, role, MEMBER_PRICE } from "./firebase-init.js";
-import { GoogleAuthProvider, signInWithPopup, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged, signOut }
+import { auth, db, storage, role, memberPrice, priceText, memberNumber } from "./firebase-init.js";
+import { GoogleAuthProvider, signInWithPopup, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, signInWithEmailAndPassword, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { ref, getBlob } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
@@ -20,12 +20,20 @@ $("g-email").onsubmit = e => {
     .then(() => { try { localStorage.setItem("signin-email", email) } catch (_) {} msg("Check your email for the sign-in link."); })
     .catch(e => msg(e.message));
 };
+$("g-pw").onsubmit = e => {
+  e.preventDefault();
+  signInWithEmailAndPassword(auth, $("g-pw-addr").value.trim(), $("g-pw-pass").value)
+    .catch(() => msg("That email and password do not match an account. Try Google or an email link, or set a password on the My account page."));
+};
 const out = () => signOut(auth); $("g-out").onclick = out; $("signout").onclick = out;
 
+let PRICE = null;
 $("g-buy").onclick = async () => {
+  PRICE = PRICE || await memberPrice();
+  if (!PRICE) { msg("Memberships are not on sale yet. Please try again soon."); return; }
   msg("Opening checkout…");
   const s = await addDoc(collection(db, "customers", auth.currentUser.uid, "checkout_sessions"),
-    { price: MEMBER_PRICE, success_url: location.href, cancel_url: location.href });
+    { price: PRICE.id, success_url: location.href, cancel_url: location.href });
   onSnapshot(s, snap => { const { url, error } = snap.data() || {}; if (error) msg(error.message); if (url) location.assign(url); });
 };
 
@@ -37,8 +45,10 @@ onAuthStateChanged(auth, async user => {
   if (!r.member) {
     $("g-who").textContent = user.email || user.displayName; $("gate-sub").hidden = false;
     if (ANDROID_APP) { $("g-buy").hidden = true; $("g-note").textContent = "This account does not have a membership."; }
+    else { PRICE = await memberPrice(); if (PRICE && priceText(PRICE)) $("g-buy").textContent = `Become a member · ${priceText(PRICE)}`; }
     return;
   }
+  try { window.LB_MEMBER_NO = await memberNumber(user); } catch (_) {}
   msg("Loading the records…");
   const blob = await getBlob(ref(storage, "data/data.json"));
   const DATA = JSON.parse(await blob.text());
@@ -50,5 +60,5 @@ onAuthStateChanged(auth, async user => {
 window.LB_SUGGEST = async (s) => {
   const u = auth.currentUser; if (!u) throw new Error("Sign in first.");
   await addDoc(collection(db, "facts"), { bin: "corrections", man: s.man || "", lodge: s.lodge || "", year: s.year || "", claim: s.claim, citation: s.citation,
-    held_at: s.held_at, source: "", volume: "", page: "", status: "pending", by: u.uid, by_name: u.email || u.displayName || "", agent: false, created: serverTimestamp() });
+    held_at: s.held_at, source: "", volume: "", page: "", status: "pending", by: u.uid, by_name: window.LB_MEMBER_NO || "", agent: false, created: serverTimestamp() });
 };

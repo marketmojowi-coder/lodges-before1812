@@ -5,6 +5,20 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function editor() { return signedIn() && request.auth.token.editor == true; }
     function member() { return signedIn() && (request.auth.token.stripeRole == "member" || editor()); }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function str(v, lo, hi) { return v is string && v.size() >= lo && v.size() <= hi; }
+
+    // Member number: written once by the member's own browser (cryptographic random, fixed format), read only by the
+    // member and the editors, never changed. Deleted with the account.
+    match /members/{uid} {
+      allow read: if owner(uid) || editor();
+      allow create: if owner(uid) && member()
+        && request.resource.data.keys().hasOnly(["no", "created"])
+        && request.resource.data.no is string && request.resource.data.no.matches("^CV(-[0-9A-HJKMNP-TV-Z]{5}){4}$")
+        && request.resource.data.created == request.time;
+      allow update: if false;
+      allow delete: if owner(uid) || editor();
+    }
 
     // Bins: anyone who is a member can see them; only editors create or change them.
     match /bins/{bin} {
@@ -20,20 +34,32 @@ service cloud.firestore {
     match /facts/{id} {
       allow read: if editor() || (member() && (resource.data.status == "accepted" || resource.data.by == request.auth.uid));
       allow create: if member()
+        && request.resource.data.keys().hasOnly(["bin", "man", "lodge", "year", "claim", "citation", "held_at", "source", "volume", "page", "status", "by", "by_name", "agent", "created"])
         && request.resource.data.status == "pending"
         && request.resource.data.by == request.auth.uid
         && request.resource.data.agent == false
-        && request.resource.data.citation is string && request.resource.data.citation.size() > 5
-        && request.resource.data.held_at is string && request.resource.data.held_at.size() > 3
-        && request.resource.data.claim is string && request.resource.data.claim.size() > 3;
+        && request.resource.data.created == request.time
+        && str(request.resource.data.citation, 6, 1500)
+        && str(request.resource.data.held_at, 4, 400)
+        && str(request.resource.data.claim, 4, 3000)
+        && str(request.resource.data.bin, 1, 80)
+        && (!("man" in request.resource.data) || str(request.resource.data.man, 0, 120))
+        && (!("lodge" in request.resource.data) || str(request.resource.data.lodge, 0, 80))
+        && (!("year" in request.resource.data) || str(request.resource.data.year, 0, 12))
+        && (!("by_name" in request.resource.data) || str(request.resource.data.by_name, 0, 40));
       allow update: if editor()
-        || (signedIn() && resource.data.by == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["by_name"]));
+        || (signedIn() && resource.data.by == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["by_name"])
+            && str(request.resource.data.by_name, 0, 40));
       allow delete: if editor() || (signedIn() && resource.data.by == request.auth.uid && resource.data.status == "pending");
     }
     // Stripe extension data: a user sees only their own customer record and starts their own checkout.
     match /customers/{uid} {
       allow read: if signedIn() && request.auth.uid == uid;
-      match /checkout_sessions/{id} { allow read, write: if signedIn() && request.auth.uid == uid; }
+      match /checkout_sessions/{id} {
+        allow read: if owner(uid);
+        allow create: if owner(uid) && request.resource.data.keys().hasOnly(["price", "success_url", "cancel_url", "mode", "allow_promotion_codes"])
+          && str(request.resource.data.price, 6, 80);
+      }
       match /subscriptions/{id} { allow read: if signedIn() && request.auth.uid == uid; }
       match /payments/{id} { allow read: if signedIn() && request.auth.uid == uid; }
     }
