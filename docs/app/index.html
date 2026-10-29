@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<title>Civic Atlas · Potomac Territory, 1700–1811</title>
+<link rel="icon" type="image/svg+xml" href="icons/emblem.svg">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#14243a">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+</head>
+<body>
+<div id="intro" class="intro" hidden aria-hidden="true">
+  <video id="intro-v" muted playsinline preload="auto"></video>
+  <div class="intro-fallback"><img src="icons/emblem.svg" alt="" class="intro-em"><p class="intro-name">Civic <span>Atlas</span></p></div>
+  <img class="intro-mark" src="market-mojo-128.png" alt="">
+  <button id="intro-skip" class="intro-skip" type="button">Skip</button>
+</div>
+<div id="gate" class="gate">
+  <div class="gate-card">
+    <div class="brandbox"><img class="emblem" src="icons/emblem.svg" alt="" width="96" height="96" style="width:96px"><h1 class="brand">Civic <span>Atlas</span></h1><p class="region">Potomac Territory <i>1700–1811</i></p></div>
+    <p class="sub2">The lodges of Georgetown, Alexandria and the City of Washington before 1812: every man, lodge, year and trade in the book series by Thomas M. Saharsky, each record with its source and where the original is held.</p>
+    <div id="g-member" class="gperks">
+      <p class="gprice"><b>Membership</b> <span id="g-price">paid once</span></p>
+      <ul><li>Every man, lodge, building and record, each cited</li><li>Census tables, the Atlas and downloads</li><li>Works offline after the first sign-in</li><li>Two-step sign-in; we keep only your email</li></ul>
+    </div>
+    <div id="gate-out">
+      <button id="g-google" class="gbtn" type="button">Sign in with Google</button>
+      <form id="g-email" class="gform"><input id="g-addr" type="email" required placeholder="Or your email address" autocomplete="email"><button type="submit">Email me a sign-in link</button></form>
+      <details class="gpw gnew" id="g-new-box"><summary>New here? Create your account</summary>
+        <form id="g-new" class="gform">
+          <input id="g-new-user" required minlength="3" maxlength="30" pattern="[A-Za-z0-9._\-]{3,30}" placeholder="Username (letters, numbers, . _ -)" autocomplete="nickname">
+          <input id="g-new-addr" type="email" required placeholder="Email address" autocomplete="email">
+          <input id="g-new-pass" type="password" required minlength="15" maxlength="128" placeholder="Password (15 characters or more)" autocomplete="new-password">
+          <input id="g-new-pass2" type="password" required minlength="15" maxlength="128" placeholder="Password again" autocomplete="new-password">
+          <button type="submit">Create account</button></form>
+        <p class="gmsg">We keep only your username and email. You confirm your email before paying.</p>
+      </details>
+      <details class="gpw"><summary>Sign in with a password</summary>
+        <form id="g-pw" class="gform"><input id="g-pw-addr" type="email" required placeholder="Email address" autocomplete="username"><input id="g-pw-pass" type="password" required minlength="15" placeholder="Password" autocomplete="current-password"><button type="submit">Sign in</button></form>
+        <p class="gmsg">Members can set a password on the My account page.</p>
+      </details>
+    </div>
+    <div id="g-verify" hidden>
+      <ol class="gsteps"><li class="done">Account</li><li class="now">Confirm email</li><li>Pay $9.99</li><li>Open</li></ol>
+      <p>We sent a confirmation link to <b id="g-v-addr"></b>. Open it, then come back and press the button below.</p>
+      <button id="g-v-done" class="gbtn" type="button">I have confirmed my email</button>
+      <button id="g-v-again" class="linkbtn" type="button">Send the link again</button> · <button id="g-v-out" class="linkbtn" type="button">Sign out</button>
+    </div>
+    <div id="gate-sub" hidden>
+      <ol class="gsteps" id="g-steps"><li class="done">Account</li><li class="done">Email confirmed</li><li class="now">Pay $9.99</li><li>Open</li></ol>
+      <p>Signed in as <b id="g-who"></b>. <span id="g-note">Members get the full data set, the fact bins and downloads.</span></p>
+      <button id="g-buy" class="gbtn" type="button">Become a member</button>
+      <div id="g-zelle"></div>
+      <button id="g-out" class="linkbtn" type="button">Sign out</button>
+    </div>
+    <form id="g-tfa" class="gform" hidden><label for="g-tfa-code" class="gmsg" style="text-align:left">Two-step sign-in: type the six-digit code from your authenticator app.</label>
+      <input id="g-tfa-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required placeholder="123456"><button type="submit">Confirm</button></form>
+    <p id="g-msg" class="gmsg" role="status"></p>
+    <button id="g-install" class="linkbtn ginstall" type="button" hidden>Install Civic Atlas on this device</button>
+    <p id="g-ios" class="gmsg" hidden>To install on iPhone or iPad: tap Share, then <b>Add to Home Screen</b>.</p>
+    <p class="gmsg gfoot">© 2026 Market Mojo LLC · <a href="sources.html">Sources</a> · <a href="disclaimer.html">Disclaimer</a> · <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a> · <a href="copyright.html">Copyright</a> · <a href="contact.html">Contact</a></p>
+  </div>
+</div>
+<div id="app" hidden>
+<nav class="topnav"><div class="wrap"><a href="index.html">Search</a> · <a href="bins.html">Fact bins</a> · <a href="account.html">My account</a> · <a href="contact.html">Contact</a> · <button id="signout" class="linkbtn" type="button">Sign out</button></div></nav>
+<header><div class="wrap">
+  <div class="brandbox"><svg class="emblem" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true" focusable="false"><circle cx="256" cy="256" r="250" fill="#14243a"/><circle cx="256" cy="256" r="232" fill="none" stroke="#c9a75f" stroke-width="10"/><circle cx="256" cy="256" r="212" fill="none" stroke="#c9a75f" stroke-width="2.5" stroke-opacity=".7"/><g fill="#ecd49a"><polygon points="79.1,191.0 80.9,196.0 86.2,196.2 82.1,199.5 83.5,204.6 79.1,201.6 74.7,204.6 76.2,199.5 72.0,196.2 77.3,196.0"/><polygon points="94.9,155.5 96.7,160.5 102.1,160.7 97.9,164.0 99.3,169.1 94.9,166.1 90.5,169.1 92.0,164.0 87.8,160.7 93.1,160.5"/><polygon points="117.8,124.0 119.6,129.0 124.9,129.2 120.7,132.5 122.2,137.6 117.8,134.6 113.4,137.6 114.8,132.5 110.6,129.2 116.0,129.0"/><polygon points="146.7,98.0 148.5,103.0 153.8,103.2 149.6,106.5 151.1,111.6 146.7,108.6 142.3,111.6 143.7,106.5 139.5,103.2 144.8,103.0"/><polygon points="180.3,78.6 182.2,83.6 187.5,83.8 183.3,87.0 184.8,92.1 180.3,89.2 175.9,92.1 177.4,87.0 173.2,83.8 178.5,83.6"/><polygon points="217.3,66.6 219.2,71.6 224.5,71.7 220.3,75.0 221.7,80.1 217.3,77.2 212.9,80.1 214.4,75.0 210.2,71.7 215.5,71.6"/><polygon points="256.0,62.5 257.8,67.5 263.1,67.7 258.9,71.0 260.4,76.1 256.0,73.1 251.6,76.1 253.1,71.0 248.9,67.7 254.2,67.5"/><polygon points="294.7,66.6 296.5,71.6 301.8,71.7 297.6,75.0 299.1,80.1 294.7,77.2 290.3,80.1 291.7,75.0 287.5,71.7 292.8,71.6"/><polygon points="331.7,78.6 333.5,83.6 338.8,83.8 334.6,87.0 336.1,92.1 331.7,89.2 327.2,92.1 328.7,87.0 324.5,83.8 329.8,83.6"/><polygon points="365.3,98.0 367.2,103.0 372.5,103.2 368.3,106.5 369.7,111.6 365.3,108.6 360.9,111.6 362.4,106.5 358.2,103.2 363.5,103.0"/><polygon points="394.2,124.0 396.0,129.0 401.4,129.2 397.2,132.5 398.6,137.6 394.2,134.6 389.8,137.6 391.3,132.5 387.1,129.2 392.4,129.0"/><polygon points="417.1,155.5 418.9,160.5 424.2,160.7 420.0,164.0 421.5,169.1 417.1,166.1 412.7,169.1 414.1,164.0 409.9,160.7 415.3,160.5"/><polygon points="432.9,191.0 434.7,196.0 440.0,196.2 435.8,199.5 437.3,204.6 432.9,201.6 428.5,204.6 429.9,199.5 425.8,196.2 431.1,196.0"/></g><defs><clipPath id="ca-med"><circle cx="256" cy="256" r="211"/></clipPath></defs><g clip-path="url(#ca-med)"><path d="M252 132 C290 128 330 150 338 192 C344 222 340 248 330 266 L342 300 C344 312 336 316 330 308 L320 290 C318 306 322 322 336 336 C362 352 384 392 392 470 L134 470 C140 400 160 356 192 342 C214 334 222 322 220 306 C210 304 202 298 200 288 C196 282 198 276 202 272 C196 268 196 262 200 258 C194 254 194 250 198 246 C190 244 182 240 182 234 C186 226 194 216 198 206 C200 196 198 184 204 170 C212 148 230 134 252 132 Z" fill="#ecd49a"/><path d="M134 470 C140 400 160 356 192 342 C206 346 222 352 246 352 C278 352 312 344 336 336 C362 352 384 392 392 470 Z" fill="#c9a75f"/><g fill="none" stroke="#14243a" stroke-linecap="round" stroke-linejoin="round"><path d="M206 168 C228 160 262 156 296 172" stroke-width="3" opacity=".7"/><path d="M262 160 C300 166 326 196 328 236" stroke-width="2.4" opacity=".55"/><path d="M276 172 C304 182 318 206 318 236" stroke-width="2.4" opacity=".45"/><path d="M276 226 C290 220 302 228 300 240 C298 252 284 254 280 246" stroke-width="3" opacity=".8"/><path d="M282 258 C298 254 312 262 310 274 C306 284 292 282 292 274" stroke-width="2.6" opacity=".6"/><path d="M326 268 L342 262 L338 280 Z M326 268 L318 284 L334 286 Z" fill="#14243a" stroke-width="1.5" opacity=".75"/><path d="M222 221 C227 217 233 217 238 221 C233 224 227 224 222 221 Z" fill="#14243a" stroke-width="1.2"/><path d="M204 264 L214 262" stroke-width="2.2" opacity=".7"/><path d="M220 306 C228 326 240 340 250 352" stroke-width="2.6" opacity=".6"/><path d="M322 322 C304 334 284 346 268 352" stroke-width="2.6" opacity=".6"/><path d="M226 330 C238 350 252 380 258 470" stroke-width="2.8" opacity=".7"/><path d="M306 344 C292 360 278 400 272 470" stroke-width="2.8" opacity=".7"/></g></g></svg><h1 class="brand">Civic <span>Atlas</span></h1><p class="region">Potomac Territory <i>1700–1811</i></p></div>
+  <form id="f" role="search"><input id="q" type="search" placeholder="A man, trade, building or year" aria-label="Search the lodge records" autocomplete="off"><button type="submit">Search</button></form>
+</div></header>
+
+<div class="filters" id="filt" hidden><div class="wrap">
+  <label for="fl">Lodge</label><select id="fl"><option value="">All lodges</option></select>
+  <label for="fs">Source</label><select id="fs"><option value="">All sources</option></select>
+  <label for="fo">Original held at</label><select id="fo"><option value="">All repositories</option></select>
+  <label for="ft">Trade</label><select id="ft"><option value="">All trades</option></select>
+  <label for="fb">Building</label><select id="fb"><option value="">All buildings</option></select>
+  <label for="y1">Years</label><input class="yr" id="y1" inputmode="numeric" placeholder="1789"> <span>to</span> <input class="yr" id="y2" inputmode="numeric" placeholder="1811">
+  <button class="linkbtn" id="clr" type="button">Start over</button>
+</div></div>
+
+<nav class="tabs" aria-label="Views"><div class="wrap">
+  <button type="button" class="tab on" data-v="index">Index</button>
+  <button type="button" class="tab" data-v="atlas">Atlas</button>
+  <button type="button" class="tab" data-v="build">Census tables</button>
+  <button type="button" class="tab" data-v="compare">Compare lodges</button>
+  <button type="button" class="tab" data-v="search">All records</button>
+  <button type="button" class="tab" data-v="sources">Sources</button>
+  <button type="button" class="tab" data-v="about">About</button>
+</div></nav>
+<section id="v-index" class="view"><div class="wrap">
+  <div id="ix-hi"></div>
+  <h2 class="sec">Browse the index</h2>
+  <div class="ixbtns" id="ix-btns">
+    <button type="button" data-ix="men">Men A–Z</button><button type="button" data-ix="trades">Trades and callings</button>
+    <button type="button" data-ix="lodges">Lodges</button><button type="button" data-ix="years">Years</button>
+    <button type="button" data-ix="atlas">Atlas of buildings</button><button type="button" data-ix="docs">Original documents</button><button type="button" data-ix="funeral">Deaths, funerals and burials</button>
+  </div>
+  <div id="ix-panel"></div>
+</div></section>
+<section id="v-atlas" class="view" hidden><div class="wrap">
+  <h2 class="sec">Atlas of the buildings</h2>
+  <p class="stats">The public works and places the lodge men built, supplied or served, from the book data sets. Tap a building on the map or in the guide for its men, crews and records.</p>
+  <div class="atlas"><div class="atl-left"><figure class="map" id="at-map"></figure><h3 class="h3s">Building guide</h3><p class="stats" style="margin:0 0 6px">Numbers match the map. Tap a tile to open the building.</p><div class="btiles" id="at-tiles"></div></div><div id="at-info"></div></div>
+  <div id="at-list"></div>
+  <div id="at-std"></div>
+</div></section>
+<section id="v-man" class="view" hidden><div class="wrap" id="man-out"></div></section>
+<section id="v-build" class="view" hidden><div class="wrap">
+  <h2 class="sec">Build a table</h2>
+  <p class="stats">Count the men named in the surviving returns and rolls. Choose what to count, the rows and the columns, then filter. The table, chart and download always agree.</p>
+  <div class="tb-controls">
+    <label>Count <select id="tb-m" title="Men: each man once. Man-years: a man counts in each year he appears."><option value="men">Men</option><option value="my">Man-years</option></select></label>
+    <label>Calling or trade <select id="tb-o"><option value="">All callings</option><option value="-1">No calling recorded</option></select></label>
+    <label>Years <span class="yrs"><input id="tb-y1" class="yr" inputmode="numeric" value="1789" aria-label="From year"> to <input id="tb-y2" class="yr" inputmode="numeric" value="1811" aria-label="To year"></span></label>
+    <span class="tb-break"></span>
+    <label>Rows <select id="tb-r"></select></label>
+    <label>Columns <select id="tb-c"></select></label>
+    <label>Lodge <select id="tb-l"><option value="">All lodges</option></select></label>
+  </div>
+  <div class="tb-actions"><button type="button" class="copy" id="tb-csv">Download CSV</button><button type="button" class="copy" id="tb-link">Copy link to this table</button></div>
+  <figure class="chart" id="tb-chart" aria-label="Chart of row totals"></figure>
+  <div class="tscroll" id="tb-table"></div>
+  <p class="stats" id="tb-note"></p>
+  <div id="tb-more"></div>
+  <div id="eco-out"></div>
+  <div class="method-brief" data-mb></div>
+</div></section>
+<section id="v-compare" class="view" hidden><div class="wrap">
+  <h2 class="sec">Compare lodges</h2>
+  <p class="stats">Tick up to four lodges to set them side by side.</p>
+  <div id="cp-pick" class="chipline"></div>
+  <div class="tscroll" id="cp-table"></div>
+  <div class="method-brief" data-mb></div>
+</div></section>
+<section id="v-sources" class="view" hidden><div class="wrap about" id="src-out"></div></section>
+<section id="v-about" class="view" hidden><div class="wrap about" id="about-out"></div></section>
+<main id="v-search" hidden><div class="wrap">
+  <section id="out" aria-live="polite"></section>
+  <aside id="side"></aside>
+</div></main>
+<footer><div class="wrap" id="foot"></div></footer>
+
+</div>
+<script src="app.js"></script>
+<script type="module" src="auth.js"></script>
+<script>if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
+</body>
+</html>
