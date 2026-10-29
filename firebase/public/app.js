@@ -155,7 +155,7 @@ function render(T){
     ${r.m.length?`<div class="chipline">${r.m.slice(0,8).map(i=>`<button class="chip${i===man?" on":""}" type="button" data-m="${i}">${esc(M[i].n)}</button>`).join("")}</div>`:""}
     <div class="cite">${ct(bookRefs([r.c])||r.c)}</div>${orig(r)}
     <button class="copy" type="button" data-c="${R.indexOf(r)}">Copy citation</button>
-    <details><summary>All fields</summary><dl>${r.f.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${ct(v)}</dd>`).join("")}</dl></details></article>`;
+    <details><summary>All fields</summary><dl>${r.f.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${/^trade group$/i.test(k)?tgLink(v):ct(v)}</dd>`).join("")}</dl></details></article>`;
   }
   if(last.length>shown)h+=`<button class="more" id="more" type="button">More records (${(last.length-shown).toLocaleString()} left)</button>`;
   o.innerHTML=h;
@@ -187,7 +187,7 @@ function side(T,q){
   let i=man; if(i===null&&nq.length>2){const k=M.findIndex(m=>m.keys.some(x=>x===nq||(nq.includes(" ")&&x.includes(nq))||x.split(/[\s,]+/).includes(nq)));if(k>=0)i=k}
   if(i!==null){const m=M[i];
     h+=`<div class="card"><h2>${esc(m.n)}</h2><div>${esc(m.l.join("; "))}</div>
-    ${m.tr?`<div class="k">Calling</div><div>${esc(m.tr)}</div>`:""}${m.tg?`<div class="k">Trade group</div><div>${esc(m.tg)}</div>`:""}
+    ${m.tr?`<div class="k">Calling</div><div>${esc(m.tr)}</div>`:""}${m.tg?`<div class="k">Trade group</div><div>${tgLink(m.tg)}</div>`:""}
     ${m.yr?`<div class="k">Years on the rolls</div><div>${esc(m.yr)}</div>`:""}
     ${(()=>{const S=service(i);const o=[...S.byOff].map(([a,ys])=>`${a} ${yrs(ys)}`).join("; ");return o?`<div class="k">Offices</div><div>${esc(o)}</div>`:""})()}
     ${m.fx?`<div class="k">Settled facts</div><ul>${m.fx.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>`:""}
@@ -207,6 +207,7 @@ function side(T,q){
   s.innerHTML=h;
   s.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>pick(+b.dataset.m));
   s.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{docSel=+b.dataset.d;run()});
+  s.querySelectorAll("[data-ix]").forEach(b=>b.onclick=()=>{show("index");ix(b.dataset.ix,b.dataset.arg);scrollTo(0,0)});
   const ud=$("undoc");if(ud)ud.onclick=()=>{docSel=null;run()};
   s.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{$(b.dataset.f).value=b.dataset.v;run()});
 }
@@ -613,6 +614,8 @@ function tradeTable(t){
 /* Book references, reconciled: one entry per book, its tables listed once. */
 /* citations: titles of books, journals and newspapers in italics */
 const ITAL=new RegExp("(Proto Lodges of the Potomac Area, 1787–1811|Federal Lodge No\\. 15, 1793–1811|Origins of the Royal Arch|(?:Potomac Lodge|Naval Lodge No\\. 41|Columbia Lodge No\\. 35|Washington Parish)(?= \\(Lulu)|History of Freemasonry in Maryland|History of the Grand Lodge and of Freemasonry in the District of Columbia|(?:The )?Chronicles of Georgetown(?:, D\\.C\\., from 1751 to 1878)?|Navy-Yard, Washington(?:: History from Organization, 1799, to Present Date)?|History of the Washington Navy Yard Civilian Workforce, 1799–1962|Records of the Columbia Historical Society|Mechanick Exercises|One Hundred and Fifty Years, 1789–1939|National Intelligencer(?: and Washington Advertiser)?|Sunday Star|Evening Star|Times, and Patowmack Packet|Centinel of Liberty|Columbian Mirror(?: and Alexandria Gazette)?|Gazette of the United States|Impartial Observer|Washington Gazette|Washington Federalist|Universal Gazette|City Gazette)","g");
+// A trade group opens its page in the trade index: the callings by grade, with each job description and specification.
+const tgLink=g=>OC.includes(g)?`<button type="button" class="linkbtn tglink" data-ix="trades" data-arg="${esc(g)}" title="Job descriptions and specifications">${esc(g)} →</button>`:esc(g);
 // Web addresses in a citation show as a short link named for the site, not as the raw address.
 const URLNAME=h=>/chroniclingamerica|loc\.gov/.test(h)?"Chronicling America":/umich\.edu/.test(h)?"ARTFL Encyclopédie":/archive\.org/.test(h)?"Internet Archive":/hathitrust/.test(h)?"HathiTrust":h.replace(/^www\./,"");
 const ct=s=>esc(s).replace(ITAL,"<i>$1</i>").replace(/(?:&lt;)?(https?:\/\/[^\s&<]+?)(?:&gt;)?(?=[.,;)]?(?:\s|$))/g,(m,u)=>{const href=u.replace(/[\u2013\u2014]/g,"-");let h="";try{h=new URL(href).hostname}catch(_){return m}return `<a class="srclink" href="${href}" target="_blank" rel="noopener">${URLNAME(h)} ↗</a>`});
@@ -648,7 +651,7 @@ function reader(k){const r=R[k],kd=kindOf(r),y=yof2(r);let dlg=$("reader");if(!d
   dlg.innerHTML=`<div class="paper" role="document"><div class="kind">${svgI(ICK[kd],KNAME[kd])} ${KNAME[kd]} · ${svgI(ICP[phaseOf(r,r.f.map(x=>x[1]).join(" "))],"phase")} ${phaseOf(r,r.f.map(x=>x[1]).join(" "))}</div>
   <h3>${esc(r.o==="NEWS"?r.f[0][1]:r.t)}</h3><div class="date">${esc(date||y||"Undated")}${r.m.length?" · "+r.m.map(i=>esc(M[i].n)).join(", "):""}</div>
   ${said?`<blockquote>${esc(said[1])}</blockquote>`:""}
-  <dl>${r.f.filter(([f])=>!/^(source|the book says|book note)$/i.test(f)).map(([f,v])=>`<dt>${esc(f)}</dt><dd>${ct(v)}</dd>`).join("")}</dl>
+  <dl>${r.f.filter(([f])=>!/^(source|the book says|book note)$/i.test(f)).map(([f,v])=>`<dt>${esc(f)}</dt><dd>${/^trade group$/i.test(f)?tgLink(v):ct(v)}</dd>`).join("")}</dl>
   ${ox?`<div class="cit"><b>Original</b>${ct(ox)}.</div><div class="cit"><b>${holdLbl(r)}</b>${ct(heldAt(r).replace(/^(Held at|Read in) /,""))}</div>`:(r.o==="AUTHOR_WB"?`<div class="cit"><b>Research note</b>${ct(r.c)}. ${esc(DATA.repos.AUTHOR_WB.access)}</div>`:r.k==="Settled fact"?`<div class="cit"><b>Sources</b>${ct(r.c)}</div><div class="cit"><b>Status</b>Settled for the whole series: checked against these records and kept the same in every book.</div>`:`<div class="cit"><b>Original</b>Compiled in the series from several documents; see the book for its sources.</div>`)}
   ${r.o==="AUTHOR_WB"||r.k==="Settled fact"?"":`<div class="cit"><b>In the books</b>${ct(bookRefs([r.c])||r.c)}</div>`}
   <details class="cite-box"><summary>Cite this record</summary><p><b>Full citation</b> <span id="rd-full">${esc(fullCite(r))}</span></p><p><b>Short citation (Oxford)</b> <span>${esc(citeText(r))}</span></p></details>
