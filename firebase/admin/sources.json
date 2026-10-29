@@ -1,0 +1,15 @@
+[
+ {"id": "schultz", "short": "Schultz", "volumes": ["1", "2", "3", "4"],
+  "cite": "Edward T. Schultz, History of Freemasonry in Maryland, of All the Rites Introduced into Maryland, from the Earliest Time to the Present, 4 vols. (Baltimore: J. H. Medairy, 1884–1888)",
+  "held_at": "Stephen J. Ponzillo Jr. Memorial Library and Museum, Grand Lodge of A.F. & A.M. of Maryland, Baltimore",
+  "about": "Printed proceedings and returns of the Grand Lodge of Maryland, 1783–1888", "public_domain": true},
+ {"id": "harper", "short": "Harper", "volumes": ["1"],
+  "cite": "Kenton N. Harper, History of the Grand Lodge and of Freemasonry in the District of Columbia (Washington, DC: R. Beresford, 1911)",
+  "held_at": "Grand Lodge of Free and Accepted Masons of the District of Columbia, library, Washington, DC",
+  "about": "The lodges of the District before and after the Grand Lodge of 1811", "public_domain": true},
+ {"id": "dove", "short": "Dove", "volumes": ["1"],
+  "cite": "John Dove, comp., Proceedings of the Grand Lodge of Virginia, 1777–1823 (Richmond, 1874)",
+  "held_at": "George Washington Masonic National Memorial, library, Alexandria, Virginia",
+  "about": "Proceedings of the Grand Lodge of Virginia: Alexandria No. 22 and the Virginia lodges", "public_domain": true,
+  "check": "Confirm the exact title-page wording and imprint against the Memorial's copy before the first approval."}
+]
