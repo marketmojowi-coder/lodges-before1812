@@ -8,7 +8,9 @@ init()
 month = sys.argv[1] if len(sys.argv) > 1 else ""
 rows = []
 for d in firestore.client().collection("sales").stream():
-    s = d.to_dict(); on = datetime.datetime.fromtimestamp(s.get("paid_on") or 0, datetime.timezone.utc).strftime("%Y-%m-%d")
+    s = d.to_dict()
+    when = datetime.datetime.fromtimestamp(s["paid_on"], datetime.timezone.utc) if s.get("paid_on") else s.get("recorded")  # Spark rows carry "recorded"
+    on = when.strftime("%Y-%m-%d") if when else "unknown"
     if month and not on.startswith(month): continue
     rows.append([on, d.id, s.get("sku"), s.get("product"), s.get("method"), s.get("state", ""), s.get("price", 0) / 100, s.get("tax", 0) / 100, s.get("total", 0) / 100, s.get("email", ""), s.get("ref", "")])
 rows.sort()
