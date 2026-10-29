@@ -12,6 +12,8 @@ if "--remove" in sys.argv: claims.pop("member", None)
 else: claims["member"] = True
 auth.set_custom_user_claims(u.uid, claims)
 paid = firestore.client().document(f"paid/{u.uid}")  # the free-plan membership record
-if "--remove" in sys.argv: paid.delete()
+if "--remove" in sys.argv:
+    paid.delete()
+    firestore.client().document(f"zelle_claims/{u.uid}").delete()  # so the buyer can pay again
 else: paid.set({"at": firestore.SERVER_TIMESTAMP, "method": "Given by the owner", "ref": "", "total": 0})
 print(u.email, "member" if claims.get("member") else "not a member")
