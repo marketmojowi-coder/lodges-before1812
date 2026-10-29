@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My account · Lodges Before 1812</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#14243a">
+<style>
+.acct{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin:14px 0 8px}
+.panel{background:var(--card);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:4px;padding:14px 16px;font-family:var(--sans)}
+.panel h2{font-family:var(--display);font-size:1.35rem;margin:0 0 8px;color:var(--fg)}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 12px;margin:0;font-size:.95rem}
+.kv dt{color:var(--muted);text-transform:uppercase;font-size:.7rem;letter-spacing:.06em;padding-top:3px}
+.kv dd{margin:0;overflow-wrap:anywhere}
+.pill{display:inline-block;font:600 .72rem var(--sans);text-transform:uppercase;letter-spacing:.06em;border-radius:10px;padding:2px 9px;border:1px solid var(--gold);color:var(--gold-2)}
+.pill.ok{background:var(--gold);color:#14243a}.pill.off{opacity:.7}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;margin:10px 8px 0 0;border-radius:4px;border:1px solid var(--line);background:var(--card);color:var(--fg);font:600 .9rem var(--sans);cursor:pointer;text-decoration:none}
+.btn.main{background:var(--gold);border-color:var(--gold);color:#14243a}
+.btn.warn{border-color:#b4553f;color:#b4553f}
+.note{color:var(--muted);font-size:.85rem;margin:8px 0 0}
+.facts{font-family:var(--sans)}
+.fact{border-bottom:1px solid var(--line);padding:10px 0}
+.fact p{margin:4px 0}
+.fact .meta{color:var(--muted);font-size:.82rem}
+.tally{font-family:var(--sans);font-size:.88rem;color:var(--muted)}
+.filterbar{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 4px}
+.filterbar button{min-height:36px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--fg);font:600 .8rem var(--sans);padding:0 12px;cursor:pointer}
+.filterbar button.on{background:var(--navy);color:#fffdf8;border-color:var(--navy)}
+@media (max-width:560px){.kv{grid-template-columns:1fr;gap:2px}.kv dd{margin-bottom:8px}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1 class="brand">My <span>Account</span></h1>
+<p class="sub">Your membership, your contributions to the fact bins, and your data.</p></div></header>
+<nav class="topnav"><div class="wrap"><a href="index.html">Search</a> · <a href="bins.html">Fact bins</a> · <a href="account.html" aria-current="page">My account</a> · <a href="terms.html">Terms</a> · <a href="privacy.html">Privacy</a></div></nav>
+<main><div class="wrap" style="display:block">
+  <p id="who" class="tally" role="status">Checking sign-in…</p>
+  <div class="acct" id="acct" hidden>
+    <section class="panel" aria-labelledby="h-mem">
+      <h2 id="h-mem">Membership</h2>
+      <dl class="kv" id="mem"></dl>
+      <div id="mem-acts"></div>
+      <p class="note" id="mem-note"></p>
+    </section>
+    <section class="panel" aria-labelledby="h-prof">
+      <h2 id="h-prof">Profile</h2>
+      <dl class="kv" id="prof"></dl>
+      <button class="btn" type="button" id="export">Download my data</button>
+      <button class="btn" type="button" id="out">Sign out</button>
+      <a class="btn warn" href="delete-account.html">Delete my account</a>
+      <p class="note">The download is a JSON file with your profile, your membership record and every fact you added.</p>
+    </section>
+  </div>
+  <section id="mine" hidden>
+    <h2 class="sec">My contributions</h2>
+    <p class="tally" id="tally"></p>
+    <div class="filterbar" id="fbar" role="group" aria-label="Show contributions"></div>
+    <div class="facts" id="facts"></div>
+    <p class="note">Every fact you add waits in its bin until an editor checks it against the source. Accepted facts appear in the data set with their citation; you can withdraw a fact while it is still pending.</p>
+  </section>
+</div></main>
+<footer><div class="wrap"><p class="tally">© 2026 Market Mojo LLC. All rights reserved. Lodges Before 1812 is not affiliated with, sponsored or endorsed by any Grand Lodge, lodge or Masonic body. <a href="terms.html">Terms</a> · <a href="terms.html#disclaimer">Disclaimer</a> · <a href="privacy.html">Privacy</a></p></div></footer>
+<script type="module">
+import { app, auth, db, role, MEMBER_PRICE } from "./firebase-init.js";
+import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { collection, query, where, getDocs, deleteDoc, doc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const day = t => { if (!t) return "–"; const d = t.toDate ? t.toDate() : new Date(typeof t === "number" ? t * 1000 : t); return d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }); };
+const kv = rows => rows.filter(r => r[1] !== undefined && r[1] !== "").map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("");
+// In the Google Play app (Trusted Web Activity) there is no buying and no link to outside billing.
+const ANDROID_APP = (() => { try { return sessionStorage.getItem("twa") === "1" || new URLSearchParams(location.search).get("source") === "twa" || document.referrer.startsWith("android-app://"); } catch (_) { return false; } })();
+let ME = null, SUB = null, FACTS = [], SHOW = "";
+
+$("out").onclick = () => signOut(auth).then(() => location.assign("index.html"));
+
+onAuthStateChanged(auth, async user => {
+  if (!user) { $("who").innerHTML = 'You are signed out. <a href="index.html">Sign in</a> to see your account.'; $("acct").hidden = $("mine").hidden = true; return; }
+  ME = user; $("who").textContent = ""; $("acct").hidden = $("mine").hidden = false;
+  const r = await role(user);
+  $("prof").innerHTML = kv([["Name", esc(user.displayName || "–")], ["Email", esc(user.email || "–")],
+    ["Signed in with", esc(user.providerData.map(p => p.providerId === "google.com" ? "Google" : p.providerId === "password" || p.providerId === "emailLink" ? "Email link" : p.providerId).join(", ") || "Email link")],
+    ["Account opened", esc(day(user.metadata.creationTime))], ["Access", r.editor ? '<span class="pill ok">Editor</span>' : r.member ? '<span class="pill ok">Member</span>' : '<span class="pill off">No membership</span>']]);
+  await loadMembership(user, r);
+  await loadFacts(user);
+});
+
+async function loadMembership(user, r) {
+  let subs = [];
+  try { subs = (await getDocs(query(collection(db, "customers", user.uid, "subscriptions"), where("status", "in", ["trialing", "active", "past_due"])))).docs.map(d => ({ id: d.id, ...d.data() })); } catch (_) {}
+  SUB = subs.sort((a, b) => (b.created?.seconds || 0) - (a.created?.seconds || 0))[0] || null;
+  if (SUB) {
+    const it = (SUB.items || [])[0] || {}, pr = it.price || {}, amt = pr.unit_amount != null ? (pr.unit_amount / 100).toLocaleString(undefined, { style: "currency", currency: (pr.currency || "usd").toUpperCase() }) : "";
+    const per = pr.recurring?.interval ? ` a ${pr.recurring.interval}` : "";
+    const st = { active: "Active", trialing: "Trial", past_due: "Payment due" }[SUB.status] || SUB.status;
+    $("mem").innerHTML = kv([["Status", `<span class="pill ${SUB.status === "past_due" ? "" : "ok"}">${esc(st)}</span>`], ["Plan", esc((pr.product?.name || it.plan?.nickname || "Membership") + (amt ? ` · ${amt}${per}` : ""))],
+      ["Started", esc(day(SUB.created))], [SUB.cancel_at_period_end ? "Ends on" : "Renews on", esc(day(SUB.current_period_end))]]);
+  } else if (r.editor) {
+    $("mem").innerHTML = kv([["Status", '<span class="pill ok">Editor access</span>'], ["Plan", "Editors see the full data set without a membership."]]);
+  } else {
+    $("mem").innerHTML = kv([["Status", '<span class="pill off">No membership</span>']]);
+  }
+  const acts = $("mem-acts"); acts.innerHTML = "";
+  if (ANDROID_APP) { $("mem-note").textContent = SUB ? "Billing for this membership is handled outside this app." : "This account does not have a membership."; return; }
+  if (SUB) {
+    acts.innerHTML = '<button class="btn main" type="button" id="portal">Manage billing and invoices</button>';
+    $("mem-note").textContent = "Update your card, download invoices, or cancel. A cancelled membership stays open until the end of the period you paid for.";
+    $("portal").onclick = async () => {
+      $("mem-note").textContent = "Opening the billing page…";
+      try {
+        const fn = httpsCallable(getFunctions(app, "us-central1"), "ext-firestore-stripe-payments-createPortalLink");
+        const { data } = await fn({ returnUrl: location.href }); location.assign(data.url);
+      } catch (e) { $("mem-note").textContent = "The billing page could not be opened: " + e.message; }
+    };
+  } else if (!r.editor) {
+    acts.innerHTML = '<button class="btn main" type="button" id="buy">Become a member</button>';
+    $("mem-note").textContent = "Members get the full data set, the fact bins and downloads. Payments by Stripe.";
+    $("buy").onclick = async () => {
+      $("mem-note").textContent = "Opening checkout…";
+      const s = await addDoc(collection(db, "customers", user.uid, "checkout_sessions"), { price: MEMBER_PRICE, success_url: location.href, cancel_url: location.href });
+      onSnapshot(s, snap => { const { url, error } = snap.data() || {}; if (error) $("mem-note").textContent = error.message; if (url) location.assign(url); });
+    };
+  }
+}
+
+async function loadFacts(user) {
+  try { FACTS = (await getDocs(query(collection(db, "facts"), where("by", "==", user.uid)))).docs.map(d => ({ id: d.id, ...d.data() })); }
+  catch (e) { FACTS = []; $("tally").textContent = "Your contributions could not be loaded: " + e.message; return; }
+  FACTS.sort((a, b) => (b.created?.seconds || 0) - (a.created?.seconds || 0));
+  drawFacts();
+}
+function drawFacts() {
+  const n = st => FACTS.filter(f => !st || f.status === st).length;
+  $("tally").textContent = FACTS.length ? `${n()} fact${n() === 1 ? "" : "s"} added: ${n("accepted")} accepted, ${n("pending")} waiting for review, ${n("rejected")} not accepted.` : "You have not added any facts yet. Open Fact bins, or use Suggest a correction on the Atlas.";
+  $("fbar").innerHTML = FACTS.length ? [["", "All"], ["pending", "Waiting"], ["accepted", "Accepted"], ["rejected", "Not accepted"]].map(([v, t]) => `<button type="button" data-s="${v}" class="${SHOW === v ? "on" : ""}" aria-pressed="${SHOW === v}">${t} (${n(v)})</button>`).join("") : "";
+  $("fbar").querySelectorAll("button").forEach(b => b.onclick = () => { SHOW = b.dataset.s; drawFacts(); });
+  const st = { pending: "Waiting for review", accepted: "Accepted", rejected: "Not accepted" };
+  $("facts").innerHTML = FACTS.filter(f => !SHOW || f.status === SHOW).map(f => `<div class="fact">
+    <span class="pill ${f.status === "accepted" ? "ok" : f.status === "rejected" ? "off" : ""}">${esc(st[f.status] || f.status)}</span>
+    <span class="meta">${esc(f.bin === "corrections" ? "Suggested correction" : "Bin: " + (f.bin ? f.bin.charAt(0).toUpperCase() + f.bin.slice(1) : "–"))} · ${esc(day(f.created))}</span>
+    <p>${esc(f.claim)}</p>
+    <p class="meta">${esc([f.man, f.lodge, f.year].filter(Boolean).join(" · "))}</p>
+    <p class="meta"><b>Source:</b> ${esc(f.citation)}${f.held_at ? ` · <b>Held at:</b> ${esc(f.held_at)}` : ""}</p>
+    ${f.review_note ? `<p class="meta"><b>Editor's note:</b> ${esc(f.review_note)}</p>` : ""}
+    ${f.status === "pending" ? `<button class="btn" type="button" data-del="${f.id}">Withdraw</button>` : ""}</div>`).join("");
+  $("facts").querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    if (!confirm("Withdraw this fact? It will be removed from the bin.")) return;
+    try { await deleteDoc(doc(db, "facts", b.dataset.del)); FACTS = FACTS.filter(f => f.id !== b.dataset.del); drawFacts(); } catch (e) { alert(e.message); }
+  });
+}
+
+$("export").onclick = () => {
+  const plain = v => v && v.toDate ? v.toDate().toISOString() : v;
+  const clean = o => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, plain(v)]));
+  const out = { exported: new Date().toISOString(), publisher: "Market Mojo LLC", app: "Lodges Before 1812",
+    profile: { uid: ME.uid, name: ME.displayName || "", email: ME.email || "", created: ME.metadata.creationTime, last_sign_in: ME.metadata.lastSignInTime },
+    membership: SUB ? { status: SUB.status, started: plain(SUB.created), current_period_end: plain(SUB.current_period_end), cancel_at_period_end: !!SUB.cancel_at_period_end } : null,
+    facts: FACTS.map(clean) };
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(out, null, 2)], { type: "application/json" }));
+  a.download = "lodges-before-1812-my-data.json"; document.body.appendChild(a); a.click(); a.remove();
+};
+</script>
+<script>if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});</script>
+</body>
+</html>

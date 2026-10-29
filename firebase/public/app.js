@@ -113,7 +113,7 @@ function side(T,q){
     h+=`<div class="card"><h2>${esc(m.n)}</h2><div>${esc(m.l.join("; "))}</div>
     ${m.tg?`<div class="k">Trade</div><div>${esc(m.tg)}${m.tr?" ("+esc(m.tr)+")":""}</div>`:""}
     ${m.yr?`<div class="k">Years on the rolls</div><div>${esc(m.yr)}</div>`:""}
-    ${m.o?`<div class="k">Offices</div><div>${esc(m.o)}</div>`:""}
+    ${(()=>{const S=service(i);const o=[...S.byOff].map(([a,ys])=>`${a} ${yrs(ys)}`).join("; ");return o?`<div class="k">Offices</div><div>${esc(o)}</div>`:""})()}
     ${m.fx?`<div class="k">Settled facts</div><ul>${m.fx.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>`:""}
     ${m.sp.length?`<div class="k">Also written</div><div>${esc(m.sp.join("; "))}</div>`:""}
     <div class="k">In the records</div><div>${m.c} records${man===i?"":` · <button class="linkbtn" type="button" data-m="${i}">show them all</button>`}</div>
@@ -516,7 +516,7 @@ const TIERS=[["svc","Physicians, chaplains and services",/physician|doctor|surge
  ["hire","Hired labour paid through",/received by|enslaved|slaves?\b|hired out|negro/i]];
 const CREWRX=[["Carpenters and joiners",/carpent|joiner|framer/i],["Stone cutters, carvers and masons",/stone ?(cutter|mason|carver|setter)|stonecutter|carver|\bcutter|mason(?!ic)/i],["Bricklayers and brickmakers",/brick/i],
  ["Smiths and plumbers",/smith|plumb|iron/i],["Painters, glaziers and plasterers",/paint|glaz|plaster/i],["Shipwrights and yard hands",/shipwright|ship carpenter|caulk|rigg|sawyer|yard hand|anchor smith|block maker/i]];
-const snOf=i=>norm(M[i].n.replace(/\(.*?\)+/g," ")).replace(/\b(jr|sr)\b/g,"").trim().split(/\s+/).filter(w=>w!=="of").slice(-1)[0]||"";
+const snOf=i=>norm(M[i].n.replace(/\(.*?\)+/g," ")).replace(/[.,]/g," ").replace(/\b(jr|sr|junr?|senr?|scnr|snr|jnr|junior|senior|2nd|3rd|second)\b/g,"").trim().split(/\s+/).filter(w=>w!=="of").slice(-1)[0]||"";
 function clauseOf(txt,i){const sn=snOf(i);if(!sn)return "";const fn=norm(M[i].n).split(/\s+/)[0];const parts=String(txt).split(/;\s+|\.\s+(?=[A-Z])|\s+\|\s+/);
   const rx=new RegExp("\\b"+sn+"\\b(?!\\s+[a-z]+\\s*['\u2019]s\\b)","i");
   return parts.find(p=>{const np=norm(p);if(!rx.test(np))return false;const m=p.match(new RegExp("\\b"+sn.charAt(0).toUpperCase()+sn.slice(1)+"\\s+([A-Z][a-z]+)"));return !m||norm(m[1])===fn||!SURN.has(norm(m[1]))&&!/^[A-Z][a-z]+['\u2019]s$/.test(m[1])})||""}
@@ -665,6 +665,59 @@ function atlas(){const names=Object.keys(BLD).filter(b=>R.some(r=>r.b.includes(b
   $("at-info").querySelectorAll("[data-sug]").forEach(e=>e.onclick=()=>suggest(+e.dataset.sug,ATB,e.dataset.tier));
   $("at-list").innerHTML=`<h3 class="h3s">All buildings and places</h3><div class="tscroll"><table class="stt"><thead><tr><th>No.</th><th>Building or place</th><th>Built or in use</th><th>Lodge men</th><th>Records</th><th>Originals</th><th>Pictures</th></tr></thead><tbody>${names.map((b,j)=>{const t=bstats(b);return `<tr><td>${j+1}</td><td style="text-align:left"><button type="button" class="linkbtn" data-at="${esc(b)}">${esc(b)}</button>${BLD[b].ll?"":" <small>(not mapped)</small>"}</td><td style="text-align:left">${esc(BLD[b].w)}</td><td>${t.men.size}</td><td>${t.recs.length}</td><td>${t.docs.size}</td><td><a href="https://www.loc.gov/photos/?q=${encodeURIComponent(BLD[b].q)}" target="_blank" rel="noopener">LOC ↗</a></td></tr>`}).join("")}</tbody></table></div>`;
   $("at-list").querySelectorAll("[data-at]").forEach(b=>b.onclick=()=>{ATB=b.dataset.at;atlas();window.scrollTo({top:0})})}
+/* ---------- A man's fact card: offices spelled out with their years, callings as written, settled facts ---------- */
+const OFFX=[[/^(w\.?\s*m\.?\.?|w,m,|worshipful master|master)$/i,"Worshipful Master"],[/^(s\.?\s*w\.?\/?|senior warden)$/i,"Senior Warden"],[/^(j\.?\s*w\.?|junior warden)$/i,"Junior Warden"],
+ [/^(sec\.?|secr\.?|sec'y|secretary)$/i,"Secretary"],[/^(treas\.?|tres\.?|trea\.?|t\.|treasurer)$/i,"Treasurer"],[/^(s\.?\s*d\.?|senior deacon)$/i,"Senior Deacon"],[/^(j\.?\s*d\.?|junior deacon)$/i,"Junior Deacon"],
+ [/^(stew\.?|steward)$/i,"Steward"],[/^tyler$/i,"Tyler"],[/^(p\.?\s*m\.?|past master)$/i,"Past Master"],[/^(m\.?\s*m\.?|master mason)$/i,"Master Mason"],[/^(f\.?\s*c\.?|fellow ?craft)$/i,"Fellow Craft"],
+ [/^(e\.?\s*a\.?|entered apprentice)$/i,"Entered Apprentice"],[/^delegate$/i,"Delegate"],[/^member$/i,"Member"],[/^jdg\.?$/i,"Junior Grand Deacon"]];
+const offName=o=>{const t=String(o).trim().replace(/\s+/g," ");if(!t||t==="–")return "";const hit=OFFX.find(([rx])=>rx.test(t));return hit?hit[1]:t};
+const DEGREES=new Set(["Member","Master Mason","Fellow Craft","Entered Apprentice"]);
+const yrs=list=>{const ys=[...new Set(list)].sort((a,b)=>a-b),out=[];for(let j=0;j<ys.length;j++){let k=j;while(k+1<ys.length&&ys[k+1]===ys[k]+1)k++;
+  out.push(k>j?`${ys[j]}–${String(ys[k]).slice(k>j&&String(ys[k]).slice(0,2)===String(ys[j]).slice(0,2)?2:0)}`:`${ys[j]}`);j=k}return out.join(", ")};
+/* the roll line must name this man: surname and the same first initial (Collen/Collin, not Lewis Williamson) */
+function sameMan(nm,i){const w=norm(nm).split(/\s+/).filter(Boolean),sn=snOf(i);if(!w.includes(sn))return false;
+  const firsts=[M[i].n,...M[i].sp].map(x=>norm(x).split(/\s+/)[0]).filter(Boolean);return firsts.some(f=>f[0]===w[0][0])}
+/* a calling as the returns write it, without the compiler's notes ("Likely brother? to …", "who was …", lodge of origin) */
+function cleanCalls(t){const out=[];String(t).split(/\s*;\s*|\s*,\s*|\s+and\s+/).forEach(x=>{
+    x=x.replace(/^.*?\bwho was\s+/i,"").split(/\s+(?:likely|probably|possibly|perhaps|brother|son|father|nephew|see|lodge\b)|\?|["\u201c(]/i)[0].trim().replace(/[.:]+$/,"");
+    if(!x||x.length>48||/^(mr|mrs|dr)\b|^\d/i.test(x))return;out.push(x.charAt(0).toUpperCase()+x.slice(1))});return out}
+const callKey=o=>norm(o).replace(/\s+/g,"").replace(/s$/,"");
+function callsOf(i,S){S=S||service(i);if(S.calls.length)return S.calls;const seen=new Set();
+  return cleanCalls(M[i].tr||"").filter(x=>!/^etc\b/i.test(x)&&!seen.has(callKey(x))&&seen.add(callKey(x)))}
+function service(i){const m=M[i],sn=snOf(i),rows=new Map(),calls=new Map();
+  for(const k of [...MP[i].p,...MP[i].x]){const r=R[k];if(!/Roll/.test(r.k))continue;const F=Object.fromEntries(r.f.map(([a,b])=>[a.toLowerCase(),b]));
+    if(F.name&&!sameMan(F.name,i))continue;
+    const occ=F.occupation;if(occ&&r.s.startsWith("Lodge rolls"))cleanCalls(occ).forEach(o=>{const key=callKey(o);if(key&&!calls.has(key))calls.set(key,o)});
+    const y=+(F.year||"")||(r.y.length===1?r.y[0]:0);if(!y)continue;
+    const lodge=F.lodge&&F.lodge!=="–"?F.lodge:(r.l[0]||m.l[0]||"");
+    const off=offName(F.office||F.grade||"");
+    const key=y+"|"+lodge,cur=rows.get(key)||{y,lodge,off:new Set(),src:new Set(),as:new Set()};
+    if(off)cur.off.add(off);if(F.name)cur.as.add(F.name.replace(/\s+/g," ").trim());cur.src.add(r.s.startsWith("Lodge rolls")?"Return to the Grand Lodge of Maryland":"Roster in the series book");rows.set(key,cur)}
+  const list=[...rows.values()].sort((a,b)=>a.y-b.y||a.lodge.localeCompare(b.lodge));
+  list.forEach(x=>{if(x.off.size>1)[...x.off].filter(o=>DEGREES.has(o)).forEach(o=>x.off.delete(o))});
+  const byOff=new Map();list.forEach(x=>x.off.forEach(o=>{if(!DEGREES.has(o)){if(!byOff.has(o))byOff.set(o,[]);byOff.get(o).push(x.y)}}));
+  const byLodge=new Map();list.forEach(x=>{if(!byLodge.has(x.lodge))byLodge.set(x.lodge,[]);byLodge.get(x.lodge).push(x.y)});
+  return {list,byOff,byLodge,calls:[...calls.values()]}}
+/* other men the rolls list under the same name (Senior, Junior, Second) */
+const twinsOf=i=>{const f=norm(M[i].n).split(/\s+/)[0],sn=snOf(i);return M.map((m,j)=>j).filter(j=>j!==i&&snOf(j)===sn&&norm(M[j].n).split(/\s+/)[0]===f)};
+const SRCN={"Roster in the series book":"Series book","Return to the Grand Lodge of Maryland":"Maryland return"};
+function factCard(i){const m=M[i],S=service(i),cal=callings(i);
+  const lodges=m.l.map(l=>{const ys=S.byLodge.get(l);return `<span class="ib-v"><b>${esc(l)}</b>${ys?` · on the rolls ${yrs(ys)} <small>(${ys.length} year${ys.length>1?"s":""} recorded)</small>`:m.yr?` · ${esc(m.yr)}`:""}</span>`}).join("");
+  const offs=[...S.byOff].sort((a,b)=>Math.min(...a[1])-Math.min(...b[1])).map(([o,ys])=>`<span class="ib-v">${esc(o)} <small>${yrs(ys)}</small></span>`).join("");
+  const callW=callsOf(i,S);
+  return `<div class="infobox">
+   <div class="ib-row"><span class="k">Lodge</span><span>${lodges||"–"}</span></div>
+   ${offs?`<div class="ib-row"><span class="k">Offices</span><span>${offs}</span></div>`:""}
+   ${callW.length?`<div class="ib-row"><span class="k">Calling as written</span><span>${esc(callW.join(" · "))}</span></div>`:""}
+   ${cal.length?`<div class="ib-row"><span class="k">In the trade index</span><span class="chips">${cal.map(c=>`<button type="button" class="chip" data-ix="trades" data-arg="${esc(c)}">${esc(c)}</button>`).join("")}</span></div>`:""}
+   ${m.sp.length?`<div class="ib-row"><span class="k">Also written</span><span>${esc(m.sp.join(" · "))}</span></div>`:""}
+   ${twinsOf(i).length?`<div class="ib-row"><span class="k">Same name on the rolls</span><span class="chips">${twinsOf(i).map(j=>`<button type="button" class="chip" data-m="${j}">${esc(M[j].n)}</button>`).join("")}</span></div>`:""}
+  </div>
+  ${m.fx?`<div class="settled"><div class="k">Settled facts <small>checked against the originals across the series</small></div><ul>${m.fx.map(f=>`<li>${esc(f.replace(/;?\s*settled$/i,""))}</li>`).join("")}</ul></div>`:""}
+  ${S.list.length?(()=>{const own=norm(m.n).trim(),asW=S.list.some(x=>[...x.as].some(a=>norm(a).trim()!==own));
+   return `<details class="service"><summary><b>Year by year on the rolls</b> (${S.list.length} year${S.list.length>1?"s":""})</summary><div class="tscroll left"><table class="stt"><thead><tr><th>Year</th><th>Lodge</th>${asW?"<th>Name as written</th>":""}<th>Office or degree</th><th>Recorded in</th></tr></thead><tbody>
+   ${S.list.map(x=>`<tr><td>${x.y}</td><td>${esc(x.lodge)}</td>${asW?`<td>${esc([...x.as].join("; "))}</td>`:""}<td>${esc([...x.off].join(", ")||"Member")}</td><td>${esc([...x.src].map(z=>SRCN[z]||z).sort().join(" · "))}</td></tr>`).join("")}</tbody></table></div>`})()+`
+   <p class="stats"><b>Maryland return:</b> the lodge's yearly return of members to the Grand Lodge of Maryland. <b>Series book:</b> the roster printed in the lodge's book in this series. Abbreviations on the returns are spelled out (W.M., Worshipful Master; Treas., Treasurer; P.M., Past Master). The returns are the authority for the name; Senior and Junior are kept apart as the returns write them.</p></details>`:""}`}
 /* ---------- A man's profile: primary sources first, cross-references apart ---------- */
 function brief(r){return r.f.filter(([k])=>k!=="Source").slice(0,4).map(([k,v])=>`<b>${esc(k)}:</b> ${esc(v)}`).join(" · ")}
 function profile(i,keep){if(!keep)LPH="";const m=M[i],P=MP[i];
@@ -672,13 +725,8 @@ function profile(i,keep){if(!keep)LPH="";const m=M[i],P=MP[i];
   const gs=[...groups.values()].sort((a,b)=>(a[0].y[0]||9999)-(b[0].y[0]||9999));
   const cal=callings(i);
   let h=`<button class="linkbtn back" type="button" id="pback">‹ Back to the index</button><div class="prof">
-  <h2>${esc(m.n)}</h2><div class="trade">${esc(m.tr||m.tg||cal.join("; ")||"Trade not recorded")}</div>
-  <div class="facts"><div><div class="k">Lodges</div>${esc(m.l.join("; "))}</div>
-  ${m.yr?`<div><div class="k">Years on the rolls</div>${esc(m.yr)}</div>`:""}
-  ${cal.length?`<div><div class="k">Calling (grouped)</div>${esc(cal.join("; "))}</div>`:""}
-  ${m.o?`<div><div class="k">Offices</div>${esc(m.o)}</div>`:""}
-  ${m.sp.length?`<div><div class="k">Also written</div>${esc(m.sp.join("; "))}</div>`:""}</div>
-  ${m.fx?`<div class="k" style="font-family:var(--sans);font-size:.7rem;text-transform:uppercase;color:var(--muted)">Settled facts</div><ul>${m.fx.map(f=>`<li>${esc(f)}</li>`).join("")}</ul>`:""}
+  <h2>${esc(m.n)}</h2><div class="trade">${esc((()=>{const c=callsOf(i);return c.length?c.join(" · "):(m.tg||cal.join(" · ")||"Calling not recorded")})())}</div>
+  ${factCard(i)}
   <div id="life">${lifeHTML(i)}</div>
   <h2 class="sec" style="font-size:1.35rem">Primary sources (${gs.length} document${gs.length===1?"":"s"})</h2>`;
   if(!gs.length)h+=`<p class="stats">No original document in the data set names him directly. He is known from the lodge rolls compiled in the series (below).</p>`;
@@ -693,6 +741,8 @@ function profile(i,keep){if(!keep)LPH="";const m=M[i],P=MP[i];
   h+=`<details ${gs.length?"":"open"}><summary><b>Cross-references in the series books and rolls (${X.length})</b>: compiled from the documents above and from the lodge rolls; not separate originals.</summary>
   <ul class="xref">${X.map(r=>`<li>${esc(r.s.replace(/ \(book data set\)/,""))} › ${esc(r.t)}${r.y.length?" ("+r.y[0]+(r.y.at(-1)!==r.y[0]?"–"+r.y.at(-1):"")+")":""}: ${brief(r)}<br><span class="acc">${esc(bookRefs([r.c])||r.c)}</span></li>`).join("")}</ul></details></div>`;
   $("man-out").innerHTML=h;show("man");$("pback").onclick=()=>show("index");
+  $("man-out").querySelectorAll(".infobox [data-ix]").forEach(b=>b.onclick=()=>{show("index");ix(b.dataset.ix,b.dataset.arg)});
+  $("man-out").querySelectorAll(".infobox [data-m]").forEach(b=>b.onclick=()=>{profile(+b.dataset.m);window.scrollTo(0,0)});
   const wl=()=>{$("life").querySelectorAll("[data-lph]").forEach(b=>b.onclick=()=>{LPH=b.dataset.lph;$("life").innerHTML=lifeHTML(i);wl()});
     $("life").querySelectorAll("[data-rk]").forEach(li=>{li.onclick=()=>reader(+li.dataset.rk);li.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();reader(+li.dataset.rk)}}})};wl();
   $("man-out").querySelectorAll("[data-cc]").forEach(b=>b.onclick=()=>{const t=citeText(R[+b.dataset.cc]);(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{b.textContent="Copied"},()=>{prompt("Copy this citation:",t)})});

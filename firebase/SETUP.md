@@ -19,6 +19,7 @@ Seller: Market Mojo LLC. Address: lodges.mktmojox.com. Cost at this size: Fireba
 Extensions > install **Run Payments with Stripe** (invertase/firestore-stripe-payments):
 - Customers collection: `customers`; Products collection: `products`; Sync custom claims: **Yes**.
 - Paste the Stripe secret key (restricted key) when asked, and add the webhook it shows in Stripe > Developers > Webhooks.
+- Leave the extension's Cloud Functions location at **us-central1** (the account page calls its `createPortalLink` function there). In Stripe > Settings > Billing > Customer portal, turn on: update payment method, invoice history, cancel subscription (at period end).
 
 ## 4. Deploy (from this repository)
 ```
@@ -47,6 +48,7 @@ Hosting > Add custom domain > `lodges.mktmojox.com`. Firebase shows two DNS reco
 - Sign-in page (Google or email link). Signed-in non-members see "Become a member" (Stripe Checkout).
 - Members download the data set from Storage once per visit (rules: members and editors only) and search it.
 - Fact bins (bins.html): members and agents add facts with a source; they wait as **pending** until an editor accepts or rejects them; counts per bin are live. Agents submit with `firebase/agents/submit_facts.py` (see AGENT_INSTRUCTIONS.md).
+- My account (account.html): membership status, plan and renewal date; **Manage billing and invoices** opens the Stripe customer portal (website only, never inside the Android app); a member's own facts with their review status (pending ones can be withdrawn); Download my data (JSON); Sign out; Delete my account.
 - The free GitHub Pages site is only a landing page; the data set is not public.
 
 ## Members' contributions: Schultz, Harper, Dove and other printed sources
