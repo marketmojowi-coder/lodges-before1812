@@ -36,7 +36,7 @@ exports.grantMembership = onDocumentWritten({ document: "customers/{uid}/payment
   console.log("membership granted", uid, pid);
 });
 
-// Zelle, confirmed by hand: when an editor marks a buyer's claim as paid (only editors may, by the database rules),
+// Zelle, GoDaddy checkout or PayPal, confirmed by hand: when an editor marks a buyer's claim as paid (only editors may, by the database rules),
 // switch the membership on. The member's app sees it at once and shows the green badge.
 exports.confirmZelle = onDocumentUpdated({ document: "zelle_claims/{uid}", region: "us-central1" }, async (ev) => {
   const before = ev.data.before.data() || {}, after = ev.data.after.data() || {};
@@ -44,10 +44,11 @@ exports.confirmZelle = onDocumentUpdated({ document: "zelle_claims/{uid}", regio
   const { uid } = ev.params;
   const user = await getAuth().getUser(uid);
   const claims = { ...(user.customClaims || {}) };
-  await recordSale(`zelle_${uid}`, { method: "Zelle", uid, email: after.email || user.email || "", name: after.name || "", state: after.state || "",
+  const method = { zelle: "Zelle", godaddy: "GoDaddy checkout", paypal: "PayPal" }[after.method] || "Zelle";
+  await recordSale(`zelle_${uid}`, { method, uid, email: after.email || user.email || "", name: after.name || "", state: after.state || "",
     price: after.price || 999, tax: after.tax || 0, total: after.total || after.price || 999, currency: "usd", ref: after.ref || "", paid_on: Math.floor(Date.now() / 1000) });
   if (claims.member === true) return;
   claims.member = true;
   await getAuth().setCustomUserClaims(uid, claims);
-  console.log("membership granted by Zelle", uid);
+  console.log("membership granted by", method, uid);
 });

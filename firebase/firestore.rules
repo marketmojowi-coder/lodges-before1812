@@ -7,6 +7,7 @@ service cloud.firestore {
     function editor() { return signedIn() && request.auth.token.editor == true; }
     function member() { return signedIn() && (request.auth.token.member == true || request.auth.token.stripeRole == "member" || editor()); }
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function verified() { return signedIn() && request.auth.token.email_verified == true; }
     function str(v, lo, hi) { return v is string && v.size() >= lo && v.size() <= hi; }
 
     // Member number: written once by the member's own browser (cryptographic random, fixed format), read only by the
@@ -75,23 +76,24 @@ service cloud.firestore {
       allow read: if signedIn() && request.auth.uid == uid;
       match /checkout_sessions/{id} {
         allow read: if owner(uid);
-        allow create: if owner(uid) && request.resource.data.keys().hasOnly(["price", "success_url", "cancel_url", "mode", "allow_promotion_codes", "automatic_tax"])
+        allow create: if owner(uid) && verified() && request.resource.data.keys().hasOnly(["price", "success_url", "cancel_url", "mode", "allow_promotion_codes", "automatic_tax"])
           && str(request.resource.data.price, 6, 80) && request.resource.data.get("mode", "payment") == "payment";
       }
       match /subscriptions/{id} { allow read: if signedIn() && request.auth.uid == uid; }
       match /payments/{id} { allow read: if signedIn() && request.auth.uid == uid; }
     }
-    // Zelle: the payee details are set by the owner (admin/set_zelle.py) and shown only to signed-in people, never in
-    // the code or on a public page. A buyer files one claim with the memo reference; only an editor marks it paid,
-    // and functions/index.js then switches the membership on.
+    // Zelle, GoDaddy checkout or PayPal: the payee details and checkout links are set by the owner (admin/set_zelle.py)
+    // and shown only to signed-in people, never in the code or on a public page. A buyer with a confirmed email files one
+    // claim with the reference; only an editor marks it paid, and functions/index.js then switches the membership on.
     match /config/zelle {
       allow read: if signedIn();
       allow write: if false;
     }
     match /zelle_claims/{uid} {
       allow read: if owner(uid) || editor();
-      allow create: if owner(uid)
-        && request.resource.data.keys().hasOnly(["ref", "name", "email", "state", "price", "tax", "total", "status", "created"])
+      allow create: if owner(uid) && verified()
+        && request.resource.data.keys().hasOnly(["ref", "name", "email", "state", "method", "price", "tax", "total", "status", "created"])
+        && request.resource.data.get("method", "zelle") in ["zelle", "godaddy", "paypal"]
         && request.resource.data.state is string && request.resource.data.state.size() == 2
         && request.resource.data.price == get(/databases/$(db)/documents/config/zelle).data.amount
         && request.resource.data.tax is int && request.resource.data.tax >= 0
