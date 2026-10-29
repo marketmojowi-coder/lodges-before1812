@@ -25,5 +25,5 @@ form{display:grid;gap:6px;max-width:560px}label{font-family:var(--sans);font-wei
 select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:8px}
 button{min-height:44px;border:0;border-radius:4px;background:var(--gold);color:#14243a;font:600 .95rem var(--sans);cursor:pointer;justify-self:start;padding:0 18px}
 .lf{border-top:1px solid var(--line);font-family:var(--sans);font-size:.85rem;color:var(--muted)}.lf .lw{display:flex;gap:14px;align-items:flex-start;padding-block:16px 30px}
-.lf img{border-radius:9px;flex:none}.lf p{margin:2px 0}.lf .fl{display:flex;flex-wrap:wrap;gap:4px 12px}
+.lf .icons{display:flex;gap:4px;flex:none}.lf .icons a{display:inline-grid;place-items:center;width:44px;height:44px;color:var(--gold-2);border-radius:8px}.lf .icons img{border-radius:8px}.lf p{margin:2px 0}.lf .fl{display:flex;flex-wrap:wrap;gap:4px 12px}
 @media (max-width:560px){.ldl{grid-template-columns:1fr}.ldl dd{margin-bottom:8px}.pub{flex-direction:column;align-items:flex-start}}
