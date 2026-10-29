@@ -5,7 +5,9 @@ service cloud.firestore {
   match /databases/{db}/documents {
     function signedIn() { return request.auth != null; }
     function editor() { return signedIn() && request.auth.token.editor == true; }
-    function member() { return signedIn() && (request.auth.token.member == true || request.auth.token.stripeRole == "member" || editor()); }
+    // paid(): a payment an editor confirmed (works on the free Spark plan, no Cloud Functions needed).
+    function paid() { return signedIn() && exists(/databases/$(db)/documents/paid/$(request.auth.uid)); }
+    function member() { return signedIn() && (request.auth.token.member == true || request.auth.token.stripeRole == "member" || editor() || paid()); }
     function owner(uid) { return signedIn() && request.auth.uid == uid; }
     function verified() { return signedIn() && request.auth.token.email_verified == true; }
     function str(v, lo, hi) { return v is string && v.size() >= lo && v.size() <= hi; }
@@ -106,10 +108,22 @@ service cloud.firestore {
         && request.resource.data.status in ["paid", "not_found"] && request.resource.data.checked == request.time;
       allow delete: if editor() || (owner(uid) && resource.data.status != "paid");
     }
-    // Sales ledger: one row per membership sold (Stripe or Zelle), written only by functions/index.js. Editors read it.
+    // Paid members: written by an editor when a payment is confirmed (or by admin/set_member.py). The member may read it.
+    match /paid/{uid} {
+      allow read: if owner(uid) || editor();
+      allow create, update: if editor() && request.resource.data.keys().hasOnly(["at", "method", "ref", "total"]);
+      allow delete: if editor();
+    }
+    // The data set, in parts of under 1 MB (admin/upload_data.py). Members read it; nobody writes it from the app.
+    match /data/{part} {
+      allow read: if member();
+      allow write: if false;
+    }
+    // Sales ledger: one row per membership sold, written by an editor when confirming a payment or by functions/index.js.
     match /sales/{id} {
       allow read: if editor();
-      allow write: if false;
+      allow create, update: if editor() && request.resource.data.sku == "CA-MEMBER-1";
+      allow delete: if false;
     }
     match /products/{id} {
       allow read: if true;

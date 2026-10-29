@@ -2,3 +2,4 @@
 *.key.json
 .firebase/
 node_modules/
+app_data*.json
