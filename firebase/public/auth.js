@@ -2,7 +2,7 @@
 import { auth, db, storage, role, MEMBER_PRICE } from "./firebase-init.js";
 import { GoogleAuthProvider, signInWithPopup, sendSignInLinkToEmail, isSignInWithEmailLink, signInWithEmailLink, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { ref, getBlob } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 const $ = id => document.getElementById(id), msg = t => { $("g-msg").textContent = t };
 // Inside the Google Play app (Trusted Web Activity, started with ?source=twa) there is no purchase button and no link to buy:
@@ -45,3 +45,10 @@ onAuthStateChanged(auth, async user => {
   $("gate").hidden = true; $("app").hidden = false; msg("");
   if (!started) { started = true; window.startApp(DATA); }
 });
+
+// "Suggest a correction" in the Atlas job site: goes to the corrections bin as a pending fact for the editor.
+window.LB_SUGGEST = async (s) => {
+  const u = auth.currentUser; if (!u) throw new Error("Sign in first.");
+  await addDoc(collection(db, "facts"), { bin: "corrections", man: s.man || "", lodge: s.lodge || "", year: s.year || "", claim: s.claim, citation: s.citation,
+    held_at: s.held_at, source: "", volume: "", page: "", status: "pending", by: u.uid, by_name: u.email || u.displayName || "", agent: false, created: serverTimestamp() });
+};
