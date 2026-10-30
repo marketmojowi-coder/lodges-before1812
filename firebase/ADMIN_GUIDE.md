@@ -37,13 +37,13 @@ backup method, such as recovery codes kept offline.
 
 1. **Account:** username, email and password (or Google). Only the username and email are kept.
 2. **Confirm email:** the app sends a link; payment stays locked until the email is confirmed (the database checks this too).
-3. **Pay $9.99 once** (plus sales tax for their state): by card (Stripe), Zelle, your GoDaddy checkout, or PayPal if you set a link.
+3. **Pay $19.99 once** (plus sales tax for their state): by card (Stripe), Zelle, your GoDaddy checkout, or PayPal if you set a link.
    Each buyer gets a reference (CA…) to put in the memo or note.
 4. **Open:** after the payment is confirmed the member is let in and sees the green *Signed in* badge.
 
 **Set up the payment buttons (once):**
-`python3 admin/set_zelle.py "you@yourbank-zelle.com" "Market Mojo LLC" 9.99 WI=0.05 --godaddy https://your-godaddy-pay-link`
-Make the GoDaddy link in GoDaddy > Payments > Pay Links, for $9.99 (let the buyer enter the amount, or turn on tax there, so
+`python3 admin/set_zelle.py "you@yourbank-zelle.com" "Market Mojo LLC" 19.99 WI=0.05 --godaddy https://your-godaddy-pay-link`
+Make the GoDaddy link in GoDaddy > Payments > Pay Links, for $19.99 (let the buyer enter the amount, or turn on tax there, so
 the tax can be added). Add `--paypal https://paypal.me/yourname` for PayPal. Leave a link out to hide that button.
 
 ## 4. Everyday jobs
