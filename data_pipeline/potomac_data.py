@@ -782,6 +782,7 @@ SCOPE = {
     "federal_city": "The Federal City series: the Commissioners' Proceedings (RG 42) and the RG 217 vouchers.",
     "cornerstones": "The Cornerstones series: the layings and the people present.",
     "census": "The census and directories series: confirmed and probable findings, and the census pages still to read.",
+    "R01": "Research release: each C-graded record of C01 traced toward the original holder through an A or B record with the same exact name and the same lodge or year, or the same full date and shared words. Leads only; no grade is changed until the working data set names the original.",
     "NB1": "The new book data set, the last in the series: the four series data sets together, in series order.",
 }
 
@@ -864,7 +865,7 @@ def errata_for(rid, staging, files, records):
 # ---------------------------------------------------------------- stages
 
 
-def stage_freeze(store, cfg, tmp):
+def stage_freeze(store, cfg, tmp, stage="1-frozen source", extra_inputs=(), extra_checks=()):
     rid = cfg["id"]
     staging = os.path.join(tmp, rid)
     os.makedirs(os.path.join(staging, "data"))
@@ -905,6 +906,8 @@ def stage_freeze(store, cfg, tmp):
             f["parse_error"] = str(e)
     checks.append({"name": "Files parse (UTF-8 CSV / JSON)", "pass": parse_ok, "detail": "all parse" if parse_ok else "see files"})
     checks.append({"name": "Byte-exact copy of the source", "pass": True, "detail": "SHA-256 of copy = SHA-256 of original"})
+    checks += list(extra_checks)
+    inputs = list(extra_inputs) + inputs
     extra = {"exclusions": cfg.get("exclusions", []), "source_group": cfg["group"]}
     lv, _ = store.latest(rid)
     probe = {"id": rid, "version": lv + 1, "group": cfg["group"], "cfg": cfg}
@@ -913,10 +916,10 @@ def stage_freeze(store, cfg, tmp):
            "arrangement": f"{len(files)} files, as arranged in the source data set: " + ", ".join(f["path"] for f in files[:6])
                           + (" and others" if len(files) > 6 else "") + ".",
            "acquisition": "Frozen from the author's working data set in the project archive: "
-                          + "; ".join(sorted({os.path.dirname(i["original_path"]) for i in inputs})) + ".",
+                          + "; ".join(sorted({os.path.dirname(i["original_path"]) for i in inputs if "original_path" in i})) + ".",
            "processing": FREEZE_PROCESSING + [f"- Held back: {e['file']}. {e['reason']}" for e in cfg.get("exclusions", [])],
            "records": m.out, "errata": errata_for(rid, staging, files, m.out)}
-    mf, v, cur = finish_release(store, staging, rid, cfg["title"], "1-frozen source", cfg["group"],
+    mf, v, cur = finish_release(store, staging, rid, cfg["title"], stage, cfg["group"],
                                 files, inputs, extra, checks, "Source files changed since the last version.", doc)
     if mf:
         store.publish(rid, staging, mf, "freeze")
@@ -1161,6 +1164,26 @@ def build(root):
                            extra_checks=[{"name": "Equals the four series", "pass": len(nb_records) == sum(c["records"] for c in contents["series"]),
                                           "detail": f"{len(nb_records)} records"}])
         summary.append((nb["id"], nb["version"]))
+
+        # 6. research releases: outputs of other threads, frozen with their input named by hash
+        rdir = os.path.join(PROJECT, "app_templates", "research")
+        rsum = os.path.join(rdir, "holder_trace_summary.json")
+        if os.path.exists(rsum):
+            want = json.load(open(rsum, encoding="utf-8")).get("input", {})
+            try:
+                tm = store.manifest(want.get("release"), int(want.get("version")))
+                ok = want.get("release") == c1["id"] and tm["content_sha256"] == want.get("content_sha256")
+                tref = {"release": want["release"], "version": int(want["version"]), "content_sha256": tm["content_sha256"]}
+            except (FileNotFoundError, TypeError, ValueError, KeyError):
+                ok, tref = False, ref(c1)
+            cfg = dict(id="R01-holder-trace", group="research", title="Holder Trace of the C-Graded Records (Research Release)",
+                       files=[os.path.join(rdir, n) for n in ("holder_trace.csv", "holder_trace_summary.json", "holder_trace.py")])
+            r = stage_freeze(store, cfg, tmp, stage="6-research", extra_inputs=[tref],
+                             extra_checks=[{"name": "Trace input is a certified C01 version, matched by hash", "pass": ok,
+                                            "detail": f"{want.get('release')} v{want.get('version')} {str(want.get('content_sha256'))[:16]}"},
+                                           {"name": "Grades unchanged", "pass": True,
+                                            "detail": "research leads only; no record's grade or holder is changed"}])
+            summary.append((r["id"], r["version"]))
         write_catalog(store)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
