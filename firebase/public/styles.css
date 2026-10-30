@@ -301,3 +301,7 @@ footer .flinks{display:flex;flex-wrap:wrap;align-items:center;gap:0 14px;margin:
 .owform{display:grid;gap:8px;max-width:520px;border:0;background:none;padding:0}.owform label{display:grid;gap:4px;font:600 .9rem var(--sans)}
 .owform input{min-height:42px;border:1px solid var(--line);border-radius:4px;padding:0 10px;font:1rem var(--sans);background:var(--card);color:var(--fg)}
 .panel.owner{border-color:var(--gold)}.panel.owner h3{font:600 1rem var(--sans);margin:14px 0 6px}
+.gabout{text-align:left;font-family:var(--sans);font-size:.92rem;color:#efe6d2;line-height:1.55;margin:10px 0 4px}
+.gabout p{margin:0 0 8px}.gabout ul{margin:0 0 8px;padding-left:18px}.gabout li{margin:3px 0}.gabout b{color:#fffdf8}
+.gate-card .brandbox{margin-bottom:6px}
+.backapp{font-weight:700;color:var(--gold-2,#7d6738)}.backbar{max-width:880px;margin:10px auto 0;padding:0 16px;font-family:var(--sans)}
