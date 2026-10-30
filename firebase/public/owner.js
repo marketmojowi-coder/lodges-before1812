@@ -18,7 +18,7 @@ export async function ownerTools(box) {
     <form id="ow-pay" class="owform">
       <label>Zelle email or phone <input id="ow-to" value="${esc(cfg.to)}" placeholder="pay@example.com"></label>
       <label>Name buyers see <input id="ow-name" value="${esc(cfg.name || "Market Mojo LLC")}"></label>
-      <label>Price in dollars <input id="ow-amt" inputmode="decimal" value="${esc(((cfg.amount || 999) / 100).toFixed(2))}"></label>
+      <label>Price in dollars <input id="ow-amt" inputmode="decimal" value="${esc(((cfg.amount || 1999) / 100).toFixed(2))}"></label>
       <label>Sales tax by state <input id="ow-tax" value="${esc(tax)}" placeholder="WI=0.05"></label>
       <label>GoDaddy Pay Link (optional) <input id="ow-gd" value="${esc(cfg.godaddy)}" placeholder="https://…"></label>
       <label>PayPal link (optional) <input id="ow-pp" value="${esc(cfg.paypal)}" placeholder="https://paypal.me/…"></label>

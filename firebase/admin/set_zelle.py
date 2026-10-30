@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Set how buyers pay the $9.99 membership. The details live only in the database (config/zelle), never in the code.
-Usage: python3 set_zelle.py "pay@yourbusiness.com" "Market Mojo LLC" 9.99 [WI=0.05 ...] [--godaddy URL] [--paypal URL]
+"""Set how buyers pay the $19.99 membership. The details live only in the database (config/zelle), never in the code.
+Usage: python3 set_zelle.py "pay@yourbusiness.com" "Market Mojo LLC" 19.99 [WI=0.05 ...] [--godaddy URL] [--paypal URL]
        Each STATE=RATE adds that state's sales tax for buyers there (Wisconsin 5% state rate; add your county rate if it applies).
        --godaddy URL   your GoDaddy Payments "Pay Link" (GoDaddy > Payments > Pay Links); adds a "Pay with GoDaddy checkout" button.
        --paypal URL    your PayPal.Me or PayPal payment link; adds a "Pay with PayPal" button.
