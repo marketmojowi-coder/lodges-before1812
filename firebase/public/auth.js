@@ -131,13 +131,16 @@ async function route(user) {
   try { window.LB_MEMBER_NO = await memberNumber(user); } catch (_) {}
   msg("Loading the records…");
   try { const text = await loadData(); keep(user.uid, text); startWith({ text }, false); signedInBadge(user, { no: window.LB_MEMBER_NO, editor: r.editor }); }
-  catch (_) { const c = await kept(user.uid); if (c) { startWith(c, true); signedInBadge(user, { offline: true, no: window.LB_MEMBER_NO }); } else msg("The records could not be loaded. Check your connection and try again."); }
+  catch (_) { const c = await kept(user.uid); if (c) { startWith(c, true); signedInBadge(user, { offline: true, no: window.LB_MEMBER_NO }); }
+    else if (r.boss) { msg(""); $("g-msg").innerHTML = 'No records are loaded yet. Open <a href="account.html">My account</a> and use Owner tools > Load records.'; }
+    else msg("The records are being updated. Please try again in a few minutes."); }
 }
 // The data set: from the database in parts (free Spark plan), or from Cloud Storage (Blaze plan) if the parts are not there.
 async function loadData() {
   try { const s = await getDocs(query(collection(db, "data"), orderBy("i")));
     if (!s.empty) { const parts = s.docs.map(d => d.data()); if (parts.length === parts[0].n) return parts.map(p => p.t).join(""); } } catch (_) {}
-  return await (await getBlob(ref(storage, "data/data.json"))).text();
+  if (!storage.app.options.storageBucket) throw new Error("no records");   // free plan: no Cloud Storage
+  return await Promise.race([getBlob(ref(storage, "data/data.json")).then(b => b.text()), new Promise((_, no) => setTimeout(() => no(new Error("timeout")), 20000))]);
 }
 function startWith(c, offline) {
   const DATA = JSON.parse(c.text);
