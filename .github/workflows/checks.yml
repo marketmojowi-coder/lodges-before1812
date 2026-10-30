@@ -32,3 +32,11 @@ jobs:
       - name: No secrets or keys committed
         run: |
           ! git ls-files | grep -E '\.(jks|keystore|p12|pem)$|service-account.*\.json$'
+      - name: Fact check program passes its self-test
+        run: python firebase/factcheck/factcheck.py --selftest
+      - name: No records file committed (the data set stays private)
+        run: |
+          ! git ls-files | grep -E 'app_data.*\.json$|fact_register\.json$|People_Cross_Reference\.csv$'
+      - name: Public pages use the settled record names
+        run: |
+          ! grep -rnE 'Posner Library|Ponzillo Library|Centennial of Liberty|\bSayers\b|Journey Warden' docs firebase/public android --include=*.html --include=*.js --include=*.md --include=*.xml
