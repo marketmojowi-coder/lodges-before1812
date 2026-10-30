@@ -39,11 +39,15 @@ import stat
 import sys
 import tempfile
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pts_docs  # noqa: E402
+
 PROJECT = "/mnt/project-files"
 DEFAULT_ROOT = os.path.join(PROJECT, "data_releases")
 CREATOR = "Thomas M. Saharsky, author and archivist"
 SERIES_NAME = "The Potomac Territory Series"
-PIPELINE_VERSION = "1.0.0"
+PIPELINE_VERSION = "1.1.0"
+GLOBAL = {"rolls": {}, "settled": []}
 
 # ---------------------------------------------------------------- holders
 RG42 = ("Record Group 42: Records of the Office of Public Buildings and Public "
@@ -525,10 +529,9 @@ def map_census(m, files):
                               f"{r.get('note','')}").strip())
 
 
-def map_release(rel, mf_files, root):
-    """Turn a frozen source release into taxonomy records."""
+def map_release(rel, files):
+    """Turn a frozen source release into taxonomy records. files = [(path, name)]"""
     m = Mapper(rel)
-    files = [(os.path.join(root, rel["dir"], "data", f["path"]), f["path"]) for f in mf_files]
     cfg = rel["cfg"]
     sid = rel["id"]
     if sid.startswith(("S01", "S02", "S03", "S04", "S05", "S06")):
@@ -599,7 +602,7 @@ class Store:
         shutil.copytree(staging, dest)
         # fixity re-read after the copy (network mount)
         for f in mf["files"]:
-            got = sha256_file(os.path.join(dest, "data", f["path"]))
+            got = sha256_file(file_abs(dest, f))
             if got != f["sha256"]:
                 raise SystemExit(f"FIXITY FAILURE after copy: {rid} v{v} {f['path']}")
         lock_read_only(dest)
@@ -608,6 +611,13 @@ class Store:
                            manifest_sha256=msha, records=mf.get("record_count"),
                            inputs=[f"{i['release']}@v{i['version']}" for i in mf.get("inputs", []) if "release" in i],
                            note=mf.get("change_note", ""))
+
+
+def file_abs(release_dir, f):
+    """Data files live in data/; documentation in docs/."""
+    if f["path"].startswith("docs/"):
+        return os.path.join(release_dir, f["path"])
+    return os.path.join(release_dir, "data", f["path"])
 
 
 def lock_read_only(path):
@@ -638,31 +648,81 @@ def content_digest(files):
     return sha256_bytes("\n".join(f"{f['path']}  {f['sha256']}" for f in sorted(files, key=lambda x: x["path"])).encode())
 
 
-def finish_release(store, staging, rid, title, stage, group, files, inputs, extra, checks, cfg_change_note):
-    content = content_digest(files)
+DOCS_NOTE = ("Documentation package added: DACS description (README), DataCite citation metadata, "
+             "codebook, processing note, rights statement, errata log, PREMIS provenance, name authority "
+             "and name change log where people appear; packaged as a BagIt bag.")
+
+
+def finish_release(store, staging, rid, title, stage, group, files, inputs, extra, checks, cfg_change_note, doc):
     lv, lmf = store.latest(rid)
+    for f in files:
+        f["_abs"] = os.path.join(staging, "data", f["path"])
+    ctx = dict(rid=rid, title=title, series=SERIES_NAME, creator=CREATOR, stage=stage, files=files,
+               inputs=inputs, pipeline_version=PIPELINE_VERSION, rolls=GLOBAL["rolls"],
+               settled=GLOBAL["settled"], **doc)
+    tmpl = pts_docs.render_docs(ctx, "{{VERSION}}", norm_name)
+    doc_fp = sha256_bytes(canon({k: sha256_bytes(v) for k, v in tmpl.items()}).encode())
+    clean = [{k: v for k, v in f.items() if k != "_abs"} for f in files]
+    content = content_digest(clean + [{"path": "docs/*", "sha256": doc_fp}])
     if lmf and lmf["content_sha256"] == content:
         return None, lv, lmf  # unchanged: no new version
     v = lv + 1
+    if lmf and not any(f["path"].startswith("docs/") for f in lmf["files"]):
+        cfg_change_note = DOCS_NOTE
+    created = now()
+    docs = pts_docs.render_docs(ctx, str(v), norm_name)
+    os.makedirs(os.path.join(staging, "docs"), exist_ok=True)
+    doc_files = []
+    for rel, b in sorted(docs.items()):
+        with open(os.path.join(staging, rel), "wb") as fh:
+            fh.write(b)
+        doc_files.append({"path": rel, "bytes": len(b), "sha256": sha256_bytes(b), "media_type": media_type(rel)})
+    status = "CERTIFIED" if all(c["pass"] for c in checks) else "FAILED"
+    if status != "CERTIFIED":
+        raise SystemExit(f"{rid}: checks failed: " + "; ".join(c["name"] + " " + c["detail"] for c in checks if not c["pass"]))
+    events = [
+        {"eventType": "creation" if stage.startswith("1") else "derivation", "eventDateTime": created,
+         "eventDetail": ("Byte-exact copy of the source files" if stage.startswith("1")
+                         else "Records derived from the input releases and mapped to the shared taxonomy"),
+         "eventOutcome": "success"},
+        {"eventType": "fixity check", "eventDateTime": created, "eventDetail": "SHA-256 computed for every file",
+         "eventOutcome": "success"},
+        {"eventType": "validation", "eventDateTime": created,
+         "eventDetail": "; ".join(f"{c['name']}: {c['detail']}" for c in checks), "eventOutcome": "success"},
+    ]
+    for e in extra.get("exclusions", [])[:50]:
+        events.append({"eventType": "deaccession", "eventDateTime": created,
+                       "eventDetail": f"Held back: {e.get('file') or e.get('record')}. {e['reason']}", "eventOutcome": "success"})
+    if lmf:
+        events.append({"eventType": "migration", "eventDateTime": created,
+                       "eventDetail": f"New version {v} of version {lv} (content {lmf['content_sha256'][:16]}). {cfg_change_note}",
+                       "eventOutcome": "success"})
+    prov = pts_docs.provenance(ctx, v, clean, events, sha256_file(os.path.abspath(__file__))).encode("utf-8")
+    with open(os.path.join(staging, "docs", "PROVENANCE.json"), "wb") as fh:
+        fh.write(prov)
+    doc_files.append({"path": "docs/PROVENANCE.json", "bytes": len(prov), "sha256": sha256_bytes(prov),
+                      "media_type": "application/json", "content": False})
     mf = {
-        "release_id": rid, "version": v, "title": title, "series": SERIES_NAME,
-        "stage": stage, "group": group, "creator": CREATOR, "created_utc": now(),
+        "release_id": rid, "version": v, "identifier": f"PTS-DS:{rid}:v{v}", "title": title, "series": SERIES_NAME,
+        "stage": stage, "group": group, "creator": CREATOR, "created_utc": created,
         "pipeline_version": PIPELINE_VERSION, "content_sha256": content,
         "previous": ({"version": lv, "content_sha256": lmf["content_sha256"]} if lmf else None),
         "change_note": cfg_change_note if lmf else "First release.",
-        "inputs": inputs, "files": files, "checks": checks,
-        "status": "CERTIFIED" if all(c["pass"] for c in checks) else "FAILED",
-        "preservation": NARA_NOTE,
+        "inputs": inputs, "files": clean + doc_files, "checks": checks, "status": status,
+        "preservation": NARA_NOTE, "errata": doc.get("errata", []),
     }
     mf.update(extra)
-    if mf["status"] != "CERTIFIED":
-        raise SystemExit(f"{rid}: checks failed: " + "; ".join(c["name"] + " " + c["detail"] for c in checks if not c["pass"]))
     with open(os.path.join(staging, "MANIFEST.json"), "w", encoding="utf-8") as f:
         json.dump(mf, f, indent=2, ensure_ascii=False)
     write_certificate(staging, mf)
-    lines = [f"{f['sha256']}  data/{f['path']}" for f in files]
-    for extra_f in ("MANIFEST.json", "CERTIFICATE.md"):
-        lines.append(f"{sha256_file(os.path.join(staging, extra_f))}  {extra_f}")
+    pts_docs.bag(staging, clean, mf["identifier"], title, created)
+    tags = ["bagit.txt", "bag-info.txt", "manifest-sha256.txt", "MANIFEST.json", "CERTIFICATE.md"] + [d["path"] for d in doc_files]
+    with open(os.path.join(staging, "tagmanifest-sha256.txt"), "w", encoding="utf-8") as f:
+        for t in tags:
+            f.write(f"{sha256_file(os.path.join(staging, t))}  {t}\n")
+    lines = [f"{f['sha256']}  data/{f['path']}" for f in clean]
+    for t in tags + ["tagmanifest-sha256.txt"]:
+        lines.append(f"{sha256_file(os.path.join(staging, t))}  {t}")
     with open(os.path.join(staging, "SHA256SUMS"), "w") as f:
         f.write("\n".join(lines) + "\n")
     return mf, v, mf
@@ -700,6 +760,105 @@ def write_certificate(staging, mf):
     L += ["", "## Preservation", ""] + [f"- {n}" for n in mf["preservation"]]
     with open(os.path.join(staging, "CERTIFICATE.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(L) + "\n")
+
+
+# ---------------------------------------------------------------- documentation text
+SCOPE = {
+    "S01": "Tables of the Royal Arch book: members 1795-1799 and 1804-1808, the series people register for the chapter, and the chronology. The minute text is held back.",
+    "S02": "Tables of the Potomac Lodge book: George-Town lodges No. 9, Columbia No. 19 and Potomac No. 43, 1789-1811; returns, officers, lot purchases at the public sales, Grand Lodge of Maryland meetings.",
+    "S03": "Tables of the Federal Lodge No. 15 book, 1793-1811: yearly rolls from the Grand Lodge returns, timelines, payrolls and lodge men in the Commissioners' Proceedings. Built from the published book only; no minute book or ledger.",
+    "S04": "Tables of the Naval Lodge No. 41 book, 1805-1811: returns, rosters, dues and the record-group tables (Grand Lodge of Maryland returns, RG 45, RG 42, land records).",
+    "S05": "Tables of the Columbia Lodge No. 35 book, 1802-1809: returns, officers, meetings and members in other lodges.",
+    "S06": "Tables of the Washington Parish book: feast days and sermons of the lodges, places, pewholders, clergy, rectors, vestries and Senate and House chaplains.",
+    "S07": "The series cross-reference of the lodge rolls: one row per man, with spellings, lodges, trades, years and offices. The authority for name forms.",
+    "S08": "The series fact register: settled facts and name forms used by every book, with their sources.",
+    "S09": "Record Group 42, Proceedings of the Commissioners, 1791-1797, as read from the author's photographs: meetings, lot sales, square divisions, contracts, payments, officers, workforce, licences, the Treasury Office estimate, lodge links, the RG 217 voucher cross-reference and the volume 3 transcript.",
+    "S10": "The cornerstone layings of the District of Columbia and beyond (105 layings), their sources, files, people, marker checks, research grades and the bio cards.",
+    "S11": "The people named at the cornerstone layings (286), each with the layings and the holder of each source.",
+    "S12": "Census and directory findings for the cornerstone people: what was read, where it is held, and what is still to read.",
+    "C01": "Every record of the twelve frozen sources mapped to the nine shared taxonomy terms, each pointing back to its source row.",
+    "C02": "One entry per person across all sources, in roll form where the man is on a lodge roll.",
+    "lodge_books": "The lodge books series: the six books, the lodge rolls cross-reference and the fact register as authority.",
+    "federal_city": "The Federal City series: the Commissioners' Proceedings (RG 42) and the RG 217 vouchers.",
+    "cornerstones": "The Cornerstones series: the layings and the people present.",
+    "census": "The census and directories series: confirmed and probable findings, and the census pages still to read.",
+    "NB1": "The new book data set, the last in the series: the four series data sets together, in series order.",
+}
+
+FREEZE_PROCESSING = [
+    "- Each source file is copied byte for byte. The SHA-256 of the copy equals the SHA-256 of the original, which is recorded in MANIFEST.json under inputs.",
+    "- File names are made ASCII with no spaces; the original name is kept in MANIFEST.json.",
+    "- Presentation files (PDF, DOCX, XLSX) are not frozen here; they are built from the same data and stay with each book.",
+    "- Checks: all files present, files parse as UTF-8 CSV or JSON, no minute book or ledger file.",
+    "- Nothing in the content is corrected at this stage. Corrections are made in the working data set and frozen as a new version.",
+]
+DERIVE_PROCESSING = [
+    "- Each source row becomes one record with the nine taxonomy terms: Person, Lodge, Calling, Place, Building, Date, Record, Evidence, Held at.",
+    "- Columns are matched to terms by their headings (for example Name, Brother, Purchaser and Payee to Person). Columns not matched are kept in `detail`.",
+    "- Dates are written in the form June 17, 1797; `date_sort` keeps the ISO form for sorting.",
+    "- Held at: the holder is read from the row's citation. Returns, rolls and compiled officer tables go to the Stephen J. Ponzillo Jr. Memorial Library and Museum; RG 42, 45 and 217 to the National Archives; parish manuscript tables to Christ Church, Washington Parish; newspapers to the Library of Congress. A row that cites only the printed book is held at 'Published:' with the book named, and graded C.",
+    "- Evidence: A where the original was read from the author's photograph (RG 42, RG 217 vouchers with photographs, cornerstone grade A); B where the row copies an original; C where it is a reference or compilation.",
+    "- Primary data first: records sort A before B before C within each date.",
+    "- Names: the lodge rolls are authoritative. People are joined only on exact normalised names (case, punctuation, titles and word order ignored); no fuzzy matching. Every change of form is listed in NAME_CHANGES.csv.",
+    "- Held back at mapping: any row that cites Federal Lodge minute books or ledger.",
+    "- Device and folder paths are removed from records.",
+]
+PEOPLE_DEFS = {
+    "person_key": "Normalised name used to join records (lower case, no titles or punctuation)",
+    "person": "Authorized form: the lodge roll form where the man is on a roll, otherwise the fullest form in the records",
+    "on_lodge_roll": "yes if the name is on the series cross-reference of the lodge rolls",
+    "also_written": "Other forms found in the records",
+    "source_releases": "Frozen source releases the person appears in",
+    "records": "Number of records naming the person",
+    "best_evidence": "Best evidence grade among those records (A, B or C)",
+    "first_year": "Earliest year in those records", "last_year": "Latest year in those records",
+    "held_at": "Holders of the originals for those records",
+}
+
+
+def errata_for(rid, staging, files, records):
+    items = []
+    pub = sum(1 for r in records if r["held_at"].startswith("Published:"))
+    if pub:
+        items.append({"area": "Holder", "issue": "Rows cite only the printed book; the original behind each row is not named in the row",
+                      "count": pub, "next": "Name the original record and its holder in the working data set; the grade then rises from C"})
+
+    def rows(name):
+        p = os.path.join(staging, "data", name)
+        return read_csv(p) if os.path.exists(p) else ([], [])
+    if rid.startswith("S08"):
+        fr = json.load(open(os.path.join(staging, "data", "fact_register.json"), encoding="utf-8"))
+        for x in fr.get("pending", []):
+            items.append({"area": "Names to settle", "issue": x, "count": "", "next": "Settle from the rolls or the original record"})
+    if rid.startswith("S09"):
+        h, b = rows("Pages_To_Photograph.csv")
+        if b:
+            items.append({"area": "Photographs", "issue": "Manuscript pages of the Proceedings not yet photographed", "count": len(b),
+                          "next": "Photograph at the National Archives (list in Pages_To_Photograph.csv)"})
+        items.append({"area": "Coverage", "issue": "Proceedings for 1798-1803 not yet added; the original volume for July 1795 to October 1796 is lost (1891 custodian's note)",
+                      "count": "", "next": "Add the later years as they are read"})
+    if rid.startswith("S10"):
+        h, b = rows("T1_Cornerstone_Layings.csv")
+        if h:
+            i = h.index("Reading status") if "Reading status" in h else None
+            n = sum(1 for r in b if i is not None and i < len(r) and "title only" in r[i].lower())
+            if n:
+                items.append({"area": "Reading", "issue": "Layings known only from the file title; the page is not yet read", "count": n,
+                              "next": "Read the pages (queue in T4_Reading_Queue.csv)"})
+            j = h.index("Open points") if "Open points" in h else None
+            n2 = sum(1 for r in b if j is not None and j < len(r) and r[j].strip())
+            if n2:
+                items.append({"area": "Open points", "issue": "Layings with open points recorded", "count": n2, "next": "See the Open points column"})
+    if rid.startswith("S12"):
+        fr = json.load(open(os.path.join(staging, "data", "census_findings.json"), encoding="utf-8"))
+        n = sum(1 for p in fr.get("people", []) for t in p.get("census_target", []) if not t.get("read"))
+        if n:
+            items.append({"area": "Census", "issue": "1800-1870 census pages not yet read (sign-in sites)", "count": n,
+                          "next": "Read with a FamilySearch or Ancestry sign-in"})
+        unc = sum(1 for p in fr.get("people", []) for r in p.get("records", []) if r.get("match") == "uncertain")
+        if unc:
+            items.append({"area": "Matches", "issue": "Findings matched on name only", "count": unc, "next": "Confirm place and role"})
+    return items
 
 
 # ---------------------------------------------------------------- stages
@@ -747,8 +906,18 @@ def stage_freeze(store, cfg, tmp):
     checks.append({"name": "Files parse (UTF-8 CSV / JSON)", "pass": parse_ok, "detail": "all parse" if parse_ok else "see files"})
     checks.append({"name": "Byte-exact copy of the source", "pass": True, "detail": "SHA-256 of copy = SHA-256 of original"})
     extra = {"exclusions": cfg.get("exclusions", []), "source_group": cfg["group"]}
+    lv, _ = store.latest(rid)
+    probe = {"id": rid, "version": lv + 1, "group": cfg["group"], "cfg": cfg}
+    m = map_release(probe, [(os.path.join(staging, "data", f["path"]), f["path"]) for f in files])
+    doc = {"scope": SCOPE.get(rid[:3], cfg["title"]),
+           "arrangement": f"{len(files)} files, as arranged in the source data set: " + ", ".join(f["path"] for f in files[:6])
+                          + (" and others" if len(files) > 6 else "") + ".",
+           "acquisition": "Frozen from the author's working data set in the project archive: "
+                          + "; ".join(sorted({os.path.dirname(i["original_path"]) for i in inputs})) + ".",
+           "processing": FREEZE_PROCESSING + [f"- Held back: {e['file']}. {e['reason']}" for e in cfg.get("exclusions", [])],
+           "records": m.out, "errata": errata_for(rid, staging, files, m.out)}
     mf, v, cur = finish_release(store, staging, rid, cfg["title"], "1-frozen source", cfg["group"],
-                                files, inputs, extra, checks, "Source files changed since the last version.")
+                                files, inputs, extra, checks, "Source files changed since the last version.", doc)
     if mf:
         store.publish(rid, staging, mf, "freeze")
     return {"id": rid, "version": v, "manifest": cur, "dir": os.path.join("releases", rid, f"v{v}"), "cfg": cfg,
@@ -798,7 +967,8 @@ def data_dictionary():
             "record_types": sorted(RECORD_TYPES)}
 
 
-def write_derived(store, tmp, rid, title, stage, group, inputs, tables, records, excluded, note, extra_checks=(), count=None):
+def write_derived(store, tmp, rid, title, stage, group, inputs, tables, records, excluded, note, extra_checks=(), count=None,
+                  people=None, errata=(), scope=""):
     staging = os.path.join(tmp, rid)
     os.makedirs(os.path.join(staging, "data"))
     files = []
@@ -821,7 +991,14 @@ def write_derived(store, tmp, rid, title, stage, group, inputs, tables, records,
              "holders": sorted(holders.items(), key=lambda x: -x[1])[:40],
              "holder_count": len(holders), "exclusions": excluded,
              "taxonomy": [t[1] for t in TAXONOMY]}
-    mf, v, cur = finish_release(store, staging, rid, title, stage, group, files, inputs, extra, checks, note)
+    defs = dict(data_dictionary()["fields"])
+    defs.update(PEOPLE_DEFS)
+    doc = {"scope": scope or title,
+           "arrangement": "Files: " + ", ".join(tables) + ". Records sorted by series, then date, then evidence (A, B, C).",
+           "acquisition": "Derived by the pipeline from the input releases listed in MANIFEST.json, each named by version and SHA-256.",
+           "processing": DERIVE_PROCESSING, "records": records, "people": people,
+           "errata": list(errata), "field_defs": defs}
+    mf, v, cur = finish_release(store, staging, rid, title, stage, group, files, inputs, extra, checks, note, doc)
     if mf:
         store.publish(rid, staging, mf, "derive")
     return {"id": rid, "version": v, "manifest": cur}
@@ -883,6 +1060,8 @@ def build(root):
     tmp = tempfile.mkdtemp(prefix="pts_build_")
     summary = []
     try:
+        fr = json.load(open(os.path.join(PROJECT, "lodge-books", "series", "fact_register.json"), encoding="utf-8"))
+        GLOBAL["settled"] = fr.get("settled", [])
         # 1. freeze
         frozen = [stage_freeze(store, cfg, tmp) for cfg in sources()]
         summary += [(f["id"], f["version"]) for f in frozen]
@@ -890,7 +1069,8 @@ def build(root):
         # map to taxonomy
         all_records, all_excluded = [], []
         for rel in frozen:
-            m = map_release(rel, rel["manifest"]["files"], root)
+            m = map_release(rel, [(os.path.join(root, rel["dir"], "data", f["path"]), f["path"])
+                                  for f in rel["manifest"]["files"] if not f["path"].startswith("docs/")])
             all_records += m.out
             all_excluded += m.excluded
         all_records = sort_records(all_records)
@@ -901,25 +1081,34 @@ def build(root):
             if r["source_release"].startswith("S07"):
                 rolls.setdefault(norm_name(r["person"]), r["person"])
                 rec_detail = r["detail"]
-                m_sp = re.search(r"Spellings: ([^;]+)", rec_detail)
+                m_sp = re.search(r"Spellings: (.+?)(?:; [A-Z][a-z ]+: |$)", rec_detail)
                 if m_sp:
-                    for sp in re.split(r",|/", m_sp[1]):
+                    for sp in re.split(r";|/", m_sp[1]):
                         if norm_name(sp):
                             rolls.setdefault(norm_name(sp), r["person"])
 
+        GLOBAL["rolls"] = rolls
         dd = data_dictionary()
+        err = {g: [] for g in ("lodge_books", "federal_city", "cornerstones", "census")}
+        for rel in frozen:
+            err[rel["group"]] += [dict(e, area=f"{rel['id'][:3]} {e['area']}") for e in rel["manifest"].get("errata", [])]
+        all_err = [e for v in err.values() for e in v]
+        name_err = [{"area": "Names", "issue": "People are joined only on exact name matches; spellings not on a roll's spelling list stay as separate entries",
+                     "count": "", "next": "Review NAME_AUTHORITY.csv for likely pairs and add them to the rolls' spelling lists"}]
         src_inputs = [ref(r) for r in frozen]
 
         # 2. combine
         c1 = write_derived(store, tmp, "C01-combined-records", "Combined Records on the Shared Taxonomy",
                            "2-combined", "all", src_inputs,
                            {"records.csv": (RECORD_FIELDS, all_records), "data_dictionary.json": (None, dd)},
-                           all_records, all_excluded, "Rebuilt from new source versions.")
+                           all_records, all_excluded, "Rebuilt from new source versions.",
+                           errata=all_err, scope=SCOPE["C01"])
         people = people_index(all_records, rolls)
         c2 = write_derived(store, tmp, "C02-combined-people", "Combined People Index",
                            "2-combined", "all", [ref(c1)] + src_inputs,
                            {"people.csv": (PEOPLE_FIELDS, people)}, all_records, [],
-                           "Rebuilt from new combined records.", count=len(people),
+                           "Rebuilt from new combined records.", count=len(people), people=people,
+                           errata=name_err, scope=SCOPE["C02"],
                            extra_checks=[{"name": "Name matching", "pass": True,
                                           "detail": f"{len(people)} people; exact normalised names only, roll form preferred"}])
         summary += [(c1["id"], c1["version"]), (c2["id"], c2["version"])]
@@ -948,7 +1137,8 @@ def build(root):
             series_rel[grp] = write_derived(store, tmp, rid, title, "3-series" if grp == "census" else "4-series",
                                             grp, ins, tables, recs,
                                             [e for e in all_excluded if e["record"].split("@")[0] in {f["id"] for f in frozen if f["group"] == grp}],
-                                            "Rebuilt from new combined records.")
+                                            "Rebuilt from new combined records.", people=ppl,
+                                            errata=err[grp] + name_err, scope=SCOPE[grp])
             summary.append((rid, series_rel[grp]["version"]))
 
         # 5. new book: the final combined data set, built from the four series releases
@@ -966,7 +1156,8 @@ def build(root):
                            "5-new book", "all", [ref(series_rel[g]) for _, g, _ in SERIES],
                            {"records.csv": (RECORD_FIELDS, nb_records), "people.csv": (PEOPLE_FIELDS, nb_people),
                             "contents.json": (None, contents), "data_dictionary.json": (None, dd)},
-                           nb_records, [], "Rebuilt from new series versions.",
+                           nb_records, [], "Rebuilt from new series versions.", people=nb_people,
+                           errata=all_err + name_err, scope=SCOPE["NB1"],
                            extra_checks=[{"name": "Equals the four series", "pass": len(nb_records) == sum(c["records"] for c in contents["series"]),
                                           "detail": f"{len(nb_records)} records"}])
         summary.append((nb["id"], nb["version"]))
@@ -1000,13 +1191,18 @@ def verify(root):
                 d = os.path.join(store.rel_dir, rid, f"v{v}")
                 mf = store.manifest(rid, v)
                 for f in mf["files"]:
-                    p = os.path.join(d, "data", f["path"])
+                    p = file_abs(d, f)
                     if not os.path.isfile(p) or sha256_file(p) != f["sha256"]:
                         problems.append(f"{rid} v{v}: {f['path']} fixity mismatch")
                     if FORBIDDEN_FILE.search(f["path"]) and not f["path"].startswith("Voucher_Cross"):
                         problems.append(f"{rid} v{v}: forbidden file {f['path']}")
-                listed = {f["path"] for f in mf["files"]}
+                listed = {f["path"] for f in mf["files"] if not f["path"].startswith("docs/")}
                 actual = set(os.listdir(os.path.join(d, "data")))
+                if os.path.isdir(os.path.join(d, "docs")):
+                    dl = {f["path"] for f in mf["files"] if f["path"].startswith("docs/")}
+                    da = {"docs/" + x for x in os.listdir(os.path.join(d, "docs"))}
+                    if dl != da:
+                        problems.append(f"{rid} v{v}: docs not in manifest: {sorted(da ^ dl)}")
                 if listed != actual:
                     problems.append(f"{rid} v{v}: files not in manifest: {sorted(actual ^ listed)}")
                 with open(os.path.join(d, "SHA256SUMS")) as sf:
