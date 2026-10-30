@@ -1,6 +1,6 @@
 // Offline start: keeps the app shell and the legal pages so the app opens without a connection. The data set is fetched after
 // sign-in and kept on the device by auth.js (IndexedDB) for offline reading.
-const SHELL = "shell-v6";
+const SHELL = "shell-v7";
 const FILES = ["./", "./index.html", "./bins.html", "./account.html", "./privacy.html", "./terms.html", "./disclaimer.html", "./copyright.html", "./contact.html", "./sources.html", "./legal.css", "./market-mojo-64.png", "./market-mojo-128.png", "./delete-account.html", "./styles.css", "./app.js",
                "./auth.js", "./bins.js", "./zelle.js", "./owner.js", "./vendor/qrcode.js", "./icons/emblem.svg", "./firebase-init.js", "./manifest.webmanifest", "./icons/icon-192.png", "./icons/icon-512.png", "./offline.html"];
 self.addEventListener("install", e => e.waitUntil(caches.open(SHELL).then(c => c.addAll(FILES)).then(() => self.skipWaiting())));
