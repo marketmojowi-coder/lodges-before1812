@@ -39,7 +39,7 @@ pip install -r requirements.txt
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your-key.json
 python3 set_editor.py you@yourmail.com                 (you can confirm payments)
 python3 upload_data.py /path/to/app_data.json          (the records file I attach in the chat; never put it in GitHub)
-python3 set_zelle.py "your-zelle@email" "Market Mojo LLC" 9.99 WI=0.05 --godaddy https://your-godaddy-pay-link
+python3 set_zelle.py "your-zelle@email" "Market Mojo LLC" 19.99 WI=0.05 --godaddy https://your-godaddy-pay-link
 ```
 3. Sign out and in again; your account now shows **Payments to confirm**.
 
