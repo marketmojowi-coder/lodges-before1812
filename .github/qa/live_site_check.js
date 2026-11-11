@@ -78,7 +78,7 @@ async function videoStatus(req, src) {
           const v = await videoStatus(req, f);
           if (v.ok) S.videos.ok++; else { S.videos.broken++; S.defects.push(`${url}: video ${v.id || f} does not play (${v.why || 'error'})`); }
         }
-        for (const m of RECORD_MARKERS) if (m.test(info.html)) S.defects.push(`${url}: member-record text on a public page (${m.source})`);
+        for (const m of RECORD_MARKERS) if (!(site.allow_markers || []).includes(m.source) && m.test(info.html)) S.defects.push(`${url}: member-record text on a public page (${m.source})`);
         const ph = info.html.replace(/<script[\s\S]*?<\/script>/g, '').match(PLACEHOLDER);
         if (ph) S.warnings.push(`${url}: placeholder text "${ph[0]}"`);
         await page.addScriptTag({ content: AXE });
