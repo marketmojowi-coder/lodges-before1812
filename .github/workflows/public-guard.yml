@@ -1,0 +1,14 @@
+name: Public guard
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Only the free landing page may be public
+        run: python3 .github/scripts/public_guard.py docs
