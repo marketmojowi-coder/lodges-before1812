@@ -1,0 +1,15 @@
+{
+  "_note": "Public sites checked every day by .github/workflows/site-check.yml. Read-only: the check loads pages, it never changes a site. warn_only sites report but do not fail the run.",
+  "sites": [
+    {"name": "Lodges before 1812 (this repo's public page)", "url": "https://marketmojowi-coder.github.io/lodges-before1812/"},
+    {"name": "GeocStone", "url": "https://cornerstone-map-7d25b.web.app/"},
+    {"name": "Fraternal Vault (test only, never changed here)", "url": "https://atlas-223f5.web.app/"},
+    {"name": "Market Mojo main site", "url": "https://mktmojox-site-f6f7a.web.app/"},
+    {"name": "marketmojo.store site", "url": "https://marketmojo-store-f6f7a.web.app/"},
+    {"name": "saharsky.com site", "url": "https://saharsky-f6f7a.web.app/"},
+    {"name": "marketmojollc.com site", "url": "https://marketmojollc-f6f7a.web.app/"},
+    {"name": "mmojo.co site", "url": "https://mmojo-co-f6f7a.web.app/"},
+    {"name": "mktmojox.com (custom domain)", "url": "https://mktmojox.com/", "warn_only": true}
+  ],
+  "max_pages_per_site": 30
+}
