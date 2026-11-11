@@ -84,8 +84,14 @@ async function videoStatus(req, src) {
         await page.addScriptTag({ content: AXE });
         const viol = await page.evaluate(async () => (await axe.run(document, { runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] } })).violations.map(v => ({ id: v.id, impact: v.impact, n: v.nodes.length, help: v.help })));
         for (const v of viol) (['serious', 'critical'].includes(v.impact) ? S.defects : S.warnings).push(`${url}: WCAG 2.2 AA ${v.id} (${v.impact}, ${v.n} places): ${v.help}`);
-        await page.setViewportSize({ width: 360, height: 800 });
-        if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) S.defects.push(`${url}: page scrolls sideways on a 360 px phone (WCAG 1.4.10)`);
+        // WCAG 1.4.10 Reflow is measured at 320 CSS px; 360 px is the common phone width.
+        for (const w of [320, 360]) {
+          await page.setViewportSize({ width: w, height: 800 });
+          if (await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1)) {
+            S.defects.push(`${url}: page scrolls sideways at ${w} px${w === 320 ? ' (WCAG 1.4.10 Reflow)' : ' (phone width)'}`);
+            break;
+          }
+        }
       } catch (e) {
         S.defects.push(`${url}: ${e.message.split('\n')[0].slice(0, 160)}`);
       }
