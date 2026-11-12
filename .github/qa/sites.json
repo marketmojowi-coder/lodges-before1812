@@ -1,15 +1,64 @@
 {
-  "_note": "Public sites checked every day by .github/workflows/site-check.yml. Read-only: the check loads pages, it never changes a site. warn_only sites report but do not fail the run. allow_markers lists record markers (exact pattern text from RECORD_MARKERS) the owner approved for that site, e.g. the free Virginia Forge index (owner, Nov 11 2026): \"allow_markers\": [\"\\\"records\\\"\\\\s*:\\\\s*\\\\[\"].",
+  "_note": "Public sites checked every day by .github/workflows/site-check.yml. Read-only: the check loads pages, it never changes a site. warn_only sites report but do not fail the run. allow_markers lists record markers (exact pattern text from RECORD_MARKERS) the owner approved for that site, e.g. the free Virginia Forge index (owner, Nov 11 2026): \"allow_markers\": [\"\\\"records\\\"\\\\s*:\\\\s*\\\\[\"]. expect / expect_og_image / forbid: text that must be on the home page, the share picture it must use, and text that must never appear on any page.",
   "sites": [
-    {"name": "Lodges before 1812 (this repo's public page)", "url": "https://marketmojowi-coder.github.io/lodges-before1812/"},
-    {"name": "GeocStone", "url": "https://cornerstone-map-7d25b.web.app/"},
-    {"name": "Fraternal Vault (test only, never changed here)", "url": "https://atlas-223f5.web.app/"},
-    {"name": "Market Mojo main site", "url": "https://mktmojox-site-f6f7a.web.app/"},
-    {"name": "marketmojo.store site", "url": "https://marketmojo-store-f6f7a.web.app/"},
-    {"name": "saharsky.com site", "url": "https://saharsky-f6f7a.web.app/"},
-    {"name": "marketmojollc.com site", "url": "https://marketmojollc-f6f7a.web.app/"},
-    {"name": "mmojo.co site", "url": "https://mmojo-co-f6f7a.web.app/"},
-    {"name": "mktmojox.com (custom domain)", "url": "https://mktmojox.com/", "warn_only": true}
+    {
+      "name": "Lodges before 1812 (this repo's public page)",
+      "url": "https://marketmojowi-coder.github.io/lodges-before1812/"
+    },
+    {
+      "name": "GeocStone",
+      "url": "https://cornerstone-map-7d25b.web.app/"
+    },
+    {
+      "name": "Fraternal Vault (test only, never changed here)",
+      "url": "https://atlas-223f5.web.app/"
+    },
+    {
+      "name": "Market Mojo main site",
+      "url": "https://mktmojox-site-f6f7a.web.app/"
+    },
+    {
+      "name": "marketmojo.store site",
+      "url": "https://marketmojo-store-f6f7a.web.app/"
+    },
+    {
+      "name": "saharsky.com site",
+      "url": "https://saharsky-f6f7a.web.app/"
+    },
+    {
+      "name": "marketmojollc.com site",
+      "url": "https://marketmojollc-f6f7a.web.app/"
+    },
+    {
+      "name": "mmojo.co site",
+      "url": "https://mmojo-co-f6f7a.web.app/"
+    },
+    {
+      "name": "mktmojox.com (custom domain)",
+      "url": "https://mktmojox.com/",
+      "warn_only": true
+    },
+    {
+      "name": "Lost Capitol (free app; records approved public)",
+      "url": "https://lost-capitol.web.app/",
+      "expect": [
+        "Open the app",
+        "Virginia State Capitol, 1779–1811"
+      ],
+      "expect_og_image": "og-image.jpg",
+      "forbid": [
+        "Open the preview",
+        "Paid edition",
+        "Sign in or create an account"
+      ],
+      "allow_markers": [
+        "\"records\"\\s*:\\s*\\[",
+        "\\bOriginal: National Archives",
+        "\\bHeld at:",
+        "window\\.CTI_DATA",
+        "\"ph\"\\s*:"
+      ]
+    }
   ],
   "max_pages_per_site": 30
 }
