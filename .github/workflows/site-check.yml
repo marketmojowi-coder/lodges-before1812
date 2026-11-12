@@ -1,0 +1,37 @@
+name: Daily public site check
+# Loads every public site once a day and reports broken pages, links, pictures,
+# videos, WCAG 2.2 AA failures and record leaks. Read-only: it changes nothing.
+# A failed run means a defect was found; GitHub emails the owner. Report is in the run summary.
+on:
+  schedule:
+    - cron: "17 11 * * *"   # 6:17 a.m. Chicago (standard time)
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install the browser and the WCAG checker
+        working-directory: .github/qa
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.48.2 axe-core@4.10.2
+          npx playwright install --with-deps chromium
+      - name: Check every public site
+        working-directory: .github/qa
+        run: node live_site_check.js
+      - name: Put the report on the run page
+        if: always()
+        working-directory: .github/qa
+        run: cat qa-report.md >> "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: site-check-report
+          path: .github/qa/qa-report.*
+          retention-days: 30
