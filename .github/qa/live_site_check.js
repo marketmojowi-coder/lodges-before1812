@@ -78,6 +78,17 @@ async function videoStatus(req, src) {
           const v = await videoStatus(req, f);
           if (v.ok) S.videos.ok++; else { S.videos.broken++; S.defects.push(`${url}: video ${v.id || f} does not play (${v.why || 'error'})`); }
         }
+        // Per-site content rules from sites.json: text that must be on the home page, text that must never appear.
+        const isHome = url === site.url.split('#')[0];
+        if (isHome) {
+          for (const t of site.expect || []) if (!info.html.includes(t)) S.defects.push(`${url}: expected text missing: "${t}"`);
+          if (site.expect_og_image) {
+            const og = await page.evaluate(() => (document.querySelector('meta[property="og:image"]') || {}).content || '');
+            if (!og.includes(site.expect_og_image)) S.defects.push(`${url}: og:image is "${og}", expected ${site.expect_og_image}`);
+            else { const s = await status(req, new URL(og, url).href); if (!(s < 400)) S.defects.push(`${url}: og:image ${og} does not load (${s})`); }
+          }
+        }
+        for (const t of site.forbid || []) if (info.html.includes(t)) S.defects.push(`${url}: forbidden text on a public page: "${t}"`);
         for (const m of RECORD_MARKERS) if (!(site.allow_markers || []).includes(m.source) && m.test(info.html)) S.defects.push(`${url}: member-record text on a public page (${m.source})`);
         const ph = info.html.replace(/<script[\s\S]*?<\/script>/g, '').match(PLACEHOLDER);
         if (ph) S.warnings.push(`${url}: placeholder text "${ph[0]}"`);
