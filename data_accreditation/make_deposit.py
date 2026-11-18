@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Prepare a deposit package for one certified data release (all rights reserved, restricted access).
+"""Prepare a deposit package for one certified data release (all rights reserved, closed access).
 
 Read-only on the certified store. Writes data_releases/deposit/<release>_v<N>/ and a zip of it:
     bag/                     the certified release, byte for byte (BagIt bag)
-    zenodo_metadata.json     deposit metadata for Zenodo (access_right "restricted", no license)
+    zenodo_metadata.json     deposit metadata for Zenodo (access_right "closed", no license)
     datacite.json            DataCite metadata for any repository that mints a DOI
     REVIEW_RECORD.json       the data review record from assess.py
     REPRODUCTION_REPORT.md   the latest reproduction test
@@ -21,8 +21,11 @@ ACC = os.path.join(ROOT, "accreditation")
 OUT = os.path.join(ROOT, "deposit")
 FORBIDDEN = re.compile(r"(?i)minute|ledger")
 NO_CREDIT = re.compile(r"(?i)withrow|morris, brent|brent morris")
-ACCESS = ("Restricted. Copyright 2026 Thomas M. Saharsky. All rights reserved. Access to the files is granted "
-          "by the author on request for research use. The originals are held by the archives named in each record.")
+# Closed access (owner's card, Nov 6, 2026: "Deposit can be closed access with a DOI"): the description and
+# DOI are public; the files are not. ACCESS_RIGHT=restricted switches to access on request.
+ACCESS_RIGHT = os.environ.get("ACCESS_RIGHT", "closed")
+ACCESS = ("Copyright 2026 Thomas M. Saharsky. All rights reserved. Access to the files is granted only by the "
+          "author, on request. The originals are held by the archives named in each record.")
 
 
 def sha(p):
@@ -67,8 +70,8 @@ def package(rid):
         "description": f"<p>{desc}</p><p>The Potomac Territory Series. Release {rid}, version {v}; content SHA-256 "
                        f"{mf['content_sha256']}. Every record names the archive that holds the original. A clean-folder "
                        f"rebuild reproduces the data files byte for byte (REPRODUCTION_REPORT.md).</p>",
-        "access_right": "restricted",
-        "access_conditions": ACCESS,
+        "access_right": ACCESS_RIGHT,
+        **({"access_conditions": ACCESS} if ACCESS_RIGHT == "restricted" else {}),
         "version": f"v{v}",
         "publication_date": mf["created_utc"][:10],
         "keywords": [s["subject"] for s in dc.get("subjects", [])],
@@ -87,13 +90,12 @@ def package(rid):
         shutil.copyfile(reps[-1], os.path.join(dest, "REPRODUCTION_REPORT.md"))
     steps = f"""# Deposit steps: {mf['title']} (version {v})
 
-All rights reserved (owner, Nov 6, 2026). The files are deposited with restricted access; the description and
-the DOI are public, and the author grants access to the files on request.
+All rights reserved (owner, Nov 6, 2026). The files are deposited with closed access: the description and the
+DOI are public, the files are not. The Federal Lodge minute books and ledger are not in this package.
 
 1. Sign in at zenodo.org (or openICPSR) with your own account. Keys and passwords stay with you.
 2. New upload. Upload the files in `bag/` (or the whole `{name}.zip`).
-3. Fill the form from `zenodo_metadata.json`: upload type Dataset; access right Restricted; paste the access
-   conditions; leave the license empty.
+3. Fill the form from `zenodo_metadata.json`: upload type Dataset; access right Closed; leave the license empty.
 4. Reserve the DOI, publish, and send the DOI back to the thread so the next release records it.
 
 Check before publishing: `SHA256SUMS` in this folder matches the files (`sha256sum -c SHA256SUMS`).
