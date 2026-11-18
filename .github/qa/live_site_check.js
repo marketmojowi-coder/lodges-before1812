@@ -114,8 +114,23 @@ async function videoStatus(req, src) {
   }
   // Outside links, checked once each.
   out.external = { ok: 0, broken: [], robot_blocked: [] };
+  // Library of Congress newspaper pages refuse automated page loads (403). Check the same page
+  // through the Library's own data addresses instead: the JSON view, then Chronicling America.
+  async function locStatus(href) {
+    const m = href.match(/loc\.gov\/resource\/(sn\w+)\/(\d{4}-\d{2}-\d{2})\/ed-(\d+)\/?(?:\?sp=(\d+))?/);
+    if (!m) return null;
+    const tries = [href + (href.includes('?') ? '&' : '?') + 'fo=json',
+      `https://chroniclingamerica.loc.gov/lccn/${m[1]}/${m[2]}/ed-${m[3]}/seq-${m[4] || 1}.json`];
+    for (const t of tries) {
+      const r = await req.get(t, { timeout: 20000, maxRedirects: 10 }).catch(() => null);
+      if (r && r.status() === 200) return 200;
+      if (r && r.status() === 404) return 404;
+    }
+    return null;
+  }
   for (const [href, from] of extSeen) {
-    const s = await status(req, href);
+    let s = await status(req, href);
+    if (BOT_BLOCK.has(s) && /loc\.gov\/resource\//.test(href)) s = (await locStatus(href)) || s;
     if (typeof s === 'number' && s < 400) out.external.ok++;
     else if (BOT_BLOCK.has(s)) out.external.robot_blocked.push({ href, status: s, ...from });
     else out.external.broken.push({ href, status: s, ...from });
