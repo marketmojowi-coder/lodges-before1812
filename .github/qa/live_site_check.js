@@ -1,6 +1,11 @@
 // Daily public-site check. Loads every page of each public site (same-origin
 // crawl), then checks: page loads, internal links, pictures, embedded videos,
 // outside links, WCAG 2.2 AA (axe-core), phone-width overflow and record leaks.
+// Content and link auditor (Nov 19 2026): page inventory compared with the last run,
+// #anchors, http links on https pages, mailto/tel form, redirect chains, sitemap.xml,
+// 404 page, titles/descriptions (missing, duplicate), og:image and JSON-LD, favicon,
+// alt text, heavy pictures, untitled frames, house terms (sites.json house_terms),
+// working notes and empty filter options, and a 0-100 score per site with its trend.
 // Read-only. Writes qa-report.json and qa-report.md; exit 1 on any defect.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -11,6 +16,9 @@ const AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 // Text that only appears in member records or paid app data (same list as public_guard.py).
 const RECORD_MARKERS = [/window\.CTI_DATA/, /"ph"\s*:/, /"records"\s*:\s*\[/, /\bOriginal: National Archives/, /\bHeld at:/];
 const PLACEHOLDER = /\b(lorem ipsum|TODO|FIXME|TBD)\b/;
+// House terms and working text that must never reach a public page (visible text only).
+const HOUSE = (cfg.house_terms || []).map(t => ({ re: new RegExp(t.pattern, t.flags || ''), why: t.why, warn: !!t.warn_only }));
+const PREV = (() => { try { return JSON.parse(fs.readFileSync(process.env.PREV_REPORT || 'previous/qa-report.json', 'utf8')); } catch (e) { return null; } })();
 const BOT_BLOCK = new Set([401, 403, 405, 429, 999]); // site refuses robots: listed, not counted as broken
 
 async function status(req, url) {
@@ -39,16 +47,19 @@ async function videoStatus(req, src) {
     const origin = new URL(site.url).origin;
     const scope = site.url;
     const S = { ...site, pages: [], defects: [], warnings: [], videos: { ok: 0, broken: 0 } };
-    const queue = [site.url], seen = new Set();
+    const queue = [site.url], seen = new Set(), linkedFrom = new Set([site.url]);
+    S.inventory = {};
     while (queue.length && seen.size < (cfg.max_pages_per_site || 30)) {
       const url = queue.shift().split('#')[0].replace(/\/index\.html$/, '/');
       if (seen.has(url)) continue;
       seen.add(url);
       const page = await ctx.newPage();
-      const P = { url };
+      const P = { url }, heavy = [];
+      page.on('response', r => { if (r.request().resourceType() === 'image') { const n = +(r.headers()['content-length'] || 0); if (n > 500000) heavy.push(`${r.url()} (${Math.round(n / 1024)} KB)`); } });
       try {
         const resp = await page.goto(url, { waitUntil: 'load', timeout: 45000 });
         P.status = resp ? resp.status() : 'no answer';
+        if (resp) { let n = 0, q = resp.request(); while ((q = q.redirectedFrom())) n++; if (n > 1) S.warnings.push(`${url}: reached through ${n} redirects (make links point at the final address)`); }
         if (!resp || resp.status() >= 400) { S.defects.push(`${url}: page did not load (${P.status})`); await page.close(); continue; }
         await page.waitForTimeout(800);
         const info = await page.evaluate(() => ({
@@ -57,14 +68,44 @@ async function videoStatus(req, src) {
           imgs: [...document.images].filter(i => i.loading !== 'lazy' || i.complete).map(i => ({ src: i.currentSrc || i.src, ok: i.complete && i.naturalWidth > 0 })),
           frames: [...document.querySelectorAll('iframe[src], video[src], video source[src], audio[src], audio source[src]')].map(f => f.src),
           html: document.documentElement.outerHTML,
+          text: document.body ? document.body.innerText : '',
+          desc: (document.querySelector('meta[name="description"]') || {}).content || '',
+          canonical: (document.querySelector('link[rel="canonical"]') || {}).href || '',
+          lang: document.documentElement.lang,
+          h1: [...document.querySelectorAll('h1')].map(h => h.innerText.trim()),
+          favicon: !!document.querySelector('link[rel~="icon"]'),
+          ids: [...document.querySelectorAll('[id],a[name]')].map(e => e.id || e.getAttribute('name')),
+
+
+          jsonld: [...document.querySelectorAll('script[type="application/ld+json"]')].map(x => x.textContent),
+          ogimg: [...document.querySelectorAll('meta[property="og:image"],meta[name="twitter:image"]')].map(m => m.content),
+          options: [...document.querySelectorAll('option')].map(o => o.textContent.trim()),
         }));
         P.title = info.title;
         if (!info.title) S.defects.push(`${url}: page has no title`);
+        // Content inventory, compared with the last run.
+        const words = (info.text.match(/\S+/g) || []).length;
+        S.inventory[url] = { title: info.title, description: info.desc, canonical: info.canonical, lang: info.lang, h1: info.h1.join(' | '), words,
+          hash: require('crypto').createHash('sha256').update(info.text).digest('hex').slice(0, 16) };
+        if (!info.desc) S.warnings.push(`${url}: no meta description (search results and shares show no summary)`);
+        if (info.h1.length !== 1) S.warnings.push(`${url}: ${info.h1.length} main headings (h1); expected 1`);
+        if (!info.favicon && url === site.url) S.warnings.push(`${url}: no favicon`);
+        for (const h of heavy) S.warnings.push(`${url}: heavy picture over 500 KB: ${h}`);
+        for (const j of info.jsonld) { try { JSON.parse(j); } catch (e) { S.defects.push(`${url}: structured data (JSON-LD) does not parse`); } }
+        for (const o of new Set(info.ogimg)) { const s = await status(req, new URL(o, url).href); if (!(s < 400)) S.defects.push(`${url}: share picture ${o} does not load (${s})`); }
+        for (const o of info.options) if (/^[a-z_]+\s*\(0\)$/.test(o)) S.warnings.push(`${url}: filter option "${o}" is a raw code with no records`);
+        for (const h of HOUSE) { const m = info.text.match(h.re); if (m) (h.warn ? S.warnings : S.defects).push(`${url}: "${m[0]}" on the page: ${h.why}`); }
+        const idset = new Set(info.ids);
         for (const l of info.links) {
-          if (/^(mailto:|tel:|#)/i.test(l.raw || '')) continue;
+          const raw = l.raw || '';
+          if (/^mailto:/i.test(raw)) { if (!/^mailto:[^@\s?]+@[^@\s?]+\.[a-z]{2,}(\?.*)?$/i.test(raw)) S.defects.push(`${url}: badly formed e-mail link "${raw}"`); continue; }
+          if (/^tel:/i.test(raw)) { if (!/^tel:\+?[\d\-(). ]{7,}$/i.test(raw)) S.defects.push(`${url}: badly formed phone link "${raw}"`); continue; }
+          if (raw.startsWith('#')) { if (raw.length > 1 && !/^#[!/]/.test(raw) && !idset.has(decodeURIComponent(raw.slice(1)))) S.defects.push(`${url}: link "${raw}" points to a place that is not on the page`); continue; }
+          if (url.startsWith('https:') && /^http:\/\//i.test(l.href)) S.warnings.push(`${url}: insecure http link ${l.href}`);
           if (/^javascript:/i.test(l.raw || '')) { S.defects.push(`${url}: link "${l.raw}" is a script, not a link`); continue; }
           if (l.href.startsWith(scope) || (l.href.startsWith(origin) && scope === origin + '/')) {
             const clean = l.href.split('#')[0].replace(/\/index\.html$/, '/');
+            linkedFrom.add(clean);
             if (!seen.has(clean) && !/\.(pdf|zip|png|jpe?g|webp|svg|mp4|json|csv)$/i.test(clean)) queue.push(clean);
             else if (/\.(pdf|zip|png|jpe?g|webp|svg|mp4)$/i.test(clean)) { const s = await status(req, clean); if (s >= 400 || s === 'no answer') S.defects.push(`${url}: link to ${clean} is broken (${s})`); }
           } else if (/^https?:/.test(l.href)) {
@@ -72,7 +113,7 @@ async function videoStatus(req, src) {
           }
         }
         for (const i of info.imgs) if (!i.ok) S.defects.push(`${url}: picture did not load: ${i.src}`);
-        for (const f of info.frames) {
+        for (const f of info.frames.filter(f => /^https?:/.test(f))) {
           if (S.videoSeen && S.videoSeen.has(f)) continue;
           (S.videoSeen = S.videoSeen || new Set()).add(f);
           const v = await videoStatus(req, f);
@@ -110,6 +151,33 @@ async function videoStatus(req, src) {
       await page.close();
     }
     delete S.videoSeen;
+    // Site-wide: duplicate titles/descriptions, 404 page, sitemap.xml against what was served.
+    const dup = (k) => { const m = {}; for (const [u, v] of Object.entries(S.inventory)) if (v[k]) (m[v[k]] = m[v[k]] || []).push(u); return Object.entries(m).filter(([, us]) => us.length > 1); };
+    for (const [t, us] of dup('title')) S.warnings.push(`${us.length} pages share the title "${t.slice(0, 60)}": ${us.join(', ')}`);
+    for (const [t, us] of dup('description')) S.warnings.push(`${us.length} pages share one description: ${us.join(', ')}`);
+    const miss = await req.get(new URL('qa-no-such-page-' + Date.now(), scope).href, { timeout: 20000 }).catch(() => null);
+    if (miss && miss.status() === 200) S.warnings.push(`a missing address answers 200, not 404 (search engines index error pages)`);
+    const sm = await req.get(origin + '/sitemap.xml', { timeout: 20000 }).catch(() => null);
+    if (sm && sm.status() === 200 && /<urlset/.test(await sm.text())) {
+      const locs = [...(await sm.text()).matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(m => m[1].replace(/\/index\.html$/, '/'));
+      for (const u of locs) if (u.startsWith(scope) && !seen.has(u)) { const s = await status(req, u); if (!(s < 400)) S.defects.push(`sitemap.xml lists ${u}, which does not load (${s})`); else S.warnings.push(`sitemap.xml lists ${u}, but no page links to it`); }
+      for (const u of seen) if (!locs.includes(u)) S.warnings.push(`${u} is served but not in sitemap.xml`);
+    }
+    // Content changes since the last run.
+    const before = PREV && (PREV.sites.find(x => x.url === S.url) || {}).inventory;
+    if (before) {
+      S.changes = [];
+      for (const [u, v] of Object.entries(S.inventory)) {
+        const b = before[u];
+        if (!b) S.changes.push(`new page ${u}`);
+        else for (const k of ['title', 'description', 'canonical', 'h1', 'hash']) if (b[k] !== v[k]) S.changes.push(`${u}: ${k === 'hash' ? `text changed (${b.words} → ${v.words} words)` : `${k} "${String(b[k]).slice(0, 50)}" → "${String(v[k]).slice(0, 50)}"`}`);
+      }
+      for (const u of Object.keys(before)) if (!S.inventory[u]) S.changes.push(`page gone ${u}`);
+    }
+    // Score: 100, less 5 per defect and 1 per warning (floor 0), with the change since the last run.
+    S.score = Math.max(0, 100 - 5 * S.defects.length - S.warnings.length);
+    const prevS = PREV && PREV.sites.find(x => x.url === S.url);
+    S.trend = prevS && typeof prevS.score === 'number' ? S.score - prevS.score : null;
     out.sites.push(S);
   }
   // Outside links, checked once each.
@@ -139,17 +207,18 @@ async function videoStatus(req, src) {
 
   let failing = 0;
   const md = [`# Public site check ${out.run.slice(0, 16).replace('T', ' ')} UTC`, '',
-    '| Site | Pages | Videos playing | Videos broken | Defects | Warnings |', '|---|---|---|---|---|---|'];
+    '| Site | Score | Trend | Pages | Videos playing | Videos broken | Defects | Warnings | Changes |', '|---|---|---|---|---|---|---|---|---|'];
   for (const S of out.sites) {
-    md.push(`| [${S.name}](${S.url}) | ${S.pages.length} | ${S.videos.ok} | ${S.videos.broken} | ${S.defects.length} | ${S.warnings.length} |`);
+    md.push(`| [${S.name}](${S.url}) | ${S.score} | ${S.trend === null ? 'first run' : (S.trend > 0 ? '+' : '') + S.trend} | ${S.pages.length} | ${S.videos.ok} | ${S.videos.broken} | ${S.defects.length} | ${S.warnings.length} | ${S.changes ? S.changes.length : '-'} |`);
     if (!S.warn_only) failing += S.defects.length;
   }
   md.push('', `Outside links: ${out.external.ok} working, ${out.external.broken.length} broken, ${out.external.robot_blocked.length} refuse robots (check by hand).`);
   failing += out.external.broken.length;
-  for (const S of out.sites) if (S.defects.length || S.warnings.length) {
+  for (const S of out.sites) if (S.defects.length || S.warnings.length || (S.changes || []).length) {
     md.push('', `## ${S.name}${S.warn_only ? ' (report only)' : ''}`);
     S.defects.forEach(d => md.push(`- DEFECT: ${d}`));
     S.warnings.forEach(d => md.push(`- warning: ${d}`));
+    (S.changes || []).forEach(d => md.push(`- changed: ${d}`));
   }
   if (out.external.broken.length) { md.push('', '## Broken outside links'); out.external.broken.forEach(b => md.push(`- ${b.href} (${b.status}) on ${b.from}`)); }
   fs.writeFileSync('qa-report.json', JSON.stringify(out, null, 1));
