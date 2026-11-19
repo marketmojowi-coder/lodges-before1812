@@ -22,6 +22,12 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.48.2 axe-core@4.10.2
           npx playwright install --with-deps chromium
+      - name: Bring back the last report (to list what changed and the score trend)
+        uses: actions/cache/restore@v4
+        with:
+          path: .github/qa/previous
+          key: site-check-${{ github.run_id }}
+          restore-keys: site-check-
       - name: Check every public site
         working-directory: .github/qa
         run: node live_site_check.js
@@ -29,6 +35,15 @@ jobs:
         if: always()
         working-directory: .github/qa
         run: cat qa-report.md >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Keep this report for tomorrow
+        if: always()
+        working-directory: .github/qa
+        run: mkdir -p previous && cp qa-report.json previous/ || true
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .github/qa/previous
+          key: site-check-${{ github.run_id }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
