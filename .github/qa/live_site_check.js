@@ -11,7 +11,7 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
-const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'sites.json'), 'utf8'));
+const cfg = JSON.parse(fs.readFileSync(process.env.SITES_JSON || path.join(__dirname, 'sites.json'), 'utf8'));
 const AXE = fs.readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 // Text that only appears in member records or paid app data (same list as public_guard.py).
 const RECORD_MARKERS = [/window\.CTI_DATA/, /"ph"\s*:/, /"records"\s*:\s*\[/, /\bOriginal: National Archives/, /\bHeld at:/];
@@ -19,6 +19,8 @@ const PLACEHOLDER = /\b(lorem ipsum|TODO|FIXME|TBD)\b/;
 // House terms and working text that must never reach a public page (visible text only).
 const HOUSE = (cfg.house_terms || []).map(t => ({ re: new RegExp(t.pattern, t.flags || ''), why: t.why, warn: !!t.warn_only }));
 const PREV = (() => { try { return JSON.parse(fs.readFileSync(process.env.PREV_REPORT || 'previous/qa-report.json', 'utf8')); } catch (e) { return null; } })();
+// OFFLINE=1: source copies served on this machine; outside links and videos are not checked.
+const OFFLINE = !!process.env.OFFLINE;
 const BOT_BLOCK = new Set([401, 403, 405, 429, 999]); // site refuses robots: listed, not counted as broken
 
 async function status(req, url) {
@@ -54,6 +56,7 @@ async function videoStatus(req, src) {
       if (seen.has(url)) continue;
       seen.add(url);
       const page = await ctx.newPage();
+      if (OFFLINE) await page.route(u => !u.href.startsWith(origin), r => r.abort());
       const P = { url }, heavy = [];
       page.on('response', r => { if (r.request().resourceType() === 'image') { const n = +(r.headers()['content-length'] || 0); if (n > 500000) heavy.push(`${r.url()} (${Math.round(n / 1024)} KB)`); } });
       try {
@@ -85,14 +88,14 @@ async function videoStatus(req, src) {
         if (!info.title) S.defects.push(`${url}: page has no title`);
         // Content inventory, compared with the last run.
         const words = (info.text.match(/\S+/g) || []).length;
-        S.inventory[url] = { title: info.title, description: info.desc, canonical: info.canonical, lang: info.lang, h1: info.h1.join(' | '), words,
+        S.inventory[url.replace(origin, '') || '/'] = { title: info.title, description: info.desc, canonical: info.canonical, lang: info.lang, h1: info.h1.join(' | '), words,
           hash: require('crypto').createHash('sha256').update(info.text).digest('hex').slice(0, 16) };
         if (!info.desc) S.warnings.push(`${url}: no meta description (search results and shares show no summary)`);
         if (info.h1.length !== 1) S.warnings.push(`${url}: ${info.h1.length} main headings (h1); expected 1`);
         if (!info.favicon && url === site.url) S.warnings.push(`${url}: no favicon`);
         for (const h of heavy) S.warnings.push(`${url}: heavy picture over 500 KB: ${h}`);
         for (const j of info.jsonld) { try { JSON.parse(j); } catch (e) { S.defects.push(`${url}: structured data (JSON-LD) does not parse`); } }
-        for (const o of new Set(info.ogimg)) { const s = await status(req, new URL(o, url).href); if (!(s < 400)) S.defects.push(`${url}: share picture ${o} does not load (${s})`); }
+        for (const o of new Set(info.ogimg)) if (!OFFLINE || new URL(o, url).origin === origin) { const s = await status(req, new URL(o, url).href); if (!(s < 400)) S.defects.push(`${url}: share picture ${o} does not load (${s})`); }
         for (const o of info.options) if (/^[a-z_]+\s*\(0\)$/.test(o)) S.warnings.push(`${url}: filter option "${o}" is a raw code with no records`);
         for (const h of HOUSE) { const m = info.text.match(h.re); if (m) (h.warn ? S.warnings : S.defects).push(`${url}: "${m[0]}" on the page: ${h.why}`); }
         const idset = new Set(info.ids);
@@ -113,7 +116,7 @@ async function videoStatus(req, src) {
           }
         }
         for (const i of info.imgs) if (!i.ok) S.defects.push(`${url}: picture did not load: ${i.src}`);
-        for (const f of info.frames.filter(f => /^https?:/.test(f))) {
+        for (const f of OFFLINE ? [] : info.frames.filter(f => /^https?:/.test(f))) {
           if (S.videoSeen && S.videoSeen.has(f)) continue;
           (S.videoSeen = S.videoSeen || new Set()).add(f);
           const v = await videoStatus(req, f);
@@ -159,12 +162,13 @@ async function videoStatus(req, src) {
     if (miss && miss.status() === 200) S.warnings.push(`a missing address answers 200, not 404 (search engines index error pages)`);
     const sm = await req.get(origin + '/sitemap.xml', { timeout: 20000 }).catch(() => null);
     if (sm && sm.status() === 200 && /<urlset/.test(await sm.text())) {
-      const locs = [...(await sm.text()).matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(m => m[1].replace(/\/index\.html$/, '/'));
+      const locs = [...(await sm.text()).matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(m => m[1].replace(site.public_url ? new URL(site.public_url).origin : origin, origin).replace(/\/index\.html$/, '/'));
       for (const u of locs) if (u.startsWith(scope) && !seen.has(u)) { const s = await status(req, u); if (!(s < 400)) S.defects.push(`sitemap.xml lists ${u}, which does not load (${s})`); else S.warnings.push(`sitemap.xml lists ${u}, but no page links to it`); }
       for (const u of seen) if (!locs.includes(u)) S.warnings.push(`${u} is served but not in sitemap.xml`);
     }
     // Content changes since the last run.
-    const before = PREV && (PREV.sites.find(x => x.url === S.url) || {}).inventory;
+    const prevS = PREV && PREV.sites.find(x => x.name === S.name);
+    const before = prevS && prevS.inventory;
     if (before) {
       S.changes = [];
       for (const [u, v] of Object.entries(S.inventory)) {
@@ -176,7 +180,6 @@ async function videoStatus(req, src) {
     }
     // Score: 100, less 5 per defect and 1 per warning (floor 0), with the change since the last run.
     S.score = Math.max(0, 100 - 5 * S.defects.length - S.warnings.length);
-    const prevS = PREV && PREV.sites.find(x => x.url === S.url);
     S.trend = prevS && typeof prevS.score === 'number' ? S.score - prevS.score : null;
     out.sites.push(S);
   }
@@ -196,6 +199,7 @@ async function videoStatus(req, src) {
     }
     return null;
   }
+  if (OFFLINE) extSeen.clear();
   for (const [href, from] of extSeen) {
     let s = await status(req, href);
     if (BOT_BLOCK.has(s) && /loc\.gov\/resource\//.test(href)) s = (await locStatus(href)) || s;
