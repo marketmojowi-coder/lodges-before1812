@@ -58,6 +58,28 @@
         "window\\.CTI_DATA",
         "\"ph\"\\s*:"
       ]
+    },
+    {
+      "name": "Virginia Forge (free index)",
+      "url": "https://marketmojowi-coder.github.io/virginia-forge/",
+      "allow_markers": [
+        "\"records\"\\s*:\\s*\\["
+      ]
+    },
+    {
+      "name": "Federal City landing page (company site)",
+      "url": "https://mktmojox-site-f6f7a.web.app/federal-city/"
+    },
+    {
+      "name": "Civic Atlas page (company site)",
+      "url": "https://mktmojox-site-f6f7a.web.app/civic-atlas/"
+    },
+    {
+      "name": "Virginia Forge page (company site)",
+      "url": "https://mktmojox-site-f6f7a.web.app/virginia-forge/",
+      "allow_markers": [
+        "\"records\"\\s*:\\s*\\["
+      ]
     }
   ],
   "max_pages_per_site": 30,
