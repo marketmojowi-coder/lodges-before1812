@@ -6,7 +6,7 @@
       "url": "https://marketmojowi-coder.github.io/lodges-before1812/"
     },
     {
-      "name": "GeocStone",
+      "name": "GeoStone",
       "url": "https://cornerstone-map-7d25b.web.app/"
     },
     {
@@ -85,8 +85,8 @@
   "max_pages_per_site": 30,
   "house_terms": [
     {
-      "pattern": "\\bGeoStone\\b",
-      "why": "the app is spelled GeocStone"
+      "pattern": "\\bGeocStone\\b",
+      "why": "old name: the app was renamed GeoStone (owner, Nov 20 2026)"
     },
     {
       "pattern": "\\bgeocach",
@@ -105,7 +105,7 @@
     },
     {
       "pattern": "\\b104 (?:corner)?stones\\b",
-      "why": "stale figure: GeocStone has 533 stones"
+      "why": "stale figure: GeoStone has 533 stones"
     },
     {
       "pattern": "\\b291 people\\b",
