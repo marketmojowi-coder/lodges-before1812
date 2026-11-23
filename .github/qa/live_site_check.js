@@ -127,6 +127,7 @@ async function videoStatus(req, src) {
         const isHome = url === site.url.split('#')[0];
         if (isHome) {
           for (const t of site.expect || []) if (!info.html.includes(t)) S.defects.push(`${url}: expected text missing: "${t}"`);
+          for (const r of cfg.require_on_home || []) if (!new RegExp(r.pattern, r.flags || '').test(info.text)) S.defects.push(`${url}: missing on the home page: ${r.why}`);
           if (site.expect_og_image) {
             const og = await page.evaluate(() => (document.querySelector('meta[property="og:image"]') || {}).content || '');
             if (!og.includes(site.expect_og_image)) S.defects.push(`${url}: og:image is "${og}", expected ${site.expect_og_image}`);
