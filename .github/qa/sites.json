@@ -1,12 +1,12 @@
 {
-  "_note": "Public sites checked every day by .github/workflows/site-check.yml. Read-only: the check loads pages, it never changes a site. warn_only sites report but do not fail the run. allow_markers lists record markers (exact pattern text from RECORD_MARKERS) the owner approved for that site, e.g. the free Virginia Forge index (owner, Nov 11 2026): \"allow_markers\": [\"\\\"records\\\"\\\\s*:\\\\s*\\\\[\"]. expect / expect_og_image / forbid: text that must be on the home page, the share picture it must use, and text that must never appear on any page. house_terms: words that must never show on any public page (regex on visible text); warn_only terms are reported, not failed.",
+  "_note": "Public sites checked every day by .github/workflows/site-check.yml. Read-only: the check loads pages, it never changes a site. warn_only sites report but do not fail the run. allow_markers lists record markers (exact pattern text from RECORD_MARKERS) the owner approved for that site, e.g. the free Virginia Forge index (owner, Nov 11 2026): \"allow_markers\": [\"\\\"records\\\"\\\\s*:\\\\s*\\\\[\"]. expect / expect_og_image / forbid: text that must be on the home page, the share picture it must use, and text that must never appear on any page. house_terms: words that must never show on any public page (regex on visible text); warn_only terms are reported, not failed. require_on_home: text every site's home page must show (regex on visible text).",
   "sites": [
     {
       "name": "Lodges before 1812 (this repo's public page)",
       "url": "https://marketmojowi-coder.github.io/lodges-before1812/"
     },
     {
-      "name": "GeocStone",
+      "name": "GeoStone",
       "url": "https://cornerstone-map-7d25b.web.app/"
     },
     {
@@ -58,13 +58,35 @@
         "window\\.CTI_DATA",
         "\"ph\"\\s*:"
       ]
+    },
+    {
+      "name": "Virginia Forge (free index)",
+      "url": "https://marketmojowi-coder.github.io/virginia-forge/",
+      "allow_markers": [
+        "\"records\"\\s*:\\s*\\["
+      ]
+    },
+    {
+      "name": "Federal City landing page (company site)",
+      "url": "https://mktmojox-site-f6f7a.web.app/federal-city/"
+    },
+    {
+      "name": "Civic Atlas page (company site)",
+      "url": "https://mktmojox-site-f6f7a.web.app/civic-atlas/"
+    },
+    {
+      "name": "Virginia Forge page (company site)",
+      "url": "https://mktmojox-site-f6f7a.web.app/virginia-forge/",
+      "allow_markers": [
+        "\"records\"\\s*:\\s*\\["
+      ]
     }
   ],
   "max_pages_per_site": 30,
   "house_terms": [
     {
-      "pattern": "\\bGeoStone\\b",
-      "why": "the app is spelled GeocStone"
+      "pattern": "\\bGeocStone\\b",
+      "why": "old name: the app was renamed GeoStone (owner, Nov 20 2026)"
     },
     {
       "pattern": "\\bgeocach",
@@ -83,7 +105,7 @@
     },
     {
       "pattern": "\\b104 (?:corner)?stones\\b",
-      "why": "stale figure: GeocStone has 533 stones"
+      "why": "stale figure: GeoStone has 533 stones"
     },
     {
       "pattern": "\\b291 people\\b",
@@ -97,6 +119,13 @@
       "pattern": "Thomas Saharsky\\b|T\\. M\\. Saharsky",
       "why": "the author is Thomas M. Saharsky",
       "warn_only": true
+    }
+  ],
+  "require_on_home": [
+    {
+      "pattern": "P\\.?\\s*O\\.?\\s*Box\\s+32[\\s\\S]{0,40}Green Bay[\\s\\S]{0,20}(?:WI|Wisconsin)\\s*54305",
+      "flags": "i",
+      "why": "company address Market Mojo LLC, PO Box 32, Green Bay, Wisconsin 54305 (owner, Nov 23 2026: on every site)"
     }
   ]
 }

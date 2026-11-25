@@ -41,7 +41,7 @@ async function videoStatus(req, src) {
 
 (async () => {
   const browser = await chromium.launch();
-  const ctx = await browser.newContext();
+  const ctx = await browser.newContext({ bypassCSP: true }); // lets the WCAG checker run on pages with a strict Content Security Policy
   const req = ctx.request;
   const out = { run: new Date().toISOString(), sites: [] };
   const extSeen = new Map();
@@ -64,6 +64,7 @@ async function videoStatus(req, src) {
         P.status = resp ? resp.status() : 'no answer';
         if (resp) { let n = 0, q = resp.request(); while ((q = q.redirectedFrom())) n++; if (n > 1) S.warnings.push(`${url}: reached through ${n} redirects (make links point at the final address)`); }
         if (!resp || resp.status() >= 400) { S.defects.push(`${url}: page did not load (${P.status})`); await page.close(); continue; }
+        if (!/html/i.test(resp.headers()['content-type'] || 'text/html')) { await page.close(); continue; } // a file, not a page
         await page.waitForTimeout(800);
         const info = await page.evaluate(() => ({
           title: document.title,
@@ -126,6 +127,7 @@ async function videoStatus(req, src) {
         const isHome = url === site.url.split('#')[0];
         if (isHome) {
           for (const t of site.expect || []) if (!info.html.includes(t)) S.defects.push(`${url}: expected text missing: "${t}"`);
+          for (const r of cfg.require_on_home || []) if (!new RegExp(r.pattern, r.flags || '').test(info.text)) S.defects.push(`${url}: missing on the home page: ${r.why}`);
           if (site.expect_og_image) {
             const og = await page.evaluate(() => (document.querySelector('meta[property="og:image"]') || {}).content || '');
             if (!og.includes(site.expect_og_image)) S.defects.push(`${url}: og:image is "${og}", expected ${site.expect_og_image}`);
@@ -155,16 +157,18 @@ async function videoStatus(req, src) {
     }
     delete S.videoSeen;
     // Site-wide: duplicate titles/descriptions, 404 page, sitemap.xml against what was served.
-    const dup = (k) => { const m = {}; for (const [u, v] of Object.entries(S.inventory)) if (v[k]) (m[v[k]] = m[v[k]] || []).push(u); return Object.entries(m).filter(([, us]) => us.length > 1); };
+    const dup = (k) => { const m = {}; for (const [u, v] of Object.entries(S.inventory)) if (v[k]) (m[v[k]] = m[v[k]] || new Set()).add(u.split('?')[0].replace(/\/$/, '') || '/'); return Object.entries(m).map(([t, us]) => [t, [...us]]).filter(([, us]) => us.length > 1); };
     for (const [t, us] of dup('title')) S.warnings.push(`${us.length} pages share the title "${t.slice(0, 60)}": ${us.join(', ')}`);
     for (const [t, us] of dup('description')) S.warnings.push(`${us.length} pages share one description: ${us.join(', ')}`);
     const miss = await req.get(new URL('qa-no-such-page-' + Date.now(), scope).href, { timeout: 20000 }).catch(() => null);
     if (miss && miss.status() === 200) S.warnings.push(`a missing address answers 200, not 404 (search engines index error pages)`);
     const sm = await req.get(origin + '/sitemap.xml', { timeout: 20000 }).catch(() => null);
     if (sm && sm.status() === 200 && /<urlset/.test(await sm.text())) {
-      const locs = [...(await sm.text()).matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(m => m[1].replace(site.public_url ? new URL(site.public_url).origin : origin, origin).replace(/\/index\.html$/, '/'));
-      for (const u of locs) if (u.startsWith(scope) && !seen.has(u)) { const s = await status(req, u); if (!(s < 400)) S.defects.push(`sitemap.xml lists ${u}, which does not load (${s})`); else S.warnings.push(`sitemap.xml lists ${u}, but no page links to it`); }
-      for (const u of seen) if (!locs.includes(u)) S.warnings.push(`${u} is served but not in sitemap.xml`);
+      const locs = [...(await sm.text()).matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map(m => { try { return origin + new URL(m[1]).pathname; } catch (e) { return m[1]; } });
+      const norm = u => { try { return new URL(u).pathname.replace(/\/index\.html$/, '/').replace(/\.html$/, '').replace(/\/$/, '') || '/'; } catch (e) { return u; } };
+      const locPaths = new Set(locs.map(norm)), seenPaths = new Set([...seen].map(norm));
+      for (const u of locs) if (u.startsWith(scope) && !seenPaths.has(norm(u))) { const s = await status(req, u); if (!(s < 400)) S.defects.push(`sitemap.xml lists ${u}, which does not load (${s})`); else S.warnings.push(`sitemap.xml lists ${u}, but no page links to it`); }
+      for (const u of seen) if (!u.includes('?') && !locPaths.has(norm(u))) S.warnings.push(`${u} is served but not in sitemap.xml`);
     }
     // Content changes since the last run.
     const prevS = PREV && PREV.sites.find(x => x.name === S.name);
@@ -201,10 +205,11 @@ async function videoStatus(req, src) {
   }
   if (OFFLINE) extSeen.clear();
   for (const [href, from] of extSeen) {
-    let s = await status(req, href);
+    let s = /youtube\.com\/watch|youtu\.be\//.test(href) ? ((await videoStatus(req, href)).ok ? 200 : 404) : await status(req, href);
     if (BOT_BLOCK.has(s) && /loc\.gov\/resource\//.test(href)) s = (await locStatus(href)) || s;
     if (typeof s === 'number' && s < 400) out.external.ok++;
-    else if (BOT_BLOCK.has(s)) out.external.robot_blocked.push({ href, status: s, ...from });
+    // Big sites that answer robots with 400/503 or not at all (not with 404) are listed for a hand check, not counted as broken.
+    else if (BOT_BLOCK.has(s) || (s !== 404 && s !== 410 && /(^|\.)(facebook|amazon|youtube|instagram|linkedin|x|twitter)\.com$/.test(new URL(href).hostname))) out.external.robot_blocked.push({ href, status: s, ...from });
     else out.external.broken.push({ href, status: s, ...from });
   }
   await browser.close();
