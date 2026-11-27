@@ -103,12 +103,12 @@ async function videoStatus(req, src) {
         for (const o of new Set(info.ogimg)) if (!OFFLINE || new URL(o, url).origin === origin) { const s = await status(req, new URL(o, url).href); if (!(s < 400)) S.defects.push(`${url}: share picture ${o} does not load (${s})`); }
         for (const o of info.options) if (/^[a-z_]+\s*\(0\)$/.test(o)) S.warnings.push(`${url}: filter option "${o}" is a raw code with no records`);
         for (const h of HOUSE) { const m = info.text.match(h.re); if (m) (h.warn ? S.warnings : S.defects).push(`${url}: "${m[0]}" on the page: ${h.why}`); }
-        const idset = new Set(info.ids);
+        const idset = new Set(info.ids), missingAnchors = new Set();
         for (const l of info.links) {
           const raw = l.raw || '';
           if (/^mailto:/i.test(raw)) { if (!/^mailto:[^@\s?]+@[^@\s?]+\.[a-z]{2,}(\?.*)?$/i.test(raw)) S.defects.push(`${url}: badly formed e-mail link "${raw}"`); continue; }
           if (/^tel:/i.test(raw)) { if (!/^tel:\+?[\d\-(). ]{7,}$/i.test(raw)) S.defects.push(`${url}: badly formed phone link "${raw}"`); continue; }
-          if (raw.startsWith('#')) { if (raw.length > 1 && !/^#[!/]/.test(raw) && !idset.has(decodeURIComponent(raw.slice(1)))) S.defects.push(`${url}: link "${raw}" points to a place that is not on the page`); continue; }
+          if (raw.startsWith('#')) { if (raw.length > 1 && !/^#[!/]/.test(raw) && !idset.has(decodeURIComponent(raw.slice(1)))) missingAnchors.add(raw); continue; }
           if (url.startsWith('https:') && /^http:\/\//i.test(l.href)) S.warnings.push(`${url}: insecure http link ${l.href}`);
           if (/^javascript:/i.test(l.raw || '')) { S.defects.push(`${url}: link "${l.raw}" is a script, not a link`); continue; }
           if (l.href.startsWith(scope) || (l.href.startsWith(origin) && scope === origin + '/')) {
@@ -127,6 +127,9 @@ async function videoStatus(req, src) {
           const v = await videoStatus(req, f);
           if (v.ok) S.videos.ok++; else { S.videos.broken++; S.defects.push(`${url}: video ${v.id || f} does not play (${v.why || 'error'})`); }
         }
+        // Three or more missing #targets on one page means the page routes by #hash (a single-page app); those links are screens, not places.
+        if (missingAnchors.size >= 3) S.warnings.push(`${url}: ${missingAnchors.size} #links have no matching place; the page looks like it switches screens by #hash, so they were not checked`);
+        else for (const raw of missingAnchors) S.defects.push(`${url}: link "${raw}" points to a place that is not on the page`);
         // Per-site content rules from sites.json: text that must be on the home page, text that must never appear.
         const isHome = url === site.url.split('#')[0];
         if (isHome) {
@@ -192,6 +195,7 @@ async function videoStatus(req, src) {
     out.sites.push(S);
   }
   // Outside links, checked once each.
+  { const hp = out.sites.reduce((n, S) => n + Object.keys(S.headers || {}).length, 0), csp = out.sites.reduce((n, S) => n + Object.values(S.headers || {}).filter(h => h['content-security-policy']).length, 0); md.push('', `Security headers saved for ${hp} pages (${csp} send a content security policy; Fraternal Vault left out).`); }
   out.external = { ok: 0, broken: [], robot_blocked: [] };
   // Library of Congress newspaper pages refuse automated page loads (403). Check the same page
   // through the Library's own data addresses instead: the JSON view, then Chronicling America.
