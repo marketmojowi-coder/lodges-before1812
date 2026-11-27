@@ -7,7 +7,14 @@
     },
     {
       "name": "GeoStone",
-      "url": "https://cornerstone-map-7d25b.web.app/"
+      "url": "https://cornerstone-map-7d25b.web.app/",
+      "expect": [
+        "Buy now"
+      ],
+      "forbid": [
+        "Coming soon"
+      ],
+      "why_expect": "$9.99 tier opened Nov 27 2026 (GeoStone PR #32, owner merged)"
     },
     {
       "name": "Fraternal Vault (test only, never changed here)",

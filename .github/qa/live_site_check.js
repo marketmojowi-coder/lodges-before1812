@@ -18,6 +18,8 @@ const RECORD_MARKERS = [/window\.CTI_DATA/, /"ph"\s*:/, /"records"\s*:\s*\[/, /\
 const PLACEHOLDER = /\b(lorem ipsum|TODO|FIXME|TBD)\b/;
 // House terms and working text that must never reach a public page (visible text only).
 const HOUSE = (cfg.house_terms || []).map(t => ({ re: new RegExp(t.pattern, t.flags || ''), why: t.why, warn: !!t.warn_only }));
+const KEEP_HEADERS = ['content-security-policy', 'x-content-type-options', 'referrer-policy', 'strict-transport-security', 'x-frame-options', 'permissions-policy'];
+const SKIP_HEADER_HOSTS = new Set(['atlas-223f5.web.app', 'atlas-223f5.firebaseapp.com']); // Fraternal Vault: hands off
 const PREV = (() => { try { return JSON.parse(fs.readFileSync(process.env.PREV_REPORT || 'previous/qa-report.json', 'utf8')); } catch (e) { return null; } })();
 // OFFLINE=1: source copies served on this machine; outside links and videos are not checked.
 const OFFLINE = !!process.env.OFFLINE;
@@ -51,6 +53,7 @@ async function videoStatus(req, src) {
     const S = { ...site, pages: [], defects: [], warnings: [], videos: { ok: 0, broken: 0 } };
     const queue = [site.url], seen = new Set(), linkedFrom = new Set([site.url]);
     S.inventory = {};
+    S.headers = {}; // security headers per page, read offline by security/web_baseline.py
     while (queue.length && seen.size < (cfg.max_pages_per_site || 30)) {
       const url = queue.shift().split('#')[0].replace(/\/index\.html$/, '/');
       if (seen.has(url)) continue;
@@ -65,6 +68,7 @@ async function videoStatus(req, src) {
         if (resp) { let n = 0, q = resp.request(); while ((q = q.redirectedFrom())) n++; if (n > 1) S.warnings.push(`${url}: reached through ${n} redirects (make links point at the final address)`); }
         if (!resp || resp.status() >= 400) { S.defects.push(`${url}: page did not load (${P.status})`); await page.close(); continue; }
         if (!/html/i.test(resp.headers()['content-type'] || 'text/html')) { await page.close(); continue; } // a file, not a page
+        if (!SKIP_HEADER_HOSTS.has(new URL(url).hostname)) { const h = resp.headers(), keep = {}; for (const k of KEEP_HEADERS) keep[k] = h[k] ?? null; S.headers[url.replace(origin, '') || '/'] = keep; }
         await page.waitForTimeout(800);
         const info = await page.evaluate(() => ({
           title: document.title,
@@ -99,12 +103,12 @@ async function videoStatus(req, src) {
         for (const o of new Set(info.ogimg)) if (!OFFLINE || new URL(o, url).origin === origin) { const s = await status(req, new URL(o, url).href); if (!(s < 400)) S.defects.push(`${url}: share picture ${o} does not load (${s})`); }
         for (const o of info.options) if (/^[a-z_]+\s*\(0\)$/.test(o)) S.warnings.push(`${url}: filter option "${o}" is a raw code with no records`);
         for (const h of HOUSE) { const m = info.text.match(h.re); if (m) (h.warn ? S.warnings : S.defects).push(`${url}: "${m[0]}" on the page: ${h.why}`); }
-        const idset = new Set(info.ids);
+        const idset = new Set(info.ids), missingAnchors = new Set();
         for (const l of info.links) {
           const raw = l.raw || '';
           if (/^mailto:/i.test(raw)) { if (!/^mailto:[^@\s?]+@[^@\s?]+\.[a-z]{2,}(\?.*)?$/i.test(raw)) S.defects.push(`${url}: badly formed e-mail link "${raw}"`); continue; }
           if (/^tel:/i.test(raw)) { if (!/^tel:\+?[\d\-(). ]{7,}$/i.test(raw)) S.defects.push(`${url}: badly formed phone link "${raw}"`); continue; }
-          if (raw.startsWith('#')) { if (raw.length > 1 && !/^#[!/]/.test(raw) && !idset.has(decodeURIComponent(raw.slice(1)))) S.defects.push(`${url}: link "${raw}" points to a place that is not on the page`); continue; }
+          if (raw.startsWith('#')) { if (raw.length > 1 && !/^#[!/]/.test(raw) && !idset.has(decodeURIComponent(raw.slice(1)))) missingAnchors.add(raw); continue; }
           if (url.startsWith('https:') && /^http:\/\//i.test(l.href)) S.warnings.push(`${url}: insecure http link ${l.href}`);
           if (/^javascript:/i.test(l.raw || '')) { S.defects.push(`${url}: link "${l.raw}" is a script, not a link`); continue; }
           if (l.href.startsWith(scope) || (l.href.startsWith(origin) && scope === origin + '/')) {
@@ -123,6 +127,9 @@ async function videoStatus(req, src) {
           const v = await videoStatus(req, f);
           if (v.ok) S.videos.ok++; else { S.videos.broken++; S.defects.push(`${url}: video ${v.id || f} does not play (${v.why || 'error'})`); }
         }
+        // Three or more missing #targets on one page means the page routes by #hash (a single-page app); those links are screens, not places.
+        if (missingAnchors.size >= 3) S.warnings.push(`${url}: ${missingAnchors.size} #links have no matching place; the page looks like it switches screens by #hash, so they were not checked`);
+        else for (const raw of missingAnchors) S.defects.push(`${url}: link "${raw}" points to a place that is not on the page`);
         // Per-site content rules from sites.json: text that must be on the home page, text that must never appear.
         const isHome = url === site.url.split('#')[0];
         if (isHome) {
@@ -222,6 +229,7 @@ async function videoStatus(req, src) {
     if (!S.warn_only) failing += S.defects.length;
   }
   md.push('', `Outside links: ${out.external.ok} working, ${out.external.broken.length} broken, ${out.external.robot_blocked.length} refuse robots (check by hand).`);
+  { const hp = out.sites.reduce((n, S) => n + Object.keys(S.headers || {}).length, 0), csp = out.sites.reduce((n, S) => n + Object.values(S.headers || {}).filter(h => h['content-security-policy']).length, 0); md.push('', `Security headers saved for ${hp} pages (${csp} send a content security policy; Fraternal Vault left out).`); }
   failing += out.external.broken.length;
   for (const S of out.sites) if (S.defects.length || S.warnings.length || (S.changes || []).length) {
     md.push('', `## ${S.name}${S.warn_only ? ' (report only)' : ''}`);

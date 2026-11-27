@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
       - name: Install the browser and the WCAG checker
@@ -23,7 +23,7 @@ jobs:
           npm install --no-save --no-audit --no-fund playwright@1.48.2 axe-core@4.10.2
           npx playwright install --with-deps chromium
       - name: Bring back the last report (to list what changed and the score trend)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: .github/qa/previous
           key: site-check-${{ github.run_id }}
@@ -39,12 +39,12 @@ jobs:
         if: always()
         working-directory: .github/qa
         run: mkdir -p previous && cp qa-report.json previous/ || true
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v6
         if: always()
         with:
           path: .github/qa/previous
           key: site-check-${{ github.run_id }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: site-check-report
