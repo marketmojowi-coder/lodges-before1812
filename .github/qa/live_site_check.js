@@ -195,7 +195,6 @@ async function videoStatus(req, src) {
     out.sites.push(S);
   }
   // Outside links, checked once each.
-  { const hp = out.sites.reduce((n, S) => n + Object.keys(S.headers || {}).length, 0), csp = out.sites.reduce((n, S) => n + Object.values(S.headers || {}).filter(h => h['content-security-policy']).length, 0); md.push('', `Security headers saved for ${hp} pages (${csp} send a content security policy; Fraternal Vault left out).`); }
   out.external = { ok: 0, broken: [], robot_blocked: [] };
   // Library of Congress newspaper pages refuse automated page loads (403). Check the same page
   // through the Library's own data addresses instead: the JSON view, then Chronicling America.
@@ -230,6 +229,7 @@ async function videoStatus(req, src) {
     if (!S.warn_only) failing += S.defects.length;
   }
   md.push('', `Outside links: ${out.external.ok} working, ${out.external.broken.length} broken, ${out.external.robot_blocked.length} refuse robots (check by hand).`);
+  { const hp = out.sites.reduce((n, S) => n + Object.keys(S.headers || {}).length, 0), csp = out.sites.reduce((n, S) => n + Object.values(S.headers || {}).filter(h => h['content-security-policy']).length, 0); md.push('', `Security headers saved for ${hp} pages (${csp} send a content security policy; Fraternal Vault left out).`); }
   failing += out.external.broken.length;
   for (const S of out.sites) if (S.defects.length || S.warnings.length || (S.changes || []).length) {
     md.push('', `## ${S.name}${S.warn_only ? ' (report only)' : ''}`);
