@@ -18,6 +18,8 @@ const RECORD_MARKERS = [/window\.CTI_DATA/, /"ph"\s*:/, /"records"\s*:\s*\[/, /\
 const PLACEHOLDER = /\b(lorem ipsum|TODO|FIXME|TBD)\b/;
 // House terms and working text that must never reach a public page (visible text only).
 const HOUSE = (cfg.house_terms || []).map(t => ({ re: new RegExp(t.pattern, t.flags || ''), why: t.why, warn: !!t.warn_only }));
+const KEEP_HEADERS = ['content-security-policy', 'x-content-type-options', 'referrer-policy', 'strict-transport-security', 'x-frame-options', 'permissions-policy'];
+const SKIP_HEADER_HOSTS = new Set(['atlas-223f5.web.app', 'atlas-223f5.firebaseapp.com']); // Fraternal Vault: hands off
 const PREV = (() => { try { return JSON.parse(fs.readFileSync(process.env.PREV_REPORT || 'previous/qa-report.json', 'utf8')); } catch (e) { return null; } })();
 // OFFLINE=1: source copies served on this machine; outside links and videos are not checked.
 const OFFLINE = !!process.env.OFFLINE;
@@ -51,6 +53,7 @@ async function videoStatus(req, src) {
     const S = { ...site, pages: [], defects: [], warnings: [], videos: { ok: 0, broken: 0 } };
     const queue = [site.url], seen = new Set(), linkedFrom = new Set([site.url]);
     S.inventory = {};
+    S.headers = {}; // security headers per page, read offline by security/web_baseline.py
     while (queue.length && seen.size < (cfg.max_pages_per_site || 30)) {
       const url = queue.shift().split('#')[0].replace(/\/index\.html$/, '/');
       if (seen.has(url)) continue;
@@ -65,6 +68,7 @@ async function videoStatus(req, src) {
         if (resp) { let n = 0, q = resp.request(); while ((q = q.redirectedFrom())) n++; if (n > 1) S.warnings.push(`${url}: reached through ${n} redirects (make links point at the final address)`); }
         if (!resp || resp.status() >= 400) { S.defects.push(`${url}: page did not load (${P.status})`); await page.close(); continue; }
         if (!/html/i.test(resp.headers()['content-type'] || 'text/html')) { await page.close(); continue; } // a file, not a page
+        if (!SKIP_HEADER_HOSTS.has(new URL(url).hostname)) { const h = resp.headers(), keep = {}; for (const k of KEEP_HEADERS) keep[k] = h[k] ?? null; S.headers[url.replace(origin, '') || '/'] = keep; }
         await page.waitForTimeout(800);
         const info = await page.evaluate(() => ({
           title: document.title,
